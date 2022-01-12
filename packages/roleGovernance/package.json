@@ -1,0 +1,45 @@
+{
+    "name": "@energyweb/role-governance",
+    "version": "1.0.0",
+    "publishConfig": {
+      "access": "public",
+      "registry": "https://registry.npmjs.org"
+    },
+    "description": "Smart contract and client code specific to EnergyWeb IAM roles",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/src/index.d.ts",
+    "files": [
+      "dist"
+    ],  
+   "scripts": {
+     "test": "echo \"Error: no implemented\" && exit 1",
+     "build": "echo \"Error: no implemented\" && exit 1",
+     "lint": "echo \"Error: no implemented\" && exit 1",
+     "fix": "echo \"Error: no implemented\" && exit 1"
+   },
+   "keywords": [
+     "Energy",
+     "EnergyWeb",
+     "EW",
+     "DID",
+     "Registry",
+     "DID Registry"
+   ],
+   "homepage": "https://github.com/energywebfoundation/iam-roles/#readme",
+   "repository": {
+     "type": "git",
+     "url": "git+https://github.com/energywebfoundation/iam-roles.git"
+   },
+   "bugs": {
+     "url": "https://github.com/energywebfoundation/iam-roles/issues"
+   },
+   "author": {
+     "name": "EnergyWeb",
+     "url": "https://www.energyweb.org/"
+   },
+   "license": "GPL-3.0-or-later",
+   "devDependencies": {
+     "lerna": "^3.18.3"
+   }
+ }

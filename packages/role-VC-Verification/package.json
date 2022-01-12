@@ -1,0 +1,37 @@
+{
+  "name": "@energyweb/role-vc-verification",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "description": "This package provides code to verify verifiable credential",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],  
+ "scripts": {
+   "test": "echo \"Error: no implemented\" && exit 1",
+   "build": "echo \"Error: no implemented\" && exit 1",
+   "lint": "echo \"Error: no implemented\" && exit 1",
+   "fix": "echo \"Error: no implemented\" && exit 1"
+ },
+ "keywords": [
+   "Energy",
+   "EnergyWeb",
+   "EW",
+   "DID",
+   "Roles",
+   "Credential"
+ ],
+ "author": {
+   "name": "EnergyWeb",
+   "url": "https://www.energyweb.org/"
+ },
+ "license": "GPL-3.0-or-later",
+ "devDependencies": {
+   "lerna": "^3.18.3"
+ }
+}
