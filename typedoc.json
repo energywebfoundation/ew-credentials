@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["packages/roleGovernance/src/index.ts"],
+  "entryPoints": ["packages/roleGovernance/src/index.ts", "packages/onChain-RoleEnrollment/src/index.ts"],
   "out": "docs",
   "exclude": "**/*+(.spec|.e2e|.test).ts",
   "readme": "none"
