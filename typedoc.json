@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["packages/roleGovernance/src/index.ts"],
+  "out": "docs",
+  "exclude": "**/*+(.spec|.e2e|.test).ts",
+  "readme": "none"
+}
