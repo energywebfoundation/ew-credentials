@@ -13,10 +13,6 @@
     "dist"
   ],  
  "scripts": {
-   "test": "echo \"Error: no implemented\" && exit 1",
-   "build": "echo \"Error: no implemented\" && exit 1",
-   "lint": "echo \"Error: no implemented\" && exit 1",
-   "fix": "echo \"Error: no implemented\" && exit 1"
  },
  "keywords": [
    "Energy",

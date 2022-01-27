@@ -1,0 +1,8 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist
+ethers
+build
+bin/contracts
