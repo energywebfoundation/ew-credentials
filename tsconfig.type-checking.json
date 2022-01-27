@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "rootDir": "dist/**/*",
+    "rootDir": "packages/*/dist/**/*",
     "noEmit": true
   },
-  "include": ["dist/**/*"]
+  "include": ["packages/*/dist/**/*"]
 }
