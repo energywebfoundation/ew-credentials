@@ -8,10 +8,10 @@ import { ClaimManager__factory as ClaimManagerFactory } from '../ethers/factorie
 import { ClaimManager } from '../ethers/ClaimManager';
 import { RevocationRegistryOnChain__factory as RevocationRegistryOnChainFactory } from '../ethers/factories/RevocationRegistryOnChain__factory';
 import { RevocationRegistryOnChain } from '../ethers/RevocationRegistryOnChain';
-import { DomainTransactionFactoryV2 } from '../../role-governance/src/domain-transaction-factory-v2';
-import { ENSRegistry } from '../ethers/ENSRegistry';
-import { RoleDefinitionResolverV2 } from '../../role-governance/ethers/RoleDefinitionResolverV2';
-import { RoleDefinitionResolverV2__factory } from '../../role-governance/ethers/factories/RoleDefinitionResolverV2__factory';
+import { DomainTransactionFactoryV2 } from '@energyweb/role-governance/src/domain-transaction-factory-v2';
+import { ENSRegistry } from '@energyweb/role-governance/ethers/ENSRegistry';
+import { RoleDefinitionResolverV2 } from '@energyweb/role-governance/ethers/RoleDefinitionResolverV2';
+import { RoleDefinitionResolverV2__factory } from '@energyweb/role-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import {
   defaultVersion,
   requestRole,

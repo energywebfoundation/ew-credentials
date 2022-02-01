@@ -11,16 +11,16 @@ import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
 } from '../test_utils/ERC1056.json';
-import { ClaimManager__factory as ClaimManagerFactory } from '../ethers/factories/ClaimManager__factory';
-import { ClaimManager } from '../ethers/ClaimManager';
-import { IdentityManager__factory as IdentityManagerFactory } from '../../../role-governance/ethers/factories/IdentityManager__factory';
-import { IdentityManager } from '../../../roleGovernance/ethers/IdentityManager';
-import { OfferableIdentity__factory as OfferableIdentityFactory } from '../../../roleGovernance/ethers/factories/OfferableIdentity__factory';
-import { RoleDefinitionResolverV2__factory } from '../../../roleGovernance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { DomainTransactionFactoryV2 } from '../../../roleGovernance/src';
-import { ENSRegistry } from '../../../roleGovernance/ethers/ENSRegistry';
-import { RoleDefinitionResolverV2 } from '../../../role-governance/ethers/RoleDefinitionResolverV2';
-import { PreconditionType } from '../../../role-governance/src/types/domain-definitions';
+import { ClaimManager__factory as ClaimManagerFactory } from '../../ethers/factories/ClaimManager__factory';
+import { ClaimManager } from '../../ethers/ClaimManager';
+import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/role-governance/ethers/factories/IdentityManager__factory';
+import { IdentityManager } from '@energyweb/role-governance/ethers/IdentityManager';
+import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/role-governance/ethers/factories/OfferableIdentity__factory';
+import { RoleDefinitionResolverV2__factory } from '@energyweb/role-governance/ethers/factories/RoleDefinitionResolverV2__factory';
+import { DomainTransactionFactoryV2 } from '@energyweb/role-governance/src';
+import { ENSRegistry } from '@energyweb/role-governance/ethers/ENSRegistry';
+import { RoleDefinitionResolverV2 } from '@energyweb/role-governance/ethers/RoleDefinitionResolverV2';
+import { PreconditionType } from '@energyweb/role-governance/src/types/domain-definitions';
 import { defaultVersion, requestRole } from '../test_utils/role-utils';
 
 const root = `0x${'0'.repeat(64)}`;
@@ -459,7 +459,7 @@ function testSuite() {
           .createIdentity(authorityAddr)
       ).wait()
     ).events?.find(
-      (e: { event: any; }) =>
+      (e) =>
         e.event ===
         proxyIdentityManager.interface.events[
           'IdentityCreated(address,address,uint256)'

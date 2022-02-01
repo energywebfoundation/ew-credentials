@@ -2,7 +2,7 @@ import { providers, ContractFactory, utils } from 'ethers';
 import {
   abi as RoleDefAbi,
   bytecode as RoleDefBytecode,
-} from '../build/contracts/RoleDefinitionResolver.json';
+} from '@energyweb/role-governance/build/contracts/RoleDefinitionResolverV2.json';
 import {
   abi as PublicResolverAbi,
   bytecode as PublicResolverBytecode,
@@ -15,10 +15,7 @@ import {
   abi as ensAbi,
   bytecode as ensBytecode,
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
-import { roleDefinitionResolverTestSuite } from './RoleDefinitionResolver.testSuite';
-import { domainCrudTestSuite } from './DomainCRUD.testSuite';
-import { domainHierarchyTestSuite } from './DomainHierarchy.testSuite';
-import { claimManagerTests } from './claim-manager-tests/ClaimManager.testSuite';
+import { claimManagerTests } from './claim-manager-tests/claim-manager-testuite';
 import { revocationRegistryTests } from './revocation-registry-testsuite';
 
 const { JsonRpcProvider } = providers;
@@ -65,7 +62,7 @@ describe('[IAM CONTRACTS]', function () {
       chainId,
     });
   });
-  
+
   describe('ClaimManager Test', claimManagerTests);
   describe('Revocation Test', revocationRegistryTests);
 });

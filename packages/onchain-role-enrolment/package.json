@@ -17,13 +17,13 @@
     "build:typechain": "npm run build:typechain:claimmanager && npm run build:typechain:revocationregistryonchain",
     "build:typechain:claimmanager": "typechain --target ethers-v5 --out-dir ethers './build/contracts/ClaimManager.json'",
     "build:typechain:revocationregistryonchain": "typechain --target ethers-v5 --out-dir ethers './build/contracts/RevocationRegistryOnChain.json'",
-    "compile1": "npm run compile:contracts && npm run build",
+    "compile": "npm run compile:contracts && npm run build",
     "compile:contracts": "truffle compile",
     "compile:ts": "bili",
     "deploy:revocationregistryfactory": "node -r ts-node/register ./scripts/deploy_revocationRegistry",
     "ganache": "ganache-cli -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000",
-    "test1": "../../node_modules/.bin/mocha --timeout 0 -r ts-node/register test/**/*-test.ts",
-    "test-ganache": "mocha -r ts-node/register test/*test.ts",
+    "test": "../../node_modules/.bin/mocha --timeout 1000 -r ts-node/register test/**/*-tests.ts",
+    "test-ganache": "mocha -r ts-node/register test/**/*-tests.ts",
     "test:truffle": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --gasLimit=10000000 \"npm run truffle\" ",
     "truffle": "rm -rf build/contracts && ts-node test/truffle/upgradedContract.ts && truffle test test/truffle/claimManager.upgrade.test.ts && rm -rf contracts/roles/ClaimManagerUpgradeTest.sol",
     "test-rpc": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"npm run test-ganache\" "
@@ -43,7 +43,8 @@
    },
    "license": "GPL-3.0-or-later",
    "dependencies": {
-     "ethers": "5.5.3"
+     "ethers": "5.5.3",
+     "@energyweb/role-governance": "1.0.0"
   },
   "devDependencies": {
     "@ensdomains/buffer": "0.0.13",
@@ -65,9 +66,9 @@
     "copyfiles": "^2.4.1",
     "ganache-cli": "^6.12.2",
     "run-with-testrpc": "0.3.1",
-    "truffle": "5.4.29",
+    "truffle": "5.4.31",
     "ts-node": "9.1.1",
     "typechain": "5.2.0",
-    "typescript": "^4.2.3"
+    "typescript": "^4.5.5"
    }
  }
