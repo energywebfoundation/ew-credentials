@@ -22,7 +22,7 @@ import { revocationRegistryTests } from './revocation-registry-testsuite';
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-describe('[IAM CONTRACTS]', function () {
+describe('[ONCHAIN ROLE ENROLMENT]', function () {
   this.timeout(0);
   const provider = new JsonRpcProvider('http://localhost:8544');
   const deployer = provider.getSigner(1);

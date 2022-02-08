@@ -25,7 +25,7 @@ const { JsonRpcProvider } = providers;
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-describe('[IAM CONTRACTS]', function () {
+describe('[ROLE GOVERNANCE]', function () {
   this.timeout(0);
   const provider = new JsonRpcProvider('http://localhost:8544');
   const deployer = provider.getSigner(1);
