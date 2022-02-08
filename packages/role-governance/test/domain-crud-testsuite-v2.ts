@@ -14,7 +14,7 @@ import { ERROR_MESSAGES } from '../src/types/error-messages';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
-import { hashLabel } from './iam-contracts-test';
+import { hashLabel } from './role-governance-test';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
 import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__factory';
 import { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';

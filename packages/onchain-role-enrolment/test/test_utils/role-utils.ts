@@ -1,4 +1,5 @@
 import { Signer, utils } from 'ethers';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager } from '../../ethers/ClaimManager';
 import { RevocationRegistryOnChain as RevocationRegistry } from '../../ethers/RevocationRegistryOnChain';
 
@@ -8,6 +9,7 @@ export const defaultVersion = 1;
 const expiry = Math.floor(new Date().getTime() / 1000) + 60 * 60;
 // set it manually because ganache returns chainId same as network utils.id
 const chainId = 73799;
+const provider = new JsonRpcProvider('http://localhost:8544');
 
 function canonizeSig(sig: string) {
   let suffix = sig.substr(130);
@@ -32,11 +34,11 @@ export async function requestRole({
   claimManager: ClaimManager;
   roleName: string;
   version?: number;
-  agreementSigner: Signer;
-  proofSigner: Signer;
-  subject?: Signer;
+  agreementSigner: JsonRpcSigner;
+  proofSigner: JsonRpcSigner;
+  subject?: JsonRpcSigner;
   subjectAddress?: string;
-  issuer?: Signer;
+  issuer?: JsonRpcSigner;
 }): Promise<void> {
   if (!subject) {
     subject = agreementSigner;
@@ -86,7 +88,7 @@ export async function requestRole({
     ]
   );
 
-  const agreement = await agreementSigner.signMessage(arrayify(agreementHash));
+  const agreement = await agreementSigner._legacySignMessage(arrayify(agreementHash));
 
   const proofHash = solidityKeccak256(
     ['bytes', 'bytes32', 'bytes32'],
@@ -109,7 +111,7 @@ export async function requestRole({
     ]
   );
 
-  const proof = await proofSigner.signMessage(arrayify(proofHash));
+  const proof = await proofSigner._legacySignMessage(arrayify(proofHash));
 
   await (
     await claimManager.register(
@@ -154,8 +156,8 @@ export async function revokeRoles({
   subjectRole,
 }: {
   revocationRegistry: RevocationRegistry;
-  revoker: Signer;
-  subjects: Signer[];
+  revoker: JsonRpcSigner;
+  subjects: JsonRpcSigner[];
   subjectRole: string;
 }): Promise<void> {
   const revocationSubjects = [''];

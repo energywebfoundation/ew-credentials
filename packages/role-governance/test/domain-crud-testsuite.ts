@@ -16,7 +16,7 @@ import { ENSRegistry } from '../ethers/ENSRegistry';
 import { RoleDefinitionResolver } from '../ethers/RoleDefinitionResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
-import { hashLabel } from './iam-contracts-test';
+import { hashLabel } from './role-governance-test';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

@@ -11,6 +11,7 @@ import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
 } from '../test_utils/ERC1056.json';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager__factory as ClaimManagerFactory } from '../../ethers/factories/ClaimManager__factory';
 import { ClaimManager } from '../../ethers/ClaimManager';
 import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/role-governance/ethers/factories/IdentityManager__factory';
@@ -37,20 +38,20 @@ let proxyIdentityManager: IdentityManager;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let erc1056: Contract;
-let provider: providers.JsonRpcProvider;
+let provider: JsonRpcProvider;
 
-let deployer: Signer;
+let deployer: JsonRpcSigner;
 let deployerAddr: string;
-let device: Signer;
+let device: JsonRpcSigner;
 let deviceAddr: string;
-let installer: Signer;
+let installer: JsonRpcSigner;
 let installerAddr: string;
-let authority: Signer;
+let authority: JsonRpcSigner;
 let authorityAddr: string;
 
 export function claimManagerTests(): void {
   // takes very long time, but can be useful sometimes
-  describe.skip('Tests on Volta', testsOnVolta);
+  // describe.skip('Tests on Volta', testsOnVolta);
   describe('Tests on ganache', testsOnGanache);
 }
 
@@ -70,34 +71,34 @@ export function testsOnGanache(): void {
   testSuite();
 }
 
-function testsOnVolta() {
-  before(async function () {
-    provider = new providers.JsonRpcProvider('');
-    const faucet = new Wallet(
-      'df66a89721aab9508a5004192e8f0a7670141bdbcf7bd59cf5a20c4efd0daef3',
-      provider
-    );
-    deployer = faucet;
-    deployerAddr = await deployer.getAddress();
-    device = new Wallet(
-      '7f88210c2baeff4983b08cf31b08ba35f01a99cb442f1db830e91496c0d5a314',
-      provider
-    );
-    installer = new Wallet(
-      '9b67937b814668c30b947f6644fc4d3c64ec59129ba0b090d7f6cdfb82c25f0b',
-      provider
-    );
-    authority = new Wallet(
-      '7925db23d51b76302941c445f7a5470aa6054aaf09bb63eb365dbacc05112264',
-      provider
-    );
-    deviceAddr = await device.getAddress();
-    installerAddr = await installer.getAddress();
-    authorityAddr = await authority.getAddress();
-  });
+// function testsOnVolta() {
+//   before(async function () {
+//     provider = new providers.JsonRpcProvider('');
+//     const faucet = new Wallet(
+//       'df66a89721aab9508a5004192e8f0a7670141bdbcf7bd59cf5a20c4efd0daef3',
+//       provider
+//     );
+//     deployer = faucet;
+//     deployerAddr = await deployer.getAddress();
+//     device = new Wallet(
+//       '7f88210c2baeff4983b08cf31b08ba35f01a99cb442f1db830e91496c0d5a314',
+//       provider
+//     );
+//     installer = new Wallet(
+//       '9b67937b814668c30b947f6644fc4d3c64ec59129ba0b090d7f6cdfb82c25f0b',
+//       provider
+//     );
+//     authority = new Wallet(
+//       '7925db23d51b76302941c445f7a5470aa6054aaf09bb63eb365dbacc05112264',
+//       provider
+//     );
+//     deviceAddr = await device.getAddress();
+//     installerAddr = await installer.getAddress();
+//     authorityAddr = await authority.getAddress();
+//   });
 
-  testSuite();
-}
+//   testSuite();
+// }
 
 function testSuite() {
   beforeEach(async function () {
@@ -331,7 +332,7 @@ function testSuite() {
     ).true;
 
     expect(
-      requestRole({
+      await requestRole({
         claimManager,
         roleName: authorityRole,
         agreementSigner: authority,
@@ -342,7 +343,7 @@ function testSuite() {
 
   it('Role proof signed by not authorized issuer should be rejected', async () => {
     expect(
-      requestRole({
+      await requestRole({
         claimManager,
         roleName: authorityRole,
         agreementSigner: authority,
@@ -351,7 +352,7 @@ function testSuite() {
     ).rejectedWith('ClaimManager: Issuer is not listed in role issuers list');
 
     expect(
-      requestRole({
+      await requestRole({
         claimManager,
         roleName: deviceRole,
         agreementSigner: device,
@@ -373,8 +374,8 @@ function testSuite() {
       agreementSigner: installer,
       proofSigner: authority,
     });
-    return expect(
-      requestRole({
+    expect(
+      await requestRole({
         claimManager,
         roleName: activeDeviceRole,
         agreementSigner: device,
@@ -670,7 +671,7 @@ function testSuite() {
 
     it('request to register with non-existing role should be rejected', async () => {
       expect(
-        requestRole({
+        await requestRole({
           claimManager,
           roleName: authorityRole,
           version: 47,

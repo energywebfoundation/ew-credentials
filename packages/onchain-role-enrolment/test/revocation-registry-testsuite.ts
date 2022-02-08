@@ -1,9 +1,10 @@
-import { utils, ContractFactory, Signer, Contract, providers } from 'ethers';
+import { utils, ContractFactory, Contract } from 'ethers';
 import { expect } from 'chai';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
 } from './test_utils/ERC1056.json';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager__factory as ClaimManagerFactory } from '../ethers/factories/ClaimManager__factory';
 import { ClaimManager } from '../ethers/ClaimManager';
 import { RevocationRegistryOnChain__factory as RevocationRegistryOnChainFactory } from '../ethers/factories/RevocationRegistryOnChain__factory';
@@ -33,20 +34,20 @@ let ensRegistry: ENSRegistry;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let erc1056: Contract;
-let provider: providers.JsonRpcProvider;
+let provider: JsonRpcProvider;
 let revocationRegistry: RevocationRegistryOnChain;
 
-let deployer: Signer;
+let deployer: JsonRpcSigner;
 let deployerAddr: string;
-let device: Signer;
+let device: JsonRpcSigner;
 let deviceAddr: string;
-let installer: Signer;
+let installer: JsonRpcSigner;
 let installerAddr: string;
-let installer1: Signer;
+let installer1: JsonRpcSigner;
 let installer1Addr: string;
-let authority: Signer;
+let authority: JsonRpcSigner;
 let authorityAddr: string;
-let admin: Signer;
+let admin: JsonRpcSigner;
 let adminAddr: string;
 
 export function revocationRegistryTests(): void {
@@ -263,7 +264,7 @@ function testSuite() {
     });
 
     expect(
-      revokeRole({
+      await revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: admin,
@@ -287,7 +288,7 @@ function testSuite() {
     });
 
     expect(
-      revokeRole({
+      await revokeRole({
         revocationRegistry,
         revoker: provider.getSigner(13),
         subject: authority,
@@ -298,7 +299,7 @@ function testSuite() {
     );
 
     expect(
-      revokeRole({
+      await revokeRole({
         revocationRegistry,
         revoker: provider.getSigner(13),
         subject: installer,
@@ -525,7 +526,7 @@ function testSuite() {
     ).true;
 
     expect(
-      revokeRole({
+      await revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: installer,
@@ -556,7 +557,7 @@ function testSuite() {
     ).true;
 
     expect(
-      revokeRole({
+      await revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: authority,

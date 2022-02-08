@@ -24,8 +24,9 @@
     "ganache": "ganache-cli -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000",
     "test": "../../node_modules/.bin/mocha --timeout 1000 -r ts-node/register test/**/*-tests.ts",
     "test-ganache": "mocha -r ts-node/register test/**/*-tests.ts",
-    "test:truffle": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --gasLimit=10000000 \"npm run truffle\" ",
+    "test:truffle": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --gasLimit=10000000 \"npm run truffle-tests\" ",
     "truffle": "rm -rf build/contracts && ts-node test/truffle/upgradedContract.ts && truffle test test/truffle/claimManager.upgrade.test.ts && rm -rf contracts/roles/ClaimManagerUpgradeTest.sol",
+    "truffle-tests": "rm -rf build/contracts && truffle test test/*-tests.ts",
     "test-rpc": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"npm run test-ganache\" "
     },
    "keywords": [
@@ -51,6 +52,7 @@
     "@ensdomains/ens-contracts": "0.0.4",
     "@ethersproject/abi": "^5.4.0",
     "@ethersproject/abstract-signer": "^5.4.1",
+    "@ethersproject/providers": "5.5.0",
     "@ew-did-registry/proxyidentity": "0.6.2",
     "@openzeppelin/contracts": "4.3.3",
     "@openzeppelin/contracts-upgradeable": "4.3.3",

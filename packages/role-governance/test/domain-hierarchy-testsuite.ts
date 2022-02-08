@@ -11,7 +11,7 @@ import { ENSRegistry } from '../ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
-import { hashLabel } from './iam-contracts-test';
+import { hashLabel } from './role-governance-test';
 import { expect } from 'chai';
 import { LegacyDomainDefTransactionFactory } from './legacy-domain-def-transaction-factory';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';

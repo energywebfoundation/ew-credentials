@@ -1,4 +1,5 @@
-import { providers, ContractFactory, utils } from 'ethers';
+import { ContractFactory, utils  } from 'ethers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import {
   abi as RoleDefAbi,
   bytecode as RoleDefBytecode,
@@ -17,8 +18,6 @@ import {
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
 import { claimManagerTests } from './claim-manager-tests/claim-manager-testuite';
 import { revocationRegistryTests } from './revocation-registry-testsuite';
-
-const { JsonRpcProvider } = providers;
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
