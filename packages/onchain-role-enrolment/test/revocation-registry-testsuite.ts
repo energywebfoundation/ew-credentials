@@ -1,5 +1,6 @@
 import { utils, ContractFactory, Contract } from 'ethers';
-import { expect } from 'chai';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
@@ -19,6 +20,9 @@ import {
   revokeRole,
   revokeRoles,
 } from './test_utils/role-utils';
+
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 const root = `0x${'0'.repeat(64)}`;
 const authorityRole = 'authority';
@@ -264,13 +268,13 @@ function testSuite() {
     });
 
     expect(
-      await revokeRole({
+      revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: admin,
         subjectRole: adminRole,
       })
-    ).rejectedWith('Revocation Registry: Role revokers are not specified');
+    ).to.eventually.rejectedWith('Revocation Registry: Role revokers are not specified');
   });
 
   it('Role can be revoked only by authorised revoker', async () => {
@@ -288,24 +292,24 @@ function testSuite() {
     });
 
     expect(
-      await revokeRole({
+      revokeRole({
         revocationRegistry,
         revoker: provider.getSigner(13),
         subject: authority,
         subjectRole: authorityRole,
       })
-    ).rejectedWith(
+    ).to.eventually.rejectedWith(
       'Revocation Registry: Revoker is not listed in role revokers list'
     );
 
     expect(
-      await revokeRole({
+      revokeRole({
         revocationRegistry,
         revoker: provider.getSigner(13),
         subject: installer,
         subjectRole: installerRole,
       })
-    ).rejectedWith('Revocation Registry: Revoker does not have required role');
+    ).to.eventually.rejectedWith('Revocation Registry: Revoker does not have required role');
   });
 
   it('Role can be revoked where revokerType is DID', async () => {
@@ -526,13 +530,13 @@ function testSuite() {
     ).true;
 
     expect(
-      await revokeRole({
+      revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: installer,
         subjectRole: installerRole,
       })
-    ).rejectedWith("Revocation Registry: Revoker's role has been revoked");
+    ).to.eventually.rejectedWith("Revocation Registry: Revoker's role has been revoked");
   });
 
   it('A revoked role cannot be revoked again', async () => {
@@ -557,13 +561,13 @@ function testSuite() {
     ).true;
 
     expect(
-      await revokeRole({
+      revokeRole({
         revocationRegistry,
         revoker: authority,
         subject: authority,
         subjectRole: authorityRole,
       })
-    ).rejectedWith('The claim is already revoked');
+    ).to.eventually.rejectedWith('The claim is already revoked');
   });
 
   it('Role can be revoked by revokers delegate', async () => {

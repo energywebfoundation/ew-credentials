@@ -6,7 +6,8 @@ import {
   Wallet,
   providers,
 } from 'ethers';
-import { expect } from 'chai';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
@@ -23,6 +24,9 @@ import { ENSRegistry } from '@energyweb/role-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/role-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/role-governance/src/types/domain-definitions';
 import { defaultVersion, requestRole } from '../test_utils/role-utils';
+
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 const root = `0x${'0'.repeat(64)}`;
 const authorityRole = 'authority';
@@ -332,33 +336,33 @@ function testSuite() {
     ).true;
 
     expect(
-      await requestRole({
+      requestRole({
         claimManager,
         roleName: authorityRole,
         agreementSigner: authority,
         proofSigner: authority,
       })
-    ).rejectedWith('ClaimManager: The proof has been submitted already');
+    ).to.eventually.rejectedWith('ClaimManager: The proof has been submitted already');
   });
 
   it('Role proof signed by not authorized issuer should be rejected', async () => {
     expect(
-      await requestRole({
+      requestRole({
         claimManager,
         roleName: authorityRole,
         agreementSigner: authority,
         proofSigner: provider.getSigner(10),
       })
-    ).rejectedWith('ClaimManager: Issuer is not listed in role issuers list');
+    ).to.eventually.rejectedWith('ClaimManager: Issuer is not listed in role issuers list');
 
     expect(
-      await requestRole({
+      requestRole({
         claimManager,
         roleName: deviceRole,
         agreementSigner: device,
         proofSigner: provider.getSigner(10),
       })
-    ).rejectedWith('ClaimManager: Issuer does not has required role');
+    ).to.eventually.rejectedWith('ClaimManager: Issuer does not has required role');
   });
 
   it('When prerequisites are not met, enrolment request must be rejected', async () => {
@@ -375,13 +379,13 @@ function testSuite() {
       proofSigner: authority,
     });
     expect(
-      await requestRole({
+      requestRole({
         claimManager,
         roleName: activeDeviceRole,
         agreementSigner: device,
         proofSigner: installer,
       })
-    ).rejectedWith('ClaimManager: Enrollment prerequisites are not met');
+    ).to.eventually.rejectedWith('ClaimManager: Enrollment prerequisites are not met');
   });
 
   it('When prerequisites are met, enrolment request must be approved', async () => {
@@ -671,14 +675,14 @@ function testSuite() {
 
     it('request to register with non-existing role should be rejected', async () => {
       expect(
-        await requestRole({
+        requestRole({
           claimManager,
           roleName: authorityRole,
           version: 47,
           agreementSigner: authority,
           proofSigner: authority,
         })
-      ).rejectedWith("ClaimManager: Such version of this role doesn't exist");
+      ).to.eventually.rejectedWith("ClaimManager: Such version of this role doesn't exist");
     });
   });
 }
