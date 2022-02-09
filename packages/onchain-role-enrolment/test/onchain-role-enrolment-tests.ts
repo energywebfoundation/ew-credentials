@@ -18,6 +18,7 @@ import {
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
 import { claimManagerTests } from './claim-manager-tests/claim-manager-testuite';
 import { revocationRegistryTests } from './revocation-registry-testsuite';
+import { eip712test } from '../src/eip712.spec';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
@@ -62,6 +63,7 @@ describe('[ONCHAIN ROLE ENROLMENT]', function () {
     });
   });
 
+  describe('EIP712 Test', eip712test);
   describe('ClaimManager Test', claimManagerTests);
   describe('Revocation Test', revocationRegistryTests);
 });

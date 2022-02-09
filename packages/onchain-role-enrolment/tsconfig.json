@@ -1,28 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": false,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noLib": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": false,
     "outDir": "./dist",
-    "preserveSymlinks": true,
-    "removeComments": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "strict": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": false,
-    "suppressImplicitAnyIndexErrors": true,
-    "target": "es6"
+    "resolveJsonModule": true
   },
   "include": ["src/**/*", "ethers/**/*"]
 }

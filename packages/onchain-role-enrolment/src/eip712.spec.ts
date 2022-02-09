@@ -3,40 +3,25 @@ import { Methods, Chain } from '@ew-did-registry/did';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { recoverOnChainProofSigner, typedClaimRequestHash } from './eip712';
 import { canonizeSig } from './utils';
+import { expect } from 'chai';
 
 const { arrayify } = utils;
 
-describe('EIP712 tests', () => {
-  const role = 'test.roles.iam.ewc';
-  const version = 1;
-  const expiry = 47;
-  const subject = Wallet.createRandom();
-  const subjectDID = `did:${Methods.Erc1056}:${Chain.VOLTA}:${subject.address}`;
-  const issuer = Wallet.createRandom();
-  const issuerDID = `did:${Methods.Erc1056}:${Chain.VOLTA}:${issuer.address}`;
-  const chainId = 1;
-  const claimManager = Wallet.createRandom().address;
-  let onChainProof: string;
+export function eip712test(): void {
+  describe('EIP712 tests', () => {
+    const role = 'test.roles.iam.ewc';
+    const version = 1;
+    const expiry = 47;
+    const subject = Wallet.createRandom();
+    const subjectDID = `did:${Methods.Erc1056}:${Chain.VOLTA}:${subject.address}`;
+    const issuer = Wallet.createRandom();
+    const issuerDID = `did:${Methods.Erc1056}:${Chain.VOLTA}:${issuer.address}`;
+    const chainId = 1;
+    const claimManager = Wallet.createRandom().address;
+    let onChainProof: string;
 
-  beforeEach(async () => {
-    const proofHash = typedClaimRequestHash(
-      {
-        role,
-        version,
-        expiry,
-        subject: subjectDID,
-        issuer: issuerDID,
-        claimManager,
-      },
-      chainId
-    );
-    onChainProof = canonizeSig(await issuer.signMessage(arrayify(proofHash)));
-  });
-
-  test('onchain issuer can be recovered', () => {
-    expect(
-      recoverOnChainProofSigner(
-        onChainProof,
+    beforeEach(async () => {
+      const proofHash = typedClaimRequestHash(
         {
           role,
           version,
@@ -46,7 +31,25 @@ describe('EIP712 tests', () => {
           claimManager,
         },
         chainId
-      )
-    ).toEqual(addressOf(issuerDID));
+      );
+      onChainProof = canonizeSig(await issuer.signMessage(arrayify(proofHash)));
+    });
+
+    it('onchain issuer can be recovered', () => {
+      expect(
+        recoverOnChainProofSigner(
+          onChainProof,
+          {
+            role,
+            version,
+            expiry,
+            subject: subjectDID,
+            issuer: issuerDID,
+            claimManager,
+          },
+          chainId
+        )
+      ).equal(addressOf(issuerDID));
+    });
   });
-});
+}
