@@ -47,6 +47,7 @@ $ npm run start
 ## Testing
 ``` sh
 $ npm run test
+```
 
 ## Contributing Guidelines 
 See [contributing.md](./contributing.md)
