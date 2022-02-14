@@ -1,5 +1,5 @@
 {
-    "name": "@energyweb/onchain-role-enrollment",
+    "name": "@energyweb/onchain-role-enrolment",
     "version": "1.0.0",
     "publishConfig": {
       "access": "public",

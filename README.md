@@ -15,14 +15,14 @@ This repository provides code for CRUD operations on roles (Verifiable Credentia
 |:---                                                                           |:---                                                       | 
 | [`@energyweb/role-vc-verification`](/packages/role-vc-verification)           | Code to verify role based verifiable credential.                        |
 | [`@energyweb/role-governance`](/packages/role-governance)           | Smart contract and client code specific to EnergyWeb IAM roles.                             |
-| [`@energyweb/onchain-role-enrollment`](/packages/onchain-role-enrollment) | exposes code to support role/claim lifecycle.                             |
+| [`@energyweb/onchain-role-enrollment`](/packages/onchain-role-enrolment) | exposes code to support role/claim lifecycle.                             |
 
 ## Installation
 This is a Node.js module available through the npm registry.
 
 ### Requirements
 
-Before installing, download and install Node.js. Node.js 14.0 or higher is required.
+Before installing, download and install Node.js. Node.js 16.0 or higher is required.
 
 Installation is done using the following commands:
 
