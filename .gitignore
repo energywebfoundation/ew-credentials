@@ -21,3 +21,9 @@ jspm_packages/
 
 # Output of 'npm pack'
 *.tgz
+
+# Build outputs
+dist
+ethers
+build
+bin/contracts

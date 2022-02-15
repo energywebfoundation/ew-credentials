@@ -88,7 +88,9 @@ export async function requestRole({
     ]
   );
 
-  const agreement = await agreementSigner._legacySignMessage(arrayify(agreementHash));
+  const agreement = await agreementSigner._legacySignMessage(
+    arrayify(agreementHash)
+  );
 
   const proofHash = solidityKeccak256(
     ['bytes', 'bytes32', 'bytes32'],

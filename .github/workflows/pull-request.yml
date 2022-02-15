@@ -24,7 +24,6 @@ jobs:
         run: npm run build
 
       - name: Build type checking
-        if: success()
         run: npx tsc --project tsconfig.type-checking.json
 
       - name: Run test

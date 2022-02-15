@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['@energyweb'],
+  extends: ['@energyweb', 'plugin:import/recommended'],
   env: {
     mocha: true,
     es2021: true,
@@ -8,4 +8,4 @@ module.exports = {
   parserOptions: {
     project: ['tsconfig.json', 'tsconfig.eslint.json', 'test/tsconfig.json'],
   },
-};
+ };

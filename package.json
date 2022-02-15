@@ -2,7 +2,6 @@
   "name": "@energyweb/iam-roles",
   "version": "1.0.0",
   "publishConfig": {
-    "access": "public",
     "registry": "https://registry.npmjs.org"
   },
   "description": "Smart contract and client code specific to EnergyWeb IAM roles",
@@ -13,10 +12,9 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "rimraf dist ethers && patch-package",
     "test": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"lerna run test\" ",
-    "setup": "lerna bootstrap --hoist --no-ci",
-    "build": "rm -rf build docs packages/*/dist && lerna run compile",
+    "setup": "lerna bootstrap --hoist --ci",
+    "build": "patch-package && rm -rf build docs packages/*/dist && lerna run compile",
     "compile": "lerna run compile",
     "build:docs": "typedoc",
     "lint": "lerna run lint --parallel --stream -- -- --ignore-path=../../.eslintignore",
@@ -66,6 +64,7 @@
     "copyfiles": "^2.4.1",
     "eslint": "^8.6.0",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "2.25.4",
     "ganache-cli": "^6.12.2",
     "husky": "^4.3.8",
     "lint-staged": "^11.1.1",

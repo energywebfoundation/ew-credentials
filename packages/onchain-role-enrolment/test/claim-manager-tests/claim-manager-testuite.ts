@@ -342,7 +342,9 @@ function testSuite() {
         agreementSigner: authority,
         proofSigner: authority,
       })
-    ).to.eventually.rejectedWith('ClaimManager: The proof has been submitted already');
+    ).to.eventually.rejectedWith(
+      'ClaimManager: The proof has been submitted already'
+    );
   });
 
   it('Role proof signed by not authorized issuer should be rejected', async () => {
@@ -353,7 +355,9 @@ function testSuite() {
         agreementSigner: authority,
         proofSigner: provider.getSigner(10),
       })
-    ).to.eventually.rejectedWith('ClaimManager: Issuer is not listed in role issuers list');
+    ).to.eventually.rejectedWith(
+      'ClaimManager: Issuer is not listed in role issuers list'
+    );
 
     expect(
       requestRole({
@@ -362,7 +366,9 @@ function testSuite() {
         agreementSigner: device,
         proofSigner: provider.getSigner(10),
       })
-    ).to.eventually.rejectedWith('ClaimManager: Issuer does not has required role');
+    ).to.eventually.rejectedWith(
+      'ClaimManager: Issuer does not has required role'
+    );
   });
 
   it('When prerequisites are not met, enrolment request must be rejected', async () => {
@@ -385,7 +391,9 @@ function testSuite() {
         agreementSigner: device,
         proofSigner: installer,
       })
-    ).to.eventually.rejectedWith('ClaimManager: Enrollment prerequisites are not met');
+    ).to.eventually.rejectedWith(
+      'ClaimManager: Enrollment prerequisites are not met'
+    );
   });
 
   it('When prerequisites are met, enrolment request must be approved', async () => {
@@ -682,7 +690,9 @@ function testSuite() {
           agreementSigner: authority,
           proofSigner: authority,
         })
-      ).to.eventually.rejectedWith("ClaimManager: Such version of this role doesn't exist");
+      ).to.eventually.rejectedWith(
+        "ClaimManager: Such version of this role doesn't exist"
+      );
     });
   });
 }

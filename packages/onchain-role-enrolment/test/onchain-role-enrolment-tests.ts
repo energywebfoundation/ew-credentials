@@ -1,4 +1,4 @@
-import { ContractFactory, utils  } from 'ethers';
+import { ContractFactory, utils } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import {
   abi as RoleDefAbi,

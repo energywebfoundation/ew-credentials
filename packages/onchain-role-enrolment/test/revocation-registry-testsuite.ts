@@ -274,7 +274,9 @@ function testSuite() {
         subject: admin,
         subjectRole: adminRole,
       })
-    ).to.eventually.rejectedWith('Revocation Registry: Role revokers are not specified');
+    ).to.eventually.rejectedWith(
+      'Revocation Registry: Role revokers are not specified'
+    );
   });
 
   it('Role can be revoked only by authorised revoker', async () => {
@@ -309,7 +311,9 @@ function testSuite() {
         subject: installer,
         subjectRole: installerRole,
       })
-    ).to.eventually.rejectedWith('Revocation Registry: Revoker does not have required role');
+    ).to.eventually.rejectedWith(
+      'Revocation Registry: Revoker does not have required role'
+    );
   });
 
   it('Role can be revoked where revokerType is DID', async () => {
@@ -536,7 +540,9 @@ function testSuite() {
         subject: installer,
         subjectRole: installerRole,
       })
-    ).to.eventually.rejectedWith("Revocation Registry: Revoker's role has been revoked");
+    ).to.eventually.rejectedWith(
+      "Revocation Registry: Revoker's role has been revoked"
+    );
   });
 
   it('A revoked role cannot be revoked again', async () => {
