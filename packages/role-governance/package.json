@@ -13,10 +13,24 @@
       "dist"
     ],  
    "scripts": {
-     "test": "echo \"Error: no implemented\" && exit 1",
-     "build": "echo \"Error: no implemented\" && exit 1",
-     "lint": "echo \"Error: no implemented\" && exit 1",
-     "fix": "echo \"Error: no implemented\" && exit 1"
+    "build": "npm run build:typechain && npm run compile:ts && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
+    "build:typechain": "npm run build:typechain:did && npm run build:typechain:roles",
+    "build:typechain:did": "npm run build:typechain:identityManager && npm run build:typechain:offerableIdentity",
+    "build:typechain:roles": "npm run build:typechain:ensregistry && npm run build:typechain:domainnotifier && npm run build:typechain:resolver && npm run build:typechain:resolverV2 && npm run build:typechain:publicresolver",
+    "build:typechain:offerableIdentity": "typechain --target ethers-v5 --out-dir ethers \"./../../node_modules/@ew-did-registry/proxyidentity/build/contracts/OfferableIdentity.json\"",
+    "build:typechain:identityManager": "typechain --target ethers-v5 --out-dir ethers \"./../../node_modules/@ew-did-registry/proxyidentity/build/contracts/IdentityManager.json\"",
+    "build:typechain:ensregistry": "typechain --target ethers-v5 --out-dir ethers './../../node_modules/@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json'",
+    "build:typechain:domainnotifier": "typechain --target ethers-v5 --out-dir ethers './build/contracts/DomainNotifier.json'",
+    "build:typechain:resolver": "typechain --target ethers-v5 --out-dir ethers './build/contracts/RoleDefinitionResolver.json'",
+    "build:typechain:resolverV2": "typechain --target ethers-v5 --out-dir ethers './build/contracts/RoleDefinitionResolverV2.json'",
+    "build:typechain:publicresolver": "typechain --target ethers-v5 --out-dir ethers './../../node_modules/@ensdomains/ens-contracts/artifacts/contracts/resolvers/PublicResolver.sol/PublicResolver.json'",
+    "compile": "npm run compile:contracts && npm run build",
+    "compile:contracts": "truffle compile",
+    "compile:ts": "bili",
+    "deploy:roleDefResolver": "node -r ts-node/register ./scripts/deploy_roleDefResolver",
+    "test": "../../node_modules/.bin/mocha --timeout 0 -r ts-node/register test/**/*-test.ts",
+    "test-rpc": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"npm run test-ganache\" ",
+    "test-ganache": "mocha -r ts-node/register test/*test.ts"
    },
    "keywords": [
      "Energy",
@@ -39,7 +53,32 @@
      "url": "https://www.energyweb.org/"
    },
    "license": "GPL-3.0-or-later",
-   "devDependencies": {
-     "lerna": "^3.18.3"
-   }
+   "dependencies": {
+    "ethers": "5.5.3"
+  },
+  "devDependencies": {
+    "@ensdomains/buffer": "0.0.13",
+    "@ensdomains/ens-contracts": "0.0.4",
+    "@ethersproject/abi": "^5.4.0",
+    "@ethersproject/abstract-signer": "^5.4.1",
+    "@ew-did-registry/proxyidentity": "0.6.2",
+    "@openzeppelin/contracts": "4.3.3",
+    "@openzeppelin/contracts-upgradeable": "4.3.3",
+    "@openzeppelin/truffle-upgrades": "1.12.0",
+    "@truffle/contract": "4.4.4",
+    "@truffle/deployer": "3.2.61",
+    "@truffle/hdwallet-provider": "1.7.0",
+    "@typechain/ethers-v5": "^7.0.1",
+    "bili": "^5.0.5",
+    "chai": "4.3.4",
+    "chai-arrays": "2.2.0",
+    "chai-as-promised": "7.1.1",
+    "copyfiles": "^2.4.1",
+    "ganache-cli": "^6.12.2",
+    "run-with-testrpc": "0.3.1",
+    "truffle": "5.4.29",
+    "ts-node": "9.1.1",
+    "typechain": "5.2.0",
+    "typescript": "^4.2.3"
+  }
  }

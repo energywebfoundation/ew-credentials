@@ -1,7 +1,14 @@
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { utils } from 'ethers';
 
-const { defaultAbiCoder, solidityKeccak256, namehash, id, arrayify, verifyMessage  } = utils;
+const {
+  defaultAbiCoder,
+  solidityKeccak256,
+  namehash,
+  id,
+  arrayify,
+  verifyMessage,
+} = utils;
 
 export const typedMsgPrefix = '1901';
 export const erc712_type_hash = utils.id(
@@ -15,10 +22,10 @@ export const proof_type_hash = utils.id(
 );
 
 /**
- * 
- * @param request 
- * @param chainId 
- * @returns 
+ *
+ * @param request
+ * @param chainId
+ * @returns
  */
 export function typedClaimRequestHash(
   request: {
@@ -35,7 +42,13 @@ export function typedClaimRequestHash(
   const domainSeparator = utils.keccak256(
     defaultAbiCoder.encode(
       ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
-      [erc712_type_hash, id('Claim Manager'), id('1.0'), chainId, request.claimManager]
+      [
+        erc712_type_hash,
+        id('Claim Manager'),
+        id('1.0'),
+        chainId,
+        request.claimManager,
+      ]
     )
   );
 
@@ -73,5 +86,8 @@ export function recoverOnChainProofSigner(
   },
   chainId: number
 ) {
-  return verifyMessage(arrayify(typedClaimRequestHash(request, chainId)), proof);
+  return verifyMessage(
+    arrayify(typedClaimRequestHash(request, chainId)),
+    proof
+  );
 }

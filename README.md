@@ -3,24 +3,26 @@
 </p>
 
 
-# PACKAGE NAME
+# IAM Roles
 
 ## Description
-Overview of package. 
-{Package} is a module-based library built with xxx. 
+This repository provides code for CRUD operations on roles (Verifiable Credential).
+{iam-roles} is a module-based library built with lerna. 
 
-//Purpose of package, sdk, etc. 
+{iam-roles} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
 
-{Package} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
-
-See {PACKAGE} deployed [here](link to Switchboard, Zero if applicable)
+| Package                                                                       | Description                                               |
+|:---                                                                           |:---                                                       | 
+| [`@energyweb/role-vc-verification`](/packages/role-vc-verification)           | Code to verify role based verifiable credential.                        |
+| [`@energyweb/role-governance`](/packages/role-governance)           | Smart contract and client code specific to EnergyWeb IAM roles.                             |
+| [`@energyweb/onchain-role-enrollment`](/packages/onchain-role-enrolment) | exposes code to support role/claim lifecycle.                             |
 
 ## Installation
 This is a Node.js module available through the npm registry.
 
 ### Requirements
 
-Before installing, download and install Node.js. Node.js xxx or higher is required.
+Before installing, download and install Node.js. Node.js 16.0 or higher is required.
 
 Installation is done using the following commands:
 
@@ -33,30 +35,19 @@ $ npm install
 $ npm run build
 ```
 
+## Setup
+``` sh
+$ npm run setup
+```
+
 ## Run
 ``` sh
 $ npm run start
 ```
-## Testing (delete if not needed)
-Testing Strategy
-
-### Integration Tests (delete if not needed)
+## Testing
 ``` sh
 $ npm run test
 ```
-
-### Unit Tests (delete if not needed)
-``` sh
-$ npm run test
-```
-
-For more details, visit the [installation guide](//LINK TO READ THE DOCS INSTALL PAGE)
-
-## Documentation
-- [ReadTheDocs](https://origins.readthedocs.io/en/latest/)
-
-## Who is Using {Package}?
-//For origin, 24/7, Zero might be good to have a few examples of implementations to give context of how its used
 
 ## Contributing Guidelines 
 See [contributing.md](./contributing.md)
