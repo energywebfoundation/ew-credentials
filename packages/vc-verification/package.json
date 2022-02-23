@@ -1,5 +1,5 @@
 {
-  "name": "@energyweb/role-vc-verification",
+  "name": "@energyweb/vc-verification",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public",

@@ -1,5 +1,5 @@
 {
-    "name": "@energyweb/onchain-role-enrolment",
+    "name": "@energyweb/onchain-claims",
     "version": "1.0.0",
     "publishConfig": {
       "access": "public",
@@ -45,7 +45,7 @@
    "license": "GPL-3.0-or-later",
    "dependencies": {
      "ethers": "5.5.3",
-     "@energyweb/role-governance": "1.0.0",
+     "@energyweb/credential-governance": "1.0.0",
      "@ew-did-registry/did": "^0.6.3-alpha.426.0",
      "@ew-did-registry/did-ethr-resolver": "^0.6.3-alpha.426.0"
   },

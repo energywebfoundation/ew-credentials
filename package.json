@@ -1,5 +1,5 @@
 {
-  "name": "@energyweb/iam-roles",
+  "name": "@energyweb/credentials",
   "version": "1.0.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
@@ -31,13 +31,13 @@
     "Registry",
     "DID Registry"
   ],
-  "homepage": "https://github.com/energywebfoundation/iam-roles/#readme",
+  "homepage": "https://github.com/energywebfoundation/ew-credentials/#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/energywebfoundation/iam-roles.git"
+    "url": "git+https://github.com/energywebfoundation/ew-credentials.git"
   },
   "bugs": {
-    "url": "https://github.com/energywebfoundation/iam-roles/issues"
+    "url": "https://github.com/energywebfoundation/ew-credentials/issues"
   },
   "author": {
     "name": "EnergyWeb",

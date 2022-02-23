@@ -15,14 +15,14 @@ import {
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager__factory as ClaimManagerFactory } from '../../ethers/factories/ClaimManager__factory';
 import { ClaimManager } from '../../ethers/ClaimManager';
-import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/role-governance/ethers/factories/IdentityManager__factory';
-import { IdentityManager } from '@energyweb/role-governance/ethers/IdentityManager';
-import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/role-governance/ethers/factories/OfferableIdentity__factory';
-import { RoleDefinitionResolverV2__factory } from '@energyweb/role-governance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { DomainTransactionFactoryV2 } from '@energyweb/role-governance/src';
-import { ENSRegistry } from '@energyweb/role-governance/ethers/ENSRegistry';
-import { RoleDefinitionResolverV2 } from '@energyweb/role-governance/ethers/RoleDefinitionResolverV2';
-import { PreconditionType } from '@energyweb/role-governance/src/types/domain-definitions';
+import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/credential-governance/ethers/factories/IdentityManager__factory';
+import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
+import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
+import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
+import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
+import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
+import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
+import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
 import { defaultVersion, requestRole } from '../test_utils/role-utils';
 
 chai.use(chaiAsPromised);
