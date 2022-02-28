@@ -3,19 +3,19 @@
 </p>
 
 
-# IAM Roles
+# EW Credentials
 
 ## Description
 This repository provides code for CRUD operations on roles (Verifiable Credential).
-{iam-roles} is a module-based library built with lerna. 
+{@energyweb/credentials} is a module-based library built with lerna. 
 
 {iam-roles} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
 
 | Package                                                                       | Description                                               |
 |:---                                                                           |:---                                                       | 
-| [`@energyweb/role-vc-verification`](/packages/role-vc-verification)           | Code to verify role based verifiable credential.                        |
-| [`@energyweb/role-governance`](/packages/role-governance)           | Smart contract and client code specific to EnergyWeb IAM roles.                             |
-| [`@energyweb/onchain-role-enrollment`](/packages/onchain-role-enrolment) | exposes code to support role/claim lifecycle.                             |
+| [`@energyweb/vc-verification`](/packages/vc-verification)           | Code to verify role based verifiable credential.                        |
+| [`@energyweb/credential-governance`](/packages/credential-governance)           | Smart contract and client code specific to EnergyWeb IAM roles.                             |
+| [`@energyweb/onchain-claims`](/packages/onchain-claims) | exposes code to support role/claim lifecycle.                             |
 
 ## Installation
 This is a Node.js module available through the npm registry.

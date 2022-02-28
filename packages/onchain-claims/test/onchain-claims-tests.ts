@@ -3,7 +3,7 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import {
   abi as RoleDefAbi,
   bytecode as RoleDefBytecode,
-} from '@energyweb/role-governance/build/contracts/RoleDefinitionResolverV2.json';
+} from '@energyweb/credential-governance/build/contracts/RoleDefinitionResolverV2.json';
 import {
   abi as PublicResolverAbi,
   bytecode as PublicResolverBytecode,

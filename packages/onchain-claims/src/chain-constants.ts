@@ -1,4 +1,4 @@
-import * as chainConstants from '@energyweb/role-governance/src/chain-constants';
+import * as chainConstants from '@energyweb/credential-governance/src/chain-constants';
 
 // Volta chain
 export const VOLTA_CHAIN_ID = 73799;
