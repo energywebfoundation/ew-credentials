@@ -1,18 +1,18 @@
 {
-    "name": "@energyweb/credential-governance",
-    "version": "1.0.0",
-    "publishConfig": {
-      "access": "public",
-      "registry": "https://registry.npmjs.org"
-    },
-    "description": "Smart contract and client code specific to EnergyWeb IAM roles",
-    "main": "dist/index.js",
-    "module": "dist/index.esm.js",
-    "types": "dist/src/index.d.ts",
-    "files": [
-      "dist"
-    ],  
-   "scripts": {
+  "name": "@energyweb/credential-governance",
+  "version": "1.0.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "description": "Smart contract and client code specific to EnergyWeb IAM roles",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
     "build": "npm run build:typechain && npm run compile:ts && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
     "build:typechain": "npm run build:typechain:did && npm run build:typechain:roles",
     "build:typechain:did": "npm run build:typechain:identityManager && npm run build:typechain:offerableIdentity",
@@ -31,30 +31,30 @@
     "test": "../../node_modules/.bin/mocha --timeout 0 -r ts-node/register test/**/*-test.ts",
     "test-rpc": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"npm run test-ganache\" ",
     "test-ganache": "mocha -r ts-node/register test/*test.ts"
-   },
-   "keywords": [
-     "Energy",
-     "EnergyWeb",
-     "EW",
-     "DID",
-     "Registry",
-     "DID Registry"
-   ],
-   "homepage": "https://github.com/energywebfoundation/iam-roles/#readme",
-   "repository": {
-     "type": "git",
-     "url": "git+https://github.com/energywebfoundation/iam-roles.git"
-   },
-   "bugs": {
-     "url": "https://github.com/energywebfoundation/iam-roles/issues"
-   },
-   "author": {
-     "name": "EnergyWeb",
-     "url": "https://www.energyweb.org/"
-   },
-   "license": "GPL-3.0-or-later",
-   "dependencies": {
-    "ethers": "5.5.3"
+  },
+  "keywords": [
+    "Energy",
+    "EnergyWeb",
+    "EW",
+    "DID",
+    "Registry",
+    "DID Registry"
+  ],
+  "homepage": "https://github.com/energywebfoundation/iam-roles/#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/energywebfoundation/iam-roles.git"
+  },
+  "bugs": {
+    "url": "https://github.com/energywebfoundation/iam-roles/issues"
+  },
+  "author": {
+    "name": "EnergyWeb",
+    "url": "https://www.energyweb.org/"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "ethers": "^5.5.4"
   },
   "devDependencies": {
     "@ensdomains/buffer": "0.0.13",
@@ -81,4 +81,4 @@
     "typechain": "5.2.0",
     "typescript": "^4.2.3"
   }
- }
+}

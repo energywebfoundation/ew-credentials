@@ -11,22 +11,22 @@
   "types": "dist/src/index.d.ts",
   "files": [
     "dist"
-  ],  
- "scripts": {
- },
- "keywords": [
-   "Energy",
-   "EnergyWeb",
-   "EW",
-   "DID",
-   "Roles",
-   "Credential"
- ],
- "author": {
-   "name": "EnergyWeb",
-   "url": "https://www.energyweb.org/"
- },
- "license": "GPL-3.0-or-later",
- "devDependencies": {
- }
+  ],
+  "scripts": {},
+  "keywords": [
+    "Energy",
+    "EnergyWeb",
+    "EW",
+    "DID",
+    "Roles",
+    "Credential"
+  ],
+  "author": {
+    "name": "EnergyWeb",
+    "url": "https://www.energyweb.org/"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "ethers": "^5.5.4"
+  }
 }
