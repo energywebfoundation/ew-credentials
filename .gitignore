@@ -27,3 +27,6 @@ dist
 ethers
 build
 bin/contracts
+
+# MacOs file
+*.DS_store
