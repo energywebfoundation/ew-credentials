@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
-  "description": "Smart contract and client code specific to EnergyWeb IAM roles",
+  "description": "Smart contract and client code specific to EnergyWeb credential governance (including roles)",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/src/index.d.ts",

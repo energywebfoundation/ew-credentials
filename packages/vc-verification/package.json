@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
-  "description": "This package provides code to verify verifiable credential",
+  "description": "This package provides code to verify verifiable credential, including governance verification",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/src/index.d.ts",

@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
-  "description": "This package provides code to support role/claim lifecycle",
+  "description": "This package provides code to enable on-chain credential/roles",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/src/index.d.ts",
