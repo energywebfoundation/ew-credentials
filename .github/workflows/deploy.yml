@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
       - uses: actions/setup-node@v2-beta
         with:
           node-version: '16.10.0'
@@ -55,7 +55,7 @@ jobs:
         run: npm run build
 
       - name: Npm run test
-        run: npm run test-rpc
+        run: npm run test
 
       - name: Output Run number
         run: echo ${{ github.run_number }}
@@ -63,7 +63,7 @@ jobs:
       - name: Deploy on develop branch
         if: github.ref == 'refs/heads/develop'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
         run: |
@@ -72,7 +72,7 @@ jobs:
       - name: Deploy on master branch
         if: github.ref == 'refs/heads/master'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           git config user.name "GITHUB_ACTION"
@@ -91,7 +91,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: develop
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Commit to develop branch and merge to master branch
         run: |
