@@ -10,6 +10,9 @@ import {
   IRoleDefinitionV2,
   IRoleDefinitionText,
   PreconditionType,
+  IFieldDefinition,
+  IIssuerDefinition,
+  IRevokerDefinition,
 } from './types/domain-definitions';
 import { ResolverContractType } from './types/resolver-contract-type';
 import { EncodedCall } from './types/transaction';
@@ -28,6 +31,9 @@ export {
   IRoleDefinitionV2,
   IRoleDefinitionText,
   PreconditionType,
+  IFieldDefinition,
+  IIssuerDefinition,
+  IRevokerDefinition,
 };
 export { EncodedCall };
 export * from './chain-constants';
