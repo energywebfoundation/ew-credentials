@@ -34,15 +34,6 @@ jobs:
           node-version: '16.10.0'
           registry-url: https://registry.npmjs.org/
 
-      - name: Configure Git
-        run: |
-          git config --global user.email ${{ secrets.GH_EMAIL }}
-          git config --global user.name ${{ secrets.GH_USER }}
-          git remote set-url origin "https://${{ secrets.GH_TOKEN }}@github.com/energywebfoundation/iam-roles.git" > /dev/null 2>&1
-          git reset --hard
-          git fetch -u origin master:master
-          git fetch -u origin develop:develop
-
       - name: Set npm credentials
         run: npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
 
@@ -95,8 +86,6 @@ jobs:
 
       - name: Commit to develop branch and merge to master branch
         run: |
-          git config --global user.email ${{ secrets.GH_EMAIL }}
-          git config --global user.name ${{ secrets.GH_USER }}
           git merge origin/master
           git push origin develop
 
