@@ -30,20 +30,16 @@ Installation is done using the following commands:
 $ npm install
 ```
 
-## Build
-``` sh
-$ npm run build
-```
-
 ## Setup
 ``` sh
 $ npm run setup
 ```
 
-## Run
+## Build
 ``` sh
-$ npm run start
+$ npm run build
 ```
+
 ## Testing
 ``` sh
 $ npm run test

@@ -178,7 +178,8 @@ function testSuite() {
           roleDefinition: {
             roleName: authorityRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: {
               issuerType: 'DID',
               did: [`did:ethr:${await authority.getAddress()}`],
@@ -202,7 +203,8 @@ function testSuite() {
           roleDefinition: {
             roleName: deviceRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: {
               issuerType: 'DID',
               did: [`did:ethr:${await authority.getAddress()}`],
@@ -223,7 +225,8 @@ function testSuite() {
           roleDefinition: {
             roleName: installerRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: { issuerType: 'ROLE', roleName: authorityRole },
             revoker: { revokerType: 'ROLE', roleName: authorityRole },
             metadata: [],
@@ -241,7 +244,8 @@ function testSuite() {
           roleDefinition: {
             roleName: adminRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: { issuerType: 'ROLE', roleName: authorityRole },
             revoker: { revokerType: 'DID', did: [] },
             metadata: [],
