@@ -205,7 +205,8 @@ function testSuite() {
           roleDefinition: {
             roleName: authorityRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: {
               issuerType: 'DID',
               did: [`did:ethr:volta:${await authority.getAddress()}`],
@@ -229,7 +230,8 @@ function testSuite() {
           roleDefinition: {
             roleName: deviceRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: { issuerType: 'ROLE', roleName: installerRole },
             revoker: { revokerType: 'ROLE', roleName: installerRole },
             metadata: [],
@@ -249,7 +251,8 @@ function testSuite() {
             enrolmentPreconditions: [
               { type: PreconditionType.Role, conditions: [deviceRole] },
             ],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: { issuerType: 'ROLE', roleName: installerRole },
             revoker: { revokerType: 'ROLE', roleName: installerRole },
             metadata: [],
@@ -267,7 +270,8 @@ function testSuite() {
           roleDefinition: {
             roleName: installerRole,
             enrolmentPreconditions: [],
-            fields: [],
+            requestorFields: [],
+            issuerFields: [],
             issuer: { issuerType: 'ROLE', roleName: authorityRole },
             revoker: { revokerType: 'ROLE', roleName: authorityRole },
             metadata: [],
