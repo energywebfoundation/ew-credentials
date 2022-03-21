@@ -1,4 +1,5 @@
-import { EventFilter, utils, providers } from 'ethers';
+import { EventFilter, utils } from 'ethers';
+import { Provider } from '@ethersproject/abstract-provider';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { ENSRegistry__factory } from '../ethers/factories/ENSRegistry__factory';
 import { abi as ensRegistryContract } from '../build/contracts/ENS.json';
@@ -15,7 +16,7 @@ import { Result } from '@ethersproject/abi';
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
   protected readonly _ensRegistry: ENSRegistry;
-  protected readonly _provider: providers.Provider;
+  protected readonly _provider: Provider;
   protected readonly _domainNotifier: DomainNotifier;
   protected readonly _publicResolver?: PublicResolver;
 
@@ -28,7 +29,7 @@ export class DomainHierarchy {
   }: {
     domainReader: DomainReader;
     ensRegistryAddress: string;
-    provider: providers.Provider;
+    provider: Provider;
     domainNotifierAddress: string;
     publicResolverAddress?: string;
   }) {
@@ -223,7 +224,7 @@ export class DomainHierarchy {
     event,
     contractInterface,
   }: {
-    provider: providers.Provider;
+    provider: Provider;
     parser: (log: Result) => Promise<string>;
     event: EventFilter;
     contractInterface: utils.Interface;

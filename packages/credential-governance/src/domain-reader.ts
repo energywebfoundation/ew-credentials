@@ -1,4 +1,5 @@
-import { providers, utils } from 'ethers';
+import { utils } from 'ethers';
+import { Provider } from '@ethersproject/abstract-provider';
 import {
   IAppDefinition,
   IIssuerDefinition,
@@ -52,7 +53,7 @@ export class DomainReader {
   ): domainDefinition is IRoleDefinition =>
     (domainDefinition as IRoleDefinition).roleName !== undefined;
 
-  private readonly _provider: providers.Provider;
+  private readonly _provider: Provider;
   private readonly _ensRegistry: ENSRegistry;
   private readonly _knownEnsResolvers: Record<
     number,
@@ -81,7 +82,7 @@ export class DomainReader {
     provider,
   }: {
     ensRegistryAddress: string;
-    provider: providers.Provider;
+    provider: Provider;
   }) {
     this._provider = provider;
     this._ensRegistry = ENSRegistry__factory.connect(
