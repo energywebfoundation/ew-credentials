@@ -54,7 +54,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "ethers": "^5.5.4"
+    "ethers": "^5.6.1"
   },
   "devDependencies": {
     "@ensdomains/buffer": "0.0.13",
