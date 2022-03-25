@@ -12,7 +12,13 @@
   "files": [
     "dist"
   ],
-  "scripts": {},
+  "scripts": {
+    "build": "npm run compile:ts && npm run build:typechain && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
+    "build:typechain": "typechain --target ethers-v5 --out-dir ethers './build/contracts/EthereumDIDRegistry.json'",
+    "compile": "npm run compile:contracts && npm run build",
+    "compile:contracts": "truffle compile",
+    "compile:ts": "bili"
+  },
   "keywords": [
     "Energy",
     "EnergyWeb",
@@ -27,6 +33,16 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "ethers": "^5.5.4"
+    "@energyweb/onchain-claims": "1.0.0",
+    "@energyweb/credential-governance": "1.0.0",
+    "@ew-did-registry/did-ethr-resolver": "^0.6.3-alpha.426.0",
+    "eth-ens-namehash": "^2.0.8",
+    "ethers": "^5.5.4",
+    "ipfs": "^0.58.3",
+    "ipfsd-ctl": "3.0.0",
+    "js-sha3": "^0.8.0"
+  },
+  "devDependencies": {
+    "jsonwebtoken": "^8.5.1"
   }
 }

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { utils } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { EthereumDIDRegistry, EthereumDIDRegistry__factory } from '../ethers';
-import { Resolver, EwSigner } from '@ew-did-registry/did-ethr-resolver';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
@@ -48,7 +48,7 @@ export class IssuanceVerification {
   }
 
   /**
-   * Verifies chain of trust for a given holder's credential 
+   * Verifies chain of trust for a given holder's credential
    * @param {string} subjectDID
    * @param {string} role
    */
@@ -58,7 +58,7 @@ export class IssuanceVerification {
       const subjectDIDDoc = await this._resolver.read(subjectDID);
       const service = subjectDIDDoc.service;
       let serviceEndpoint = '';
-      for (let sv of service) {
+      for (const sv of service) {
         if (utils.namehash(sv.type) === role) {
           serviceEndpoint = sv.serviceEndpoint;
           hasParent = false;
@@ -98,9 +98,9 @@ export class IssuanceVerification {
    * Verifies issuer's authority to issue credential
    * @param {string} role
    * @param {string} issuerDID
-   * @returns {boolean}
+   * @returns boolean
    */
-  async verifyIssuer(role: string, issuerDID: string): Promise<Boolean> {
+  async verifyIssuer(role: string, issuerDID: string): Promise<boolean> {
     const { dids, role: string } = await this._roleDefResolver.issuers(
       utils.namehash(role)
     );
@@ -124,7 +124,7 @@ export class IssuanceVerification {
     const service = issuerDIDDocument.service;
     const hasRole = false;
     let serviceEndpoint = '';
-    for (let sv of service) {
+    for (const sv of service) {
       if (utils.namehash(sv.type) === role) {
         serviceEndpoint = sv.serviceEndpoint;
         break;
