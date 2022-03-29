@@ -1,17 +1,17 @@
+// @ts-ignore
 import jwt from 'jsonwebtoken';
 import { utils } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { EthereumDIDRegistry, EthereumDIDRegistry__factory } from '../ethers';
-import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { EwSigner, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 
 export class IssuanceVerification {
-  private _signer: JsonRpcSigner;
+  private _signer: EwSigner;
   private _ipfsStore: IDidStore;
   private _ipfsUrl: string;
   private _resolver: Resolver;
@@ -27,7 +27,7 @@ export class IssuanceVerification {
    * @param claimManagerAddr
    */
   constructor(
-    signer: JsonRpcSigner,
+    signer: EwSigner,
     roleDefResolverAddr: string,
     registrySetting: RegistrySettings,
     ipfsUrl: string
