@@ -1,9 +1,9 @@
 // @ts-ignore
 import jwt from 'jsonwebtoken';
-import { utils } from 'ethers';
+import { utils, providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { EthereumDIDRegistry, EthereumDIDRegistry__factory } from '../ethers';
-import { EwSigner, Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
@@ -11,7 +11,6 @@ import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governa
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 
 export class IssuanceVerification {
-  private _signer: EwSigner;
   private _ipfsStore: IDidStore;
   private _ipfsUrl: string;
   private _resolver: Resolver;
@@ -27,24 +26,23 @@ export class IssuanceVerification {
    * @param claimManagerAddr
    */
   constructor(
-    signer: EwSigner,
+    provider: providers.Provider,
     roleDefResolverAddr: string,
     registrySetting: RegistrySettings,
     ipfsUrl: string
   ) {
-    this._signer = signer;
     this._ipfsUrl = ipfsUrl;
     this._ipfsStore = new DidStore(this._ipfsUrl);
     this._registrySetting = registrySetting;
     this._roleDefResolver = RoleDefinitionResolverV2__factory.connect(
       roleDefResolverAddr,
-      signer
+      provider
     );
     this._didRegistry = EthereumDIDRegistry__factory.connect(
       registrySetting.address,
-      signer
+      provider
     );
-    this._resolver = new Resolver(this._signer.provider, this._registrySetting);
+    this._resolver = new Resolver(provider, this._registrySetting);
   }
 
   /**
