@@ -1,5 +1,6 @@
-import jwt from 'jsonwebtoken';
-import { utils } from 'ethers';
+// @ts-ignore
+import * as jwt from 'jsonwebtoken';
+import { utils, providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { EthereumDIDRegistry, EthereumDIDRegistry__factory } from '../ethers';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
@@ -8,10 +9,9 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 
 export class IssuanceVerification {
-  private _signer: JsonRpcSigner;
+  private _provider: providers.Provider;
   private _ipfsStore: IDidStore;
   private _ipfsUrl: string;
   private _resolver: Resolver;
@@ -23,28 +23,35 @@ export class IssuanceVerification {
 
   /**
    *
-   * @param signer
-   * @param claimManagerAddr
+   * @param provider
+   * @param roleDefResolverAddr
+   * @param registrySetting
+   * @param ipfsUrl
    */
-  constructor(
-    signer: JsonRpcSigner,
+  constructor({
+    provider,
+    roleDefResolverAddr,
+    registrySetting,
+    ipfsUrl
+  }: {
+    provider: providers.Provider,
     roleDefResolverAddr: string,
     registrySetting: RegistrySettings,
     ipfsUrl: string
-  ) {
-    this._signer = signer;
+  }) {
+    this._provider = provider;
     this._ipfsUrl = ipfsUrl;
     this._ipfsStore = new DidStore(this._ipfsUrl);
     this._registrySetting = registrySetting;
     this._roleDefResolver = RoleDefinitionResolverV2__factory.connect(
       roleDefResolverAddr,
-      signer
+      this._provider
     );
     this._didRegistry = EthereumDIDRegistry__factory.connect(
       registrySetting.address,
-      signer
+      this._provider
     );
-    this._resolver = new Resolver(this._signer.provider, this._registrySetting);
+    this._resolver = new Resolver(this._provider, this._registrySetting);
   }
 
   /**
