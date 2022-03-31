@@ -5,19 +5,18 @@ import { ProofVerifier } from '@ew-did-registry/claims';
 import { EthereumDIDRegistry, EthereumDIDRegistry__factory } from '../ethers';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
-import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
+import { StorageSettings } from './models';
+import { CredentialResolver } from '.';
 
 export class IssuanceVerification {
   private _provider: providers.Provider;
-  private _ipfsStore: IDidStore;
-  private _ipfsUrl: string;
   private _resolver: Resolver;
   private _registrySetting: RegistrySettings;
   private _didRegistry: EthereumDIDRegistry;
   private _roleDefResolver: RoleDefinitionResolverV2;
+  private _credentialResolver: CredentialResolver;
   private ASSERTION_DELEGATE_TYPE =
     '0x766572694b657900000000000000000000000000000000000000000000000000';
 
@@ -26,22 +25,20 @@ export class IssuanceVerification {
    * @param provider
    * @param roleDefResolverAddr
    * @param registrySetting
-   * @param ipfsUrl
+   * @param storageSettings
    */
   constructor({
     provider,
     roleDefResolverAddr,
     registrySetting,
-    ipfsUrl
+    storageSettings,
   }: {
-    provider: providers.Provider,
-    roleDefResolverAddr: string,
-    registrySetting: RegistrySettings,
-    ipfsUrl: string
+    provider: providers.Provider;
+    roleDefResolverAddr: string;
+    registrySetting: RegistrySettings;
+    storageSettings: StorageSettings;
   }) {
     this._provider = provider;
-    this._ipfsUrl = ipfsUrl;
-    this._ipfsStore = new DidStore(this._ipfsUrl);
     this._registrySetting = registrySetting;
     this._roleDefResolver = RoleDefinitionResolverV2__factory.connect(
       roleDefResolverAddr,
@@ -52,6 +49,7 @@ export class IssuanceVerification {
       this._provider
     );
     this._resolver = new Resolver(this._provider, this._registrySetting);
+    this._credentialResolver = new CredentialResolver(storageSettings);
   }
 
   /**
@@ -90,7 +88,9 @@ export class IssuanceVerification {
    * @param {string} serviceEndpoint
    */
   async verifyCredential(serviceEndpoint: string) {
-    const token = await this._ipfsStore.get(serviceEndpoint);
+    const token = await this._credentialResolver.getIssuerCredential(
+      serviceEndpoint
+    );
     const payload = jwt.decode(token) as { iss: string };
     const issuerDIDDoc = await this._resolver.read(payload.iss);
     const verifier = new ProofVerifier(issuerDIDDoc);
@@ -137,7 +137,9 @@ export class IssuanceVerification {
         break;
       }
     }
-    const token = await this._ipfsStore.get(serviceEndpoint);
+    const token = await this._credentialResolver.getIssuerCredential(
+      serviceEndpoint
+    );
     const payload = jwt.decode(token) as { iss: string };
     const issuerDIDDoc = await this._resolver.read(payload.iss);
     const verifier = new ProofVerifier(issuerDIDDoc);
