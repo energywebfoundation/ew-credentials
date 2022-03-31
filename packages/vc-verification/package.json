@@ -13,11 +13,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run compile:ts && npm run build:typechain && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
+    "build": "npm run compile:ts && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
     "build:typechain": "typechain --target ethers-v5 --out-dir ethers './build/contracts/EthereumDIDRegistry.json'",
-    "compile": "npm run compile:contracts && npm run build",
+    "compile": "npm run compile:contracts && npm run build:typechain && npm run build",
     "compile:contracts": "truffle compile",
-    "compile:ts": "bili"
+    "compile:ts": "bili",
+    "test": "../../node_modules/.bin/mocha --timeout 1000 -r ts-node/register test/**/*-tests.ts",
+    "test-ganache": "mocha -r ts-node/register test/**/*-tests.ts",
+    "test-rpc": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"npm run test-ganache\" "
   },
   "keywords": [
     "Energy",
@@ -35,14 +38,29 @@
   "dependencies": {
     "@energyweb/onchain-claims": "1.0.0",
     "@energyweb/credential-governance": "1.0.0",
-    "@ew-did-registry/did-ethr-resolver": "^0.6.3-alpha.426.0",
-    "eth-ens-namehash": "^2.0.8",
-    "ethers": "^5.5.4",
-    "ipfs": "^0.58.3",
-    "ipfsd-ctl": "3.0.0",
-    "js-sha3": "^0.8.0"
+    "ethers": "^5.6.1"
   },
   "devDependencies": {
-    "jsonwebtoken": "^8.5.1"
+    "@ew-did-registry/claims": "0.6.3-alpha.502.0",
+    "@ew-did-registry/did-registry": "0.6.3-alpha.502.0",
+    "@ew-did-registry/did-ethr-resolver": "0.6.3-alpha.502.0",
+    "@ew-did-registry/did-ipfs-store": "0.6.3-alpha.502.0",
+    "@ew-did-registry/did-store-interface": "0.6.3-alpha.502.0",
+    "@typechain/ethers-v5": "^9.0.0",
+    "chai": "4.3.4",
+    "chai-arrays": "2.2.0",
+    "chai-as-promised": "7.1.1",
+    "eth-ens-namehash": "^2.0.8",
+    "ganache-cli": "^6.12.2",
+    "ipfs": "^0.58.3",
+    "ipfsd-ctl": "3.0.0",
+    "js-sha3": "^0.8.0",
+    "jsonwebtoken": "^8.5.1",
+    "mocha": "7.2.0",
+    "run-with-testrpc": "0.3.1",
+    "truffle": "5.4.29",
+    "ts-node": "9.1.1",
+    "typechain": "7.0.0",
+    "typescript": "^4.5.5"
   }
 }
