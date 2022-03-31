@@ -78,7 +78,7 @@ export class IssuanceVerification {
           return 'Issuer is not allowed to issue role';
         }
       } else {
-        return 'the credential is invalid';
+        return 'The credential is invalid';
       }
     }
   }
@@ -114,14 +114,7 @@ export class IssuanceVerification {
     let didMatched = false;
     if (dids.length > 0) {
       for (let i = 0; i < dids.length; i++) {
-        if (
-          dids[i] == issuerDID ||
-          (await this._didRegistry.validDelegate(
-            dids[i],
-            this.ASSERTION_DELEGATE_TYPE,
-            issuerDID
-          ))
-        ) {
+        if (dids[i] == issuerDID) {
           didMatched = true;
           break;
         }
