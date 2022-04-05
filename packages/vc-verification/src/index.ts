@@ -1,2 +1,2 @@
 export * from './issuer-verification';
-export * from './issuer-credential-resolver';
+export * from './credential-resolver';

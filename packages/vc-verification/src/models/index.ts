@@ -1,1 +1,2 @@
-export * from './credential-storage';
+export * from './credential-resolver-settings';
+export * from './verifiable-credentials';
