@@ -35,3 +35,10 @@ export interface Proof {
 export interface VerificationResult {
   status: boolean;
 }
+
+export interface OffChainClaim {
+  claimType: string;
+  claimTypeVersion: number;
+  issuedToken: string;
+  iss: string;
+}

@@ -7,7 +7,11 @@ import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { CredentialResolver } from '.';
-import { IVerifiableCredential, VerificationResult } from './models';
+import {
+  IVerifiableCredential,
+  VerificationResult,
+  OffChainClaim,
+} from './models';
 
 export class IssuerVerification {
   private _provider: providers.Provider;
@@ -80,27 +84,36 @@ export class IssuerVerification {
     while (hasParent) {
       let subjectDID = credential.credentialSubject.id;
       let role = await this.parseRoleFromCredential(credential);
-      let serviceEndpoint = await this.getCredentialUrl(subjectDID, role);
-      const issuerDID = await this.verifyCredential(serviceEndpoint);
-      if (issuerDID) {
-        if (await this.verifyIssuerAuthority(role, issuerDID)) {
-          subjectDID = issuerDID;
-          if (await this.isRoleIssuerDID(role)) {
-            hasParent = false;
+      let offChainClaim = await this._credentialResolver.getCredential(
+        subjectDID,
+        role
+      );
+      if (typeof offChainClaim === 'string') {
+        return 'No credential found';
+      } else {
+        const issuerDID = await this.verifyIssuedToken(
+          offChainClaim.issuedToken
+        );
+        if (issuerDID) {
+          if (await this.verifyIssuerAuthority(role, issuerDID)) {
+            subjectDID = issuerDID;
+            if (await this.isRoleIssuerDID(role)) {
+              hasParent = false;
+            }
+          } else {
+            return 'Issuer is not allowed to issue role';
           }
         } else {
-          return 'Issuer is not allowed to issue role';
+          return 'The credential is invalid';
         }
-      } else {
-        return 'The credential is invalid';
       }
     }
   }
 
   /**
    * Verifies credential and chain of trust with callback function
-   * @param credential
-   * @param verifyCredentialProofCallback
+   *
+   * TO BE COMPLETED
    */
   async verifyChainOfTrustCallback(
     credential: IVerifiableCredential,
@@ -122,23 +135,15 @@ export class IssuerVerification {
           }
         }
       } else {
-        const issuerCredentialUrl = await this.getCredentialUrl(
+        const issuerCredential = await this._credentialResolver.getCredential(
           credential.issuer,
           role
         );
-        if (issuerCredentialUrl) {
-          const issuerCredential = await this._credentialResolver.getCredential(
-            issuerCredentialUrl
-          );
-          const decodedCredendial = (await jwt.decode(
-            issuerCredential
-          )) as IVerifiableCredential;
-          const result = await verifyCredentialProofCallback(decodedCredendial);
-          if (result) {
-            credential = decodedCredendial;
-          } else {
-            return 'Invalid credential';
-          }
+        const result = await verifyCredentialProofCallback(issuerCredential);
+        if (result) {
+          credential = issuerCredential;
+        } else {
+          return 'Invalid credential';
         }
       }
     }
@@ -177,41 +182,15 @@ export class IssuerVerification {
   }
 
   /**
-   *
-   * @param did fetches serviceEndpoint from the subject's DIDDoc
-   * @param role
-   * @returns
-   */
-  async getCredentialUrl(did: string, role: string) {
-    const subjectDIDDoc = await this._resolver.read(did);
-    const service = subjectDIDDoc.service;
-    let serviceEndpoint = '';
-    for (const sv of service) {
-      let token = await this._credentialResolver.getCredential(
-        sv.serviceEndpoint
-      );
-      let { claimType } = (await jwt.decode(token)) as {
-        claimType: string;
-      };
-      if (claimType === role) {
-        serviceEndpoint = sv.serviceEndpoint;
-        return serviceEndpoint;
-      }
-    }
-    return 'No Credential Found';
-  }
-
-  /**
    * Verify credential signature
    * @param {string} serviceEndpoint
    */
-  async verifyCredential(serviceEndpoint: string) {
-    const token = await this._credentialResolver.getCredential(serviceEndpoint);
-    const { iss } = jwt.decode(token) as { iss: string };
-    const issuerDIDDoc = await this._resolver.read(iss);
+  async verifyIssuedToken(token: string) {
+    const offChainClaim = jwt.decode(token) as OffChainClaim;
+    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
     const verifier = new ProofVerifier(issuerDIDDoc);
     if (await verifier.verifyAssertionProof(token)) {
-      return iss;
+      return offChainClaim.iss;
     } else {
       return 'Invalid Credential';
     }
@@ -224,28 +203,32 @@ export class IssuerVerification {
    * @returns boolean
    */
   async verifyIssuerAuthority(
-    role: string,
+    namespace: string,
     issuerDID: string
   ): Promise<boolean> {
-    const { dids, role: string } = await this.resolveIsuers(role);
-    let didMatched = false;
-    if (dids.length > 0) {
-      for (let i = 0; i < dids.length; i++) {
-        if (dids[i] == issuerDID) {
-          didMatched = true;
-          break;
+    const issuers = await this.resolveIsuers(namespace);
+    if (issuers.dids.length > 0) {
+      for (let i = 0; i < issuers.dids.length; i++) {
+        if (issuers.dids[i] == issuerDID) {
+          return true;
         }
       }
     }
-    const serviceEndpoint = await this.getCredentialUrl(issuerDID, role);
-    const token = await this._credentialResolver.getCredential(serviceEndpoint);
-    const payload = jwt.decode(token) as { iss: string };
-    const issuerDIDDoc = await this._resolver.read(payload.iss);
-    const verifier = new ProofVerifier(issuerDIDDoc);
-    if ((await verifier.verifyAssertionProof(token)) || didMatched) {
-      return true;
-    } else {
+    const offChainClaim = await this._credentialResolver.getCredential(
+      issuerDID,
+      issuers.role
+    );
+    if (typeof offChainClaim === 'string') {
       return false;
+    } else {
+      const isClaimVerified = await this.verifyIssuedToken(
+        offChainClaim.issuedToken
+      );
+      if (typeof isClaimVerified == 'string') {
+        return false;
+      } else {
+        return true;
+      }
     }
   }
 }
