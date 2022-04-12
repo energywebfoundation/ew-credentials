@@ -10,5 +10,8 @@ export interface CredentialResolver {
    * @param namespace
    * @returns Offchain claim of the holder for the given namespace
    */
-  getCredential(did: string, namespace: string): Promise<OffChainClaim | undefined>
+  getCredential(
+    did: string,
+    namespace: string
+  ): Promise<OffChainClaim | undefined>;
 }

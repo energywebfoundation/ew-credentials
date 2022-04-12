@@ -78,5 +78,4 @@ export class IpfsCredentialResolver implements CredentialResolver {
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
   }
-
 }
