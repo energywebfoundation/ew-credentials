@@ -1,26 +1,17 @@
-import { CachedDidDocCredentialResolver, IpfsCredentialResolver } from '.';
+import { OffChainClaim } from './models';
 
 /**
- * This class handles the different approaches for credential resolution
+ * An interface for a credential resolver
  */
-export class CredentialResolver {
-  private _credentialResolver:
-    | CachedDidDocCredentialResolver
-    | IpfsCredentialResolver;
-
-  constructor(
-    credentialResolver: CachedDidDocCredentialResolver | IpfsCredentialResolver
-  ) {
-    this._credentialResolver = credentialResolver;
-  }
-
+export interface CredentialResolver {
   /**
    *
    * @param did
    * @param namespace
    * @returns Offchain claim of the holder for the given namespace
    */
-  async getCredential(did: string, namespace: string) {
-    return this._credentialResolver.getCredential(did, namespace);
-  }
+  getCredential(
+    did: string,
+    namespace: string
+  ): Promise<OffChainClaim | undefined>;
 }

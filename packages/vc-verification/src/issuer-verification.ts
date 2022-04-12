@@ -3,18 +3,19 @@ import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { CredentialResolver, RoleDefinitionResolver } from '.';
+import { CredentialResolver, IssuerDefinitionResolver } from '.';
 import {
   IVerifiableCredential,
   VerificationResult,
   OffChainClaim,
 } from './models';
+import { upgradeChainId } from './upgrade-chainid';
 
 export class IssuerVerification {
   private _provider: providers.Provider;
   private _resolver: Resolver;
   private _registrySetting: RegistrySettings;
-  private _roleDefResolver: RoleDefinitionResolver;
+  private _issuerDefResolver: IssuerDefinitionResolver;
   private _credentialResolver: CredentialResolver;
 
   /**
@@ -28,11 +29,11 @@ export class IssuerVerification {
     provider: providers.Provider,
     registrySetting: RegistrySettings,
     credentialResolver: CredentialResolver,
-    roleDefResolver: RoleDefinitionResolver
+    issuerDefResolver: IssuerDefinitionResolver
   ) {
     this._provider = provider;
     this._registrySetting = registrySetting;
-    this._roleDefResolver = roleDefResolver;
+    this._issuerDefResolver = issuerDefResolver;
     this._resolver = new Resolver(this._provider, this._registrySetting);
     this._credentialResolver = credentialResolver;
   }
@@ -91,7 +92,7 @@ export class IssuerVerification {
             if (await this.isRoleIssuerDID(role)) {
               hasParent = false;
             } else {
-              const issuers = await this._roleDefResolver.getRoleIssuers(role);
+              const issuers = await this._issuerDefResolver.getRoleIssuerDefinition(role);
               if (issuers.roleName) {
                 role = issuers.roleName;
               }
@@ -121,7 +122,7 @@ export class IssuerVerification {
     let didMatched = false;
     while (hasParent) {
       const role = await this.parseRoleFromCredential(credential);
-      const issuers = await this._roleDefResolver.getRoleIssuers(role);
+      const issuers = await this._issuerDefResolver.getRoleIssuerDefinition(role);
       if (issuers.did && issuers.did.length > 0) {
         for (let i = 0; i < issuers.did.length; i++) {
           if (issuers.did[i] == credential.issuer) {
@@ -162,7 +163,7 @@ export class IssuerVerification {
    * @returns
    */
   private async isRoleIssuerDID(role: string) {
-    const issuers = await this._roleDefResolver.getRoleIssuers(role);
+    const issuers = await this._issuerDefResolver.getRoleIssuerDefinition(role);
     if (issuers.did && issuers.did.length > 0) {
       return true;
     } else {
@@ -195,7 +196,7 @@ export class IssuerVerification {
     namespace: string,
     issuerDID: string
   ): Promise<boolean> {
-    const issuers = await this._roleDefResolver.getRoleIssuers(namespace);
+    const issuers = await this._issuerDefResolver.getRoleIssuerDefinition(namespace);
     if (issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
         if (issuers.did[i] == issuerDID) {
@@ -209,6 +210,7 @@ export class IssuerVerification {
         issuerDID,
         issuers.roleName
       );
+      offChainClaim = offChainClaim ? upgradeChainId(offChainClaim) : undefined;
     }
     if (!offChainClaim) {
       return false;
