@@ -1,12 +1,9 @@
-// @ts-ignore
 import * as jwt from 'jsonwebtoken';
-import { utils, providers } from 'ethers';
+import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
-import { CredentialResolver } from '.';
+import { CredentialResolver, RoleDefinitionResolver } from '.';
 import {
   IVerifiableCredential,
   VerificationResult,
@@ -17,7 +14,7 @@ export class IssuerVerification {
   private _provider: providers.Provider;
   private _resolver: Resolver;
   private _registrySetting: RegistrySettings;
-  private _roleDefResolver: RoleDefinitionResolverV2;
+  private _roleDefResolver: RoleDefinitionResolver;
   private _credentialResolver: CredentialResolver;
 
   /**
@@ -27,23 +24,15 @@ export class IssuerVerification {
    * @param registrySetting
    * @param credentialResolver
    */
-  constructor({
-    provider,
-    roleDefResolverAddr,
-    registrySetting,
-    credentialResolver,
-  }: {
-    provider: providers.Provider;
-    roleDefResolverAddr: string;
-    registrySetting: RegistrySettings;
-    credentialResolver: CredentialResolver;
-  }) {
+  constructor(
+    provider: providers.Provider,
+    registrySetting: RegistrySettings,
+    credentialResolver: CredentialResolver,
+    roleDefResolver: RoleDefinitionResolver
+  ) {
     this._provider = provider;
     this._registrySetting = registrySetting;
-    this._roleDefResolver = RoleDefinitionResolverV2__factory.connect(
-      roleDefResolverAddr,
-      this._provider
-    );
+    this._roleDefResolver = roleDefResolver;
     this._resolver = new Resolver(this._provider, this._registrySetting);
     this._credentialResolver = credentialResolver;
   }
@@ -81,9 +70,9 @@ export class IssuerVerification {
    */
   async verifyCredentialChainOfTrust(credential: IVerifiableCredential) {
     let hasParent = true;
+    let subjectDID = credential.credentialSubject.id;
+    let role = await this.parseRoleFromCredential(credential);
     while (hasParent) {
-      let subjectDID = credential.credentialSubject.id;
-      let role = await this.parseRoleFromCredential(credential);
       let offChainClaim = await this._credentialResolver.getCredential(
         subjectDID,
         role
@@ -91,14 +80,21 @@ export class IssuerVerification {
       if (typeof offChainClaim === 'string') {
         return 'No credential found';
       } else {
-        const issuerDID = await this.verifyIssuedToken(
-          offChainClaim.issuedToken
-        );
+        let issuerDID;
+        if (offChainClaim?.issuedToken) {
+          issuerDID = await this.verifyIssuedToken(offChainClaim.issuedToken);
+        }
         if (issuerDID) {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
             subjectDID = issuerDID;
+
             if (await this.isRoleIssuerDID(role)) {
               hasParent = false;
+            } else {
+              const issuers = await this._roleDefResolver.getRoleIssuers(role);
+              if (issuers.roleName) {
+                role = issuers.roleName;
+              }
             }
           } else {
             return 'Issuer is not allowed to issue role';
@@ -125,10 +121,10 @@ export class IssuerVerification {
     let didMatched = false;
     while (hasParent) {
       const role = await this.parseRoleFromCredential(credential);
-      const issuers = await this.resolveIsuers(role);
-      if (issuers.dids.length > 0) {
-        for (let i = 0; i < issuers.dids.length; i++) {
-          if (issuers.dids[i] == credential.issuer) {
+      const issuers = await this._roleDefResolver.getRoleIssuers(role);
+      if (issuers.did && issuers.did.length > 0) {
+        for (let i = 0; i < issuers.did.length; i++) {
+          if (issuers.did[i] == credential.issuer) {
             didMatched = true;
             hasParent = false;
             break;
@@ -139,8 +135,10 @@ export class IssuerVerification {
           credential.issuer,
           role
         );
+        // @ts-ignore
         const result = await verifyCredentialProofCallback(issuerCredential);
         if (result) {
+          // @ts-ignore
           credential = issuerCredential;
         } else {
           return 'Invalid credential';
@@ -164,21 +162,12 @@ export class IssuerVerification {
    * @returns
    */
   private async isRoleIssuerDID(role: string) {
-    const issuers = await this._roleDefResolver.issuers(utils.namehash(role));
-    if (issuers.dids.length > 0) {
+    const issuers = await this._roleDefResolver.getRoleIssuers(role);
+    if (issuers.did && issuers.did.length > 0) {
       return true;
     } else {
       return false;
     }
-  }
-
-  /**
-   * Fetches list of issuers for the given role
-   * @param role
-   * @returns
-   */
-  async resolveIsuers(role: string) {
-    return this._roleDefResolver.issuers(utils.namehash(role));
   }
 
   /**
@@ -206,19 +195,22 @@ export class IssuerVerification {
     namespace: string,
     issuerDID: string
   ): Promise<boolean> {
-    const issuers = await this.resolveIsuers(namespace);
-    if (issuers.dids.length > 0) {
-      for (let i = 0; i < issuers.dids.length; i++) {
-        if (issuers.dids[i] == issuerDID) {
+    const issuers = await this._roleDefResolver.getRoleIssuers(namespace);
+    if (issuers.did && issuers.did.length > 0) {
+      for (let i = 0; i < issuers.did.length; i++) {
+        if (issuers.did[i] == issuerDID) {
           return true;
         }
       }
     }
-    const offChainClaim = await this._credentialResolver.getCredential(
-      issuerDID,
-      issuers.role
-    );
-    if (typeof offChainClaim === 'string') {
+    let offChainClaim;
+    if (issuers.roleName) {
+      offChainClaim = await this._credentialResolver.getCredential(
+        issuerDID,
+        issuers.roleName
+      );
+    }
+    if (!offChainClaim) {
       return false;
     } else {
       const isClaimVerified = await this.verifyIssuedToken(
