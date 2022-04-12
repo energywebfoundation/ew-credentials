@@ -1,4 +1,4 @@
-import { CachedDidDocCredentialResolver, IpfsCredentialResolver } from '.';
+import { OffChainClaim } from './models';
 
 /**
  * An interface for a credential resolver
@@ -10,5 +10,5 @@ export interface CredentialResolver {
    * @param namespace
    * @returns Offchain claim of the holder for the given namespace
    */
-  async getCredential(did: string, namespace: string)
+  getCredential(did: string, namespace: string): Promise<OffChainClaim | undefined>
 }

@@ -25,7 +25,7 @@ export class CachedRoleDefinitionResolver extends RoleResolver {
    */
   async getRoleIssuers(namespace: string): Promise<IIssuerDefinition> {
     let issuers: IIssuerDefinition = {};
-    for (let role of this._roleDefinitions) {
+    for (const role of this._roleDefinitions) {
       if (role.roleName == namespace) {
         issuers = role.issuer;
       }

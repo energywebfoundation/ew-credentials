@@ -9,6 +9,7 @@ import {
   VerificationResult,
   OffChainClaim,
 } from './models';
+import { upgradeChainId } from './upgrade-chainid';
 
 export class IssuerVerification {
   private _provider: providers.Provider;
@@ -209,6 +210,7 @@ export class IssuerVerification {
         issuerDID,
         issuers.roleName
       );
+      offChainClaim = offChainClaim ? upgradeChainId(offChainClaim) : undefined;
     }
     if (!offChainClaim) {
       return false;
