@@ -8,7 +8,7 @@ import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
 
-export class IpfsCredentialResolver {
+export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _ipfsUrl: string;
   private _resolver: Resolver;
