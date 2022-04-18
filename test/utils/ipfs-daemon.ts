@@ -7,13 +7,15 @@ let ipfsd: any;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function spawnIpfsDaemon(): Promise<any> {
-  const ipfsBin = path.resolve(__dirname, '../', 'node_modules/.bin', 'jsipfs');
+  const ipfsBin = path.resolve(__dirname, '../../', 'node_modules/.bin', 'jsipfs');
   ipfsd = await Ctl.createController({
     type: 'js',
     disposable: true,
     test: true,
     ipfsBin,
-    ipfsHttpModule,
+    ipfsHttpModule: require('ipfs-http-client'),
+    // remote: true,
+    // endpoint: 'http://localhost:4455',
   });
   return ipfsd.apiAddr;
 }

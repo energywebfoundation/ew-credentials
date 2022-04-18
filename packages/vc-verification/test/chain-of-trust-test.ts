@@ -1,11 +1,4 @@
-import {
-  utils,
-  ContractFactory,
-  Signer,
-  Contract,
-  Wallet,
-  providers,
-} from 'ethers';
+import { utils, ContractFactory, Contract, Signer } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import jwt from 'jsonwebtoken';
@@ -14,8 +7,6 @@ import {
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { ClaimManager__factory as ClaimManagerFactory } from '@energyweb/onchain-claims/ethers/factories/ClaimManager__factory';
-import { ClaimManager } from '@energyweb/onchain-claims/ethers/ClaimManager';
 import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/credential-governance/ethers/factories/IdentityManager__factory';
 import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
 import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
@@ -25,20 +16,32 @@ import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
 import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
-import { shutDownIpfsDaemon, spawnIpfsDaemon } from './utils/ipfs-daemon';
 import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
 import DIDRegistry from '@ew-did-registry/did-registry';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
+import {DidStore} from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
-import { IssuanceVerification } from '../src';
+import {
+  CredentialResolver,
+  IssuerVerification,
+  IssuerDefinitionResolver,
+  IpfsCredentialResolver,
+  EthersProviderIssuerDefinitionResolver,
+} from '../src';
+import {
+  IVerifiableCredential,
+  OffChainClaim,
+} from '../src/models';
 import {
   DIDAttribute,
   PubKeyType,
   ProviderTypes,
   ProviderSettings,
   RegistrySettings,
+  IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
+import { JWT } from '@ew-did-registry/jwt';
+import { spawnIpfsDaemon, shutDownIpfsDaemon } from '../../../test/utils/ipfs-daemon';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -52,14 +55,15 @@ const managerRole = 'manager';
 const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-let claimManager: ClaimManager;
 let proxyIdentityManager: IdentityManager;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
 let provider: JsonRpcProvider;
-let issuanceVerification: IssuanceVerification;
+let issuerVerification: IssuerVerification;
 let registrySettings: RegistrySettings;
+let credentialResolver: CredentialResolver;
+let issuerDefinitionResolver: IssuerDefinitionResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -71,7 +75,6 @@ let admin: EwSigner;
 let adminAddress: string;
 let verifier: EwSigner;
 let verifierAddress: string;
-let store: DidStore;
 
 let userKeys: Keys;
 let userDid: string;
@@ -91,10 +94,12 @@ let adminOperator: Operator;
 let managerOperator: Operator;
 let verifierOperator: Operator;
 let providerSettings: ProviderSettings;
+let ipfsUrl: string;
+let didStore: DidStore;
+
+const validity = 10 * 60 * 1000;
 
 export function IssuanceVerificationTest(): void {
-  // takes very long time, but can be useful sometimes
-  // describe.skip('Tests on Volta', testsOnVolta);
   describe('Tests on ganache', testsOnGanache);
 }
 
@@ -107,26 +112,35 @@ export function testsOnGanache(): void {
     providerSettings = {
       type: ProviderTypes.HTTP,
     };
-    userKeys = new Keys();
+    userKeys = new Keys({privateKey: '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1'});
     userAddress = userKeys.getAddress();
     userDid = `did:${Methods.Erc1056}:${userAddress}`;
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
-    adminKeys = new Keys();
+    adminKeys = new Keys({privateKey: '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418'});
     adminAddress = adminKeys.getAddress();
     adminDid = `did:${Methods.Erc1056}:${adminAddress}`;
     admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
 
-    managerKeys = new Keys();
+    managerKeys = new Keys({privateKey: 'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7'});
     managerAddress = managerKeys.getAddress();
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
-  });
 
-  verifierKeys = new Keys();
-  verifierAddress = verifierKeys.getAddress();
-  verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-  verifier = EwSigner.fromPrivateKey(verifierKeys.privateKey, providerSettings);
+    verifierKeys = new Keys({privateKey: '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5'});
+    verifierAddress = verifierKeys.getAddress();
+    verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
+    verifier = EwSigner.fromPrivateKey(
+      verifierKeys.privateKey,
+      providerSettings
+    );
+    ipfsUrl = await spawnIpfsDaemon();
+    console.log(ipfsUrl);
+    });
+
+    after(async () => {
+      await shutDownIpfsDaemon();
+    });
 
   testSuite();
 }
@@ -173,18 +187,25 @@ function testSuite() {
       address: registry.address,
     };
 
-    const ipfsApi = await spawnIpfsDaemon();
-    store = new DidStore(ipfsApi);
+    providerSettings = {
+      type: ProviderTypes.HTTP,
+    };
 
+    didStore = new DidStore(ipfsUrl);
+    credentialResolver = new IpfsCredentialResolver(provider, registrySettings, didStore);
     userOperator = new Operator(user, { address: registry.address });
     adminOperator = new Operator(admin, { address: registry.address });
     managerOperator = new Operator(manager, { address: registry.address });
+    
+    await userOperator.create();
+    await adminOperator.create();
+    await managerOperator.create();
 
     userReg = new DIDRegistry(
       userKeys,
       userDid,
       userOperator,
-      store,
+      didStore,
       providerSettings
     );
 
@@ -192,7 +213,7 @@ function testSuite() {
       adminKeys,
       adminDid,
       adminOperator,
-      store,
+      didStore,
       providerSettings
     );
 
@@ -200,7 +221,7 @@ function testSuite() {
       managerKeys,
       managerDid,
       managerOperator,
-      store,
+      didStore,
       providerSettings
     );
 
@@ -208,20 +229,20 @@ function testSuite() {
       verifierKeys,
       verifierDid,
       verifierOperator,
-      store,
+      didStore,
       providerSettings
     );
 
-    await userReg.document.create();
-    await adminReg.document.create();
-    await managerReg.document.create();
-    await verifierReg.document.create();
-
-    issuanceVerification = new IssuanceVerification(
-      verifier,
-      roleResolver.address,
+    //credentialResolver = ipfsResolverMock;
+    issuerDefinitionResolver = new EthersProviderIssuerDefinitionResolver(
+      provider,
+      roleResolver.address
+    );
+    issuerVerification = new IssuerVerification(
+      provider,
       registrySettings,
-      ipfsApi
+      credentialResolver,
+      issuerDefinitionResolver
     );
 
     await (
@@ -361,28 +382,72 @@ function testSuite() {
 
   describe('chainOfTrustTests', () => {
     it('verifies hierarchy of issuers', async () => {
-      const credential = {
-        id: adminDid,
-        requestor: adminDid,
-        issuer: adminDid,
-        claimType: 'adminRole',
+      const claim = {
+        claimTypeVersion: 1,
+        issuedToken: 'token',
+        iss: adminDid,
+        claimType: adminRole,
       };
 
-      const token = jwt.sign(credential, {
-        subject: credential.requestor,
-        issuer: credential.issuer,
-      });
+      let adminJWT = new JWT(adminKeys);
+      let token: string = '';
+      let ipfsCID: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        token =await adminJWT.sign(claim);
 
-      const credentialUrl = await store.save(token);
+        if (token) {
+          ipfsCID= await didStore.save(token);
+        }
+      }
+      console.log(ipfsCID.toString())
+      const serviceId = adminRole;
+      const updateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
+      const vc: IVerifiableCredential = {
+        '@context': [],
+        id: adminDid,
+        type: ['Claims'],
+        issuer: adminDid,
+        issaunceDate: '02/02/2022',
+        credentialSubject: {
+          id: adminDid,
+          role: {
+            namespace: adminRole,
+            version: '1',
+          },
+          issuerFields: [],
+        },
+        proof: {
+          '@context': 'string',
+          verificationMethod: 'string',
+          created: 'string',
+          proofPurpose: 'string',
+          type: 'string',
+        },
+      };
+
       await adminOperator.update(adminDid, DIDAttribute.ServicePoint, {
         type: DIDAttribute.ServicePoint,
         value: {
           id: adminDid,
           type: adminRole,
-          serviceEndpoint: credentialUrl,
+          serviceEndpoint: ipfsCID,
         },
       });
+
+      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
     });
-    issuanceVerification.verifyChainOfTrust(adminDid, adminRole);
   });
 }

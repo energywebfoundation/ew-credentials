@@ -7,10 +7,20 @@ import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ether
  * An interface for Resolution of issuers for a namespace
  */
 export interface IssuerDefinitionResolver {
-  getRoleIssuerDefinition(namespace: string): Promise<IIssuerDefinition>;
+  /**
+   * Fetches authorised issuers for the provided namespace
+   * @param namespace
+   * @returns IIssuerDefinition for the namespace
+   */
+  getIssuerDefinition(namespace: string): Promise<IIssuerDefinition>;
 }
 
-export class ENSRoleDefinitionResolver implements IssuerDefinitionResolver {
+/**
+ * Resolves an issuer definition by reading smart contract state via an Ethers provider
+ */
+export class EthersProviderIssuerDefinitionResolver
+  implements IssuerDefinitionResolver
+{
   private _roleDefResolver: RoleDefinitionResolverV2;
 
   constructor(provider: providers.Provider, roleDefResolverAddr: string) {
@@ -25,7 +35,7 @@ export class ENSRoleDefinitionResolver implements IssuerDefinitionResolver {
    * @param namespace
    * @returns issuers for the namespace from blockchain contract
    */
-  async getRoleIssuerDefinition(namespace: string): Promise<IIssuerDefinition> {
+  async getIssuerDefinition(namespace: string): Promise<IIssuerDefinition> {
     const issuers: IIssuerDefinition = {};
     const result = await this._roleDefResolver.issuers(namespace);
     const type = await this._roleDefResolver.issuerType(namespace);

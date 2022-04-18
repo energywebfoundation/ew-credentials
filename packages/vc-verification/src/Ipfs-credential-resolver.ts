@@ -1,5 +1,4 @@
 import { providers } from 'ethers';
-import { CredentialResolverIpfsSettings } from './models';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { OffChainClaim } from './models';
@@ -11,16 +10,14 @@ import { CredentialResolver } from './credential-resolver';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
-  private _ipfsUrl: string;
   private _resolver: Resolver;
 
   constructor(
     provider: providers.Provider,
     registrySetting: RegistrySettings,
-    credentialResolverSettings: CredentialResolverIpfsSettings
+    didStore: DidStore,
   ) {
-    this._ipfsUrl = credentialResolverSettings.ipfsUrl;
-    this._ipfsStore = new DidStore(this._ipfsUrl);
+    this._ipfsStore = didStore;
     this._resolver = new Resolver(provider, registrySetting);
   }
 
@@ -31,15 +28,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
    */
   async getCredential(did: string, role: string) {
     const offChainClaims = await this.offchainClaimsOf(did);
-    for (const claim of offChainClaims) {
-      if (claim.claimType === role) {
-        return claim;
-      }
-    }
+    return offChainClaims.find((claim) => claim.claimType === role);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async isOffchainClaim(claim: any): Promise<boolean> {
+  private async isOffchainClaim(claim: any): Promise<boolean> {
     const offChainClaimProps = [
       'claimType',
       'claimTypeVersion',
@@ -50,7 +43,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return offChainClaimProps.every((p) => claimProps.includes(p));
   }
 
-  async offchainClaimsOf(did: string): Promise<OffChainClaim[]> {
+  private async offchainClaimsOf(did: string): Promise<OffChainClaim[]> {
     const transformClaim = (
       claim: OffChainClaim
     ): OffChainClaim | undefined => {
