@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
-import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
 import {
@@ -9,7 +9,6 @@ import {
   VerificationResult,
   OffChainClaim,
 } from './models';
-import { upgradeChainId } from './upgrade-chainid';
 
 export class IssuerVerification {
   private _resolver: Resolver;
@@ -37,7 +36,7 @@ export class IssuerVerification {
   /**
    * Verifies chain of trust for a holder's credential
    * @param credential
-   * @param verifyCredentialProofCallback
+   * @param verifyCredentialProofCallback verification callback approach to verify all issuers in hierarchy. By default the chain is verified against RoleDefinition
    * @returns
    */
   async verifyChainOfTrust(
@@ -52,7 +51,7 @@ export class IssuerVerification {
         verifyCredentialProofCallback
       );
     } else if (credential) {
-      return this.verifyCredentialChainOfTrust(credential);
+      return this.verifyChainOfTrustByRoleDefinition(credential);
     } else {
       throw new Error('Not sufficient information');
     }
@@ -62,30 +61,26 @@ export class IssuerVerification {
    * Verifies chain of trust for a given holder's DID and role
    * @param {string} credential
    */
-  async verifyCredentialChainOfTrust(credential: IVerifiableCredential) {
+  async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
     let isVcVerified = false;
     let hasParent = true;
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
     while (hasParent) {
-      let offChainClaim;
-      if (subjectDID) {
-        offChainClaim = await this._credentialResolver.getCredential(
-          subjectDID,
-          role
-        );
-      }
+      let offChainClaim = await this._credentialResolver.getCredential(
+        subjectDID,
+        role
+      );
       if (!offChainClaim) {
         throw new Error('No credential found');
       } else {
         let issuerDID;
-        if (offChainClaim?.issuedToken) {
+        if (offChainClaim.issuedToken) {
           issuerDID = await this.verifyIssuedToken(offChainClaim.issuedToken);
         }
         if (issuerDID) {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
             subjectDID = issuerDID;
-
             if (await this.isRoleIssuerDID(role)) {
               isVcVerified = true;
               hasParent = false;
@@ -93,12 +88,12 @@ export class IssuerVerification {
               const issuers = await this._issuerDefResolver.getIssuerDefinition(
                 role
               );
-              if (issuers.roleName) {
+              if (issuers && issuers.roleName) {
                 role = issuers.roleName;
               }
             }
           } else {
-            throw new Error('Issuer is not allowed to issue role');
+            throw new Error('Issuer is not allowed to issue credential');
           }
         } else {
           throw new Error('The credential is invalid');
@@ -124,7 +119,7 @@ export class IssuerVerification {
     while (hasParent) {
       const role = await this.parseRoleFromCredential(credential);
       const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
-      if (issuers.did && issuers.did.length > 0) {
+      if (issuers && issuers.did && issuers.did.length > 0) {
         for (let i = 0; i < issuers.did.length; i++) {
           if (issuers.did[i] == credential.issuer) {
             didMatched = true;
@@ -165,7 +160,7 @@ export class IssuerVerification {
    */
   private async isRoleIssuerDID(role: string) {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
-    return issuers.did && issuers.did.length > 0;
+    return issuers && issuers.did && issuers.did.length > 0;
   }
 
   /**
@@ -196,28 +191,26 @@ export class IssuerVerification {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(
       namespace
     );
-    if (issuers.did && issuers.did.length > 0) {
+    if (issuers && issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] == issuerDID) {
+        if (issuers.did[i] == addressOf(issuerDID)) {
           return true;
         }
       }
     }
     let offChainClaim;
-    if (issuers.roleName) {
+    if (issuers && issuers.roleName) {
       offChainClaim = await this._credentialResolver.getCredential(
         issuerDID,
         issuers.roleName
       );
-      offChainClaim = offChainClaim ? upgradeChainId(offChainClaim) : undefined;
     }
     if (!offChainClaim) {
       return false;
-    } else {
-      const isClaimVerified = await this.verifyIssuedToken(
-        offChainClaim.issuedToken
-      );
-      return typeof isClaimVerified === 'string';
     }
+    const isClaimVerified = await this.verifyIssuedToken(
+      offChainClaim.issuedToken
+    );
+    return typeof isClaimVerified === 'string';
   }
 }

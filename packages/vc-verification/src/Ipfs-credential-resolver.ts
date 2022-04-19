@@ -1,9 +1,12 @@
-import { providers } from 'ethers';
+import { providers, utils } from 'ethers';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { OffChainClaim } from './models';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
-import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import {
+  RegistrySettings,
+  IServiceEndpoint,
+} from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
 import { upgradeChainId } from './upgrade-chainid';
 import { CredentialResolver } from './credential-resolver';
@@ -15,24 +18,30 @@ export class IpfsCredentialResolver implements CredentialResolver {
   constructor(
     provider: providers.Provider,
     registrySetting: RegistrySettings,
-    didStore: DidStore,
+    didStore: DidStore
   ) {
     this._ipfsStore = didStore;
     this._resolver = new Resolver(provider, registrySetting);
   }
 
   /**
-   *
-   * @param serviceEndpoint
-   * @returns {string}
+   * Fethces credential for the given did and role
+   * @param did
+   * @param role
+   * @returns
    */
   async getCredential(did: string, role: string) {
     const offChainClaims = await this.offchainClaimsOf(did);
-    return offChainClaims.find((claim) => claim.claimType === role);
+    return offChainClaims.find(
+      (claim) =>
+        claim.claimType === role || utils.namehash(claim.claimType) === role
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async isOffchainClaim(claim: any): Promise<boolean> {
+  async isOffchainClaim(claim: unknown): Promise<boolean> {
+    if (!claim) return false;
+    if (typeof claim !== 'object') return false;
     const offChainClaimProps = [
       'claimType',
       'claimTypeVersion',
@@ -58,7 +67,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     };
 
     const didDocument = await this._resolver.read(did);
-    const services = didDocument.service || [];
+    const services: IServiceEndpoint[] = didDocument.service || [];
     return (
       await Promise.all(
         services.map(async ({ serviceEndpoint }) => {

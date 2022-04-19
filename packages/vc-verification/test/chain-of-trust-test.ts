@@ -1,7 +1,6 @@
 import { utils, ContractFactory, Contract, Signer } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import jwt from 'jsonwebtoken';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
@@ -17,8 +16,7 @@ import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ether
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
 import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
 import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
-import DIDRegistry from '@ew-did-registry/did-registry';
-import {DidStore} from '@ew-did-registry/did-ipfs-store';
+import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
@@ -27,10 +25,7 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerDefinitionResolver,
 } from '../src';
-import {
-  IVerifiableCredential,
-  OffChainClaim,
-} from '../src/models';
+import { IVerifiableCredential, OffChainClaim } from '../src/models';
 import {
   DIDAttribute,
   PubKeyType,
@@ -41,7 +36,10 @@ import {
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
 import { JWT } from '@ew-did-registry/jwt';
-import { spawnIpfsDaemon, shutDownIpfsDaemon } from '../../../test/utils/ipfs-daemon';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -85,14 +83,9 @@ let managerDid: string;
 let verifierKeys: Keys;
 let verifierDid: string;
 
-let adminReg: DIDRegistry;
-let managerReg: DIDRegistry;
-let userReg: DIDRegistry;
-let verifierReg: DIDRegistry;
 let userOperator: Operator;
 let adminOperator: Operator;
 let managerOperator: Operator;
-let verifierOperator: Operator;
 let providerSettings: ProviderSettings;
 let ipfsUrl: string;
 let didStore: DidStore;
@@ -112,22 +105,34 @@ export function testsOnGanache(): void {
     providerSettings = {
       type: ProviderTypes.HTTP,
     };
-    userKeys = new Keys({privateKey: '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1'});
+    userKeys = new Keys({
+      privateKey:
+        '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1',
+    });
     userAddress = userKeys.getAddress();
     userDid = `did:${Methods.Erc1056}:${userAddress}`;
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
-    adminKeys = new Keys({privateKey: '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418'});
+    adminKeys = new Keys({
+      privateKey:
+        '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418',
+    });
     adminAddress = adminKeys.getAddress();
     adminDid = `did:${Methods.Erc1056}:${adminAddress}`;
     admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
 
-    managerKeys = new Keys({privateKey: 'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7'});
+    managerKeys = new Keys({
+      privateKey:
+        'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7',
+    });
     managerAddress = managerKeys.getAddress();
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    verifierKeys = new Keys({privateKey: '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5'});
+    verifierKeys = new Keys({
+      privateKey:
+        '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
+    });
     verifierAddress = verifierKeys.getAddress();
     verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
     verifier = EwSigner.fromPrivateKey(
@@ -135,12 +140,11 @@ export function testsOnGanache(): void {
       providerSettings
     );
     ipfsUrl = await spawnIpfsDaemon();
-    console.log(ipfsUrl);
-    });
+  });
 
-    after(async () => {
-      await shutDownIpfsDaemon();
-    });
+  after(async () => {
+    await shutDownIpfsDaemon();
+  });
 
   testSuite();
 }
@@ -192,48 +196,19 @@ function testSuite() {
     };
 
     didStore = new DidStore(ipfsUrl);
-    credentialResolver = new IpfsCredentialResolver(provider, registrySettings, didStore);
+    credentialResolver = new IpfsCredentialResolver(
+      provider,
+      registrySettings,
+      didStore
+    );
     userOperator = new Operator(user, { address: registry.address });
     adminOperator = new Operator(admin, { address: registry.address });
     managerOperator = new Operator(manager, { address: registry.address });
-    
+
     await userOperator.create();
     await adminOperator.create();
     await managerOperator.create();
 
-    userReg = new DIDRegistry(
-      userKeys,
-      userDid,
-      userOperator,
-      didStore,
-      providerSettings
-    );
-
-    adminReg = new DIDRegistry(
-      adminKeys,
-      adminDid,
-      adminOperator,
-      didStore,
-      providerSettings
-    );
-
-    managerReg = new DIDRegistry(
-      managerKeys,
-      managerDid,
-      managerOperator,
-      didStore,
-      providerSettings
-    );
-
-    verifierReg = new DIDRegistry(
-      verifierKeys,
-      verifierDid,
-      verifierOperator,
-      didStore,
-      providerSettings
-    );
-
-    //credentialResolver = ipfsResolverMock;
     issuerDefinitionResolver = new EthersProviderIssuerDefinitionResolver(
       provider,
       roleResolver.address
@@ -381,25 +356,29 @@ function testSuite() {
   });
 
   describe('chainOfTrustTests', () => {
-    it('verifies hierarchy of issuers', async () => {
+    it('verifies issuer, where the role is issued by did', async () => {
+      let adminJWT = new JWT(adminKeys);
+      const roleClaim = {
+        iss: adminDid,
+        subject: adminDid,
+        role: adminRole,
+      };
+      const roleToken = await adminJWT.sign(roleClaim);
       const claim = {
         claimTypeVersion: 1,
-        issuedToken: 'token',
+        issuedToken: roleToken,
         iss: adminDid,
         claimType: adminRole,
       };
-
-      let adminJWT = new JWT(adminKeys);
       let token: string = '';
       let ipfsCID: string = 'ipfsUrl';
       if (admin.privateKey) {
-        token =await adminJWT.sign(claim);
+        token = await adminJWT.sign(claim);
 
         if (token) {
-          ipfsCID= await didStore.save(token);
+          ipfsCID = await didStore.save(token);
         }
       }
-      console.log(ipfsCID.toString())
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -438,16 +417,211 @@ function testSuite() {
         },
       };
 
-      await adminOperator.update(adminDid, DIDAttribute.ServicePoint, {
+      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
+    });
+
+    it('verifies issuer, where the role is issued by role', async () => {
+      let adminJWT = new JWT(adminKeys);
+      const roleClaimAdmin = {
+        iss: adminDid,
+        subject: adminDid,
+        role: adminRole,
+      };
+      const roleTokenAdmin = await adminJWT.sign(roleClaimAdmin);
+      const claimAdmin = {
+        claimTypeVersion: 1,
+        issuedToken: roleTokenAdmin,
+        iss: adminDid,
+        claimType: adminRole,
+      };
+      let tokenAdmin: string = '';
+      let ipfsCIDAdmin: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        tokenAdmin = await adminJWT.sign(claimAdmin);
+
+        if (tokenAdmin) {
+          ipfsCIDAdmin = await didStore.save(tokenAdmin);
+        }
+      }
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: adminDid,
-          type: adminRole,
-          serviceEndpoint: ipfsCID,
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
         },
-      });
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
 
-      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
+      const roleClaimManager = {
+        iss: adminDid,
+        subject: managerDid,
+        role: managerRole,
+      };
+      const roleTokenManager = await adminJWT.sign(roleClaimManager);
+      const claimManager = {
+        claimTypeVersion: 1,
+        issuedToken: roleTokenManager,
+        iss: adminDid,
+        claimType: managerRole,
+      };
+      let tokenManager: string = '';
+      let ipfsCIDManager: string = 'ipfsUrlManager';
+      if (admin.privateKey) {
+        tokenManager = await adminJWT.sign(claimManager);
+
+        if (tokenManager) {
+          ipfsCIDManager = await didStore.save(tokenManager);
+        }
+      }
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      const managerVC: IVerifiableCredential = {
+        '@context': [],
+        id: managerDid,
+        type: ['Claims'],
+        issuer: adminDid,
+        issaunceDate: '02/02/2022',
+        credentialSubject: {
+          id: managerDid,
+          role: {
+            namespace: managerRole,
+            version: '1',
+          },
+          issuerFields: [],
+        },
+        proof: {
+          '@context': 'string',
+          verificationMethod: 'string',
+          created: 'string',
+          proofPurpose: 'string',
+          type: 'string',
+        },
+      };
+
+      expect(await issuerVerification.verifyChainOfTrust(managerVC)).true;
+    });
+
+    it('rejects credential for any unauthorised issuer in the chain', async () => {
+      let adminJWT = new JWT(adminKeys);
+      const roleClaimAdmin = {
+        iss: adminDid,
+        subject: adminDid,
+        role: adminRole,
+      };
+      const roleTokenAdmin = await adminJWT.sign(roleClaimAdmin);
+      const claimAdmin = {
+        claimTypeVersion: 1,
+        issuedToken: roleTokenAdmin,
+        iss: adminDid,
+        claimType: adminRole,
+      };
+      let tokenAdmin: string = '';
+      let ipfsCIDAdmin: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        tokenAdmin = await adminJWT.sign(claimAdmin);
+
+        if (tokenAdmin) {
+          ipfsCIDAdmin = await didStore.save(tokenAdmin);
+        }
+      }
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
+
+      const roleClaimUser = {
+        iss: adminDid,
+        subject: userDid,
+        role: userRole,
+      };
+      const roleTokenUser = await adminJWT.sign(roleClaimUser);
+      const claimsUser = {
+        claimTypeVersion: 1,
+        issuedToken: roleTokenUser,
+        iss: adminDid,
+        claimType: userRole,
+      };
+      let tokenUser: string = '';
+      let ipfsCIDUser: string = 'ipfsUrUser';
+      if (admin.privateKey) {
+        tokenUser = await adminJWT.sign(claimsUser);
+
+        if (tokenUser) {
+          ipfsCIDUser = await didStore.save(tokenUser);
+        }
+      }
+      const serviceIdUser = userRole;
+      const updateDataUser: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${userDid}#service-${serviceIdUser}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDUser,
+        },
+      };
+      await userOperator.update(
+        userDid,
+        DIDAttribute.ServicePoint,
+        updateDataUser,
+        validity
+      );
+      const userVC: IVerifiableCredential = {
+        '@context': [],
+        id: userDid,
+        type: ['Claims'],
+        issuer: adminDid,
+        issaunceDate: '02/02/2022',
+        credentialSubject: {
+          id: userDid,
+          role: {
+            namespace: userRole,
+            version: '1',
+          },
+          issuerFields: [],
+        },
+        proof: {
+          '@context': 'string',
+          verificationMethod: 'string',
+          created: 'string',
+          proofPurpose: 'string',
+          type: 'string',
+        },
+      };
+      const res = issuerVerification.verifyChainOfTrust(userVC);
+      await expect(res).to.be.rejectedWith(
+        'Issuer is not allowed to issue credential'
+      );
     });
   });
 }

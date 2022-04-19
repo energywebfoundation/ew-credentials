@@ -1,5 +1,5 @@
 import { IIssuerDefinition } from '@energyweb/credential-governance';
-import { providers } from 'ethers';
+import { providers, utils } from 'ethers';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 
@@ -12,7 +12,9 @@ export interface IssuerDefinitionResolver {
    * @param namespace
    * @returns IIssuerDefinition for the namespace
    */
-  getIssuerDefinition(namespace: string): Promise<IIssuerDefinition>;
+  getIssuerDefinition(
+    namespace: string
+  ): Promise<IIssuerDefinition | undefined>;
 }
 
 /**
@@ -35,16 +37,25 @@ export class EthersProviderIssuerDefinitionResolver
    * @param namespace
    * @returns issuers for the namespace from blockchain contract
    */
-  async getIssuerDefinition(namespace: string): Promise<IIssuerDefinition> {
-    const issuers: IIssuerDefinition = {};
-    const result = await this._roleDefResolver.issuers(namespace);
-    const type = await this._roleDefResolver.issuerType(namespace);
+  async getIssuerDefinition(
+    namespace: string
+  ): Promise<IIssuerDefinition | undefined> {
+    let issuers: IIssuerDefinition;
+    let resolvedNamespace = namespace.startsWith('0x')
+      ? namespace
+      : utils.namehash(namespace);
+    const [result, type] = await Promise.all([
+      this._roleDefResolver.issuers(resolvedNamespace),
+      this._roleDefResolver.issuerType(resolvedNamespace),
+    ]);
     if (result.dids.length > 0 || result.role.length > 0) {
-      issuers.did = result.dids;
-      issuers.roleName = result.role;
-      //confirm the type representation TODO
-      issuers.issuerType = type.toString();
+      return (issuers = {
+        did: result.dids,
+        roleName: result.role,
+        //confirm the type representation TODO
+        issuerType: type.toString(),
+      });
     }
-    return issuers;
+    return undefined;
   }
 }
