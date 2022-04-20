@@ -1,12 +1,12 @@
-import { Config } from "bili";
+import { Config } from 'bili';
 
 const config: Config = {
-  input: "src/index.ts",
+  input: 'src/index.ts',
   output: {
-    format: ["cjs", "esm"],
+    format: ['cjs', 'esm'],
     minify: false,
-    sourceMap: true
-  }
+    sourceMap: true,
+  },
 };
 
 export default config;

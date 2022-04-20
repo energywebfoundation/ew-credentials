@@ -62,11 +62,9 @@ export class IssuerVerification {
    * @param {string} credential
    */
   async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
-    let isVcVerified = false;
-    let hasParent = true;
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
-    while (hasParent) {
+    while (true) {
       let offChainClaim = await this._credentialResolver.getCredential(
         subjectDID,
         role
@@ -82,15 +80,13 @@ export class IssuerVerification {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
             subjectDID = issuerDID;
             if (await this.isRoleIssuerDID(role)) {
-              isVcVerified = true;
-              hasParent = false;
-            } else {
-              const issuers = await this._issuerDefResolver.getIssuerDefinition(
-                role
-              );
-              if (issuers && issuers.roleName) {
-                role = issuers.roleName;
-              }
+              return true;
+            }
+            const issuers = await this._issuerDefResolver.getIssuerDefinition(
+              role
+            );
+            if (issuers && issuers.roleName) {
+              role = issuers.roleName;
             }
           } else {
             throw new Error('Issuer is not allowed to issue credential');
@@ -100,7 +96,6 @@ export class IssuerVerification {
         }
       }
     }
-    return isVcVerified;
   }
 
   /**

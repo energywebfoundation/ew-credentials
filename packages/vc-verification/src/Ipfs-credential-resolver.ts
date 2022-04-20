@@ -38,7 +38,6 @@ export class IpfsCredentialResolver implements CredentialResolver {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async isOffchainClaim(claim: unknown): Promise<boolean> {
     if (!claim) return false;
     if (typeof claim !== 'object') return false;
