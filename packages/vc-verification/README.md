@@ -3,24 +3,19 @@
 </p>
 
 
-# PACKAGE NAME
+# @energyweb/vc-verification
 
 ## Description
-Overview of package. 
-{Package} is a module-based library built with xxx. 
+This package is a typescript lirary that provides functionality to verify a verifiable credential and it's chain of trust (hierarchy of issuers for the given credential).
 
-//Purpose of package, sdk, etc. 
-
-{Package} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
-
-See {PACKAGE} deployed [here](link to Switchboard, Zero if applicable)
+[`@energyweb/vc-verification`](../vc-verification/) is a component of the [Energy Web Decentralized Operating System](#ew-dos)
 
 ## Installation
 This is a Node.js module available through the npm registry.
 
 ### Requirements
 
-Before installing, download and install Node.js. Node.js xxx or higher is required.
+Before installing, download and install Node.js. Node.js 16.0 or higher is required.
 
 Installation is done using the following commands:
 
@@ -28,35 +23,20 @@ Installation is done using the following commands:
 $ npm install
 ```
 
+## Setup
+``` sh
+$ npm run setup
+```
+
 ## Build
 ``` sh
 $ npm run build
 ```
 
-## Run
+## Testing
 ``` sh
-$ npm run start
+$ npm run test-rpc
 ```
-## Testing (delete if not needed)
-Testing Strategy
-
-### Integration Tests (delete if not needed)
-``` sh
-$ npm run test
-```
-
-### Unit Tests (delete if not needed)
-``` sh
-$ npm run test
-```
-
-For more details, visit the [installation guide](//LINK TO READ THE DOCS INSTALL PAGE)
-
-## Documentation
-- [ReadTheDocs](https://origins.readthedocs.io/en/latest/)
-
-## Who is Using {Package}?
-//For origin, 24/7, Zero might be good to have a few examples of implementations to give context of how its used
 
 ## Contributing Guidelines 
 See [contributing.md](./contributing.md)
