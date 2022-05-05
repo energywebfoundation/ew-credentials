@@ -1,26 +1,22 @@
 import { Event, utils, providers } from 'ethers';
-import { addressOf } from '@ew-did-registry/did-ethr-resolver';
+import { addressOf, EwSigner } from '@ew-did-registry/did-ethr-resolver';
 import {
-  RevocationRegistryOnChain,
-  RevocationRegistryOnChain__factory,
+  ClaimsRevocationRegistry,
+  ClaimsRevocationRegistry__factory,
 } from '../ethers';
 
-export class OnChainClaimRevocation {
-  private _revocationRegistryOnChain: RevocationRegistryOnChain;
+export class ClaimRevocation {
+  private _revocationRegistry: ClaimsRevocationRegistry;
 
   /**
    * @param provider
    * @param revocationRegistryOnChainAddr - Address of the on chain claim's RevocationRegistry
    */
-  constructor(
-    provider: providers.Provider,
-    revocationRegistryOnChainAddr: string
-  ) {
-    this._revocationRegistryOnChain =
-      RevocationRegistryOnChain__factory.connect(
-        revocationRegistryOnChainAddr,
-        provider
-      );
+  constructor(revoker: EwSigner, revocationRegistryOnChainAddr: string) {
+    this._revocationRegistry = ClaimsRevocationRegistry__factory.connect(
+      revocationRegistryOnChainAddr,
+      revoker
+    );
   }
 
   /**
@@ -41,7 +37,7 @@ export class OnChainClaimRevocation {
     const subjectAddress = addressOf(subject);
     const revokerAddress = addressOf(revoker);
     try {
-      const tx = await this._revocationRegistryOnChain.revokeClaim(
+      const tx = await this._revocationRegistry.revokeClaim(
         namespaceHash,
         subjectAddress,
         revokerAddress
@@ -78,7 +74,7 @@ export class OnChainClaimRevocation {
       revocationSubjects[i] = addressOf(subjects[i]);
     }
     try {
-      const tx = await this._revocationRegistryOnChain.revokeClaimsInList(
+      const tx = await this._revocationRegistry.revokeClaimsInList(
         namespaceHash,
         revocationSubjects,
         revokerAddress
@@ -104,7 +100,7 @@ export class OnChainClaimRevocation {
    */
   async isClaimRevoked(namespace: string, subject: string): Promise<boolean> {
     const subjectAddress = addressOf(subject);
-    const revokedStatus = await this._revocationRegistryOnChain.isRevoked(
+    const revokedStatus = await this._revocationRegistry.isRevoked(
       utils.namehash(namespace),
       subjectAddress
     );
@@ -124,7 +120,7 @@ export class OnChainClaimRevocation {
     subject: string
   ): Promise<string[]> {
     const subjectAddress = addressOf(subject);
-    const result = await this._revocationRegistryOnChain.getRevocationDetail(
+    const result = await this._revocationRegistry.getRevocationDetail(
       utils.namehash(namespace),
       subjectAddress
     );

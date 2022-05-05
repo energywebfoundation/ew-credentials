@@ -14,7 +14,7 @@ interface EthereumDIDRegistry {
     function validDelegate(address identity, bytes32 delegateType, address delegate) external view returns(bool);
 }
     
-contract RevocationRegistryOnChain {
+contract ClaimsRevocationRegistry {
     bytes32 constant private ASSERTION_DELEGATE_TYPE = 0x766572694b657900000000000000000000000000000000000000000000000000;
 
     struct RevokedClaim {
