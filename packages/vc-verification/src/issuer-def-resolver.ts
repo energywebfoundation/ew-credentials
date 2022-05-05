@@ -41,7 +41,7 @@ export class EthersProviderIssuerDefinitionResolver
     namespace: string
   ): Promise<IIssuerDefinition | undefined> {
     let issuers: IIssuerDefinition;
-    let resolvedNamespace = namespace.startsWith('0x')
+    const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
     const [result, type] = await Promise.all([

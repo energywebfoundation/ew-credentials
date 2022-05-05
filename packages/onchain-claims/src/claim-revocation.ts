@@ -1,4 +1,4 @@
-import { Event, utils, providers } from 'ethers';
+import { Event, utils } from 'ethers';
 import { addressOf, EwSigner } from '@ew-did-registry/did-ethr-resolver';
 import {
   ClaimsRevocationRegistry,
@@ -10,7 +10,7 @@ export class ClaimRevocation {
 
   /**
    * @param provider
-   * @param revocationRegistryOnChainAddr - Address of the on chain claim's RevocationRegistry
+   * @param revocationRegistryOnChainAddr - Address of the claim's RevocationRegistry
    */
   constructor(revoker: EwSigner, revocationRegistryOnChainAddr: string) {
     this._revocationRegistry = ClaimsRevocationRegistry__factory.connect(

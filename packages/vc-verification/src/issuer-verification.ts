@@ -65,7 +65,7 @@ export class IssuerVerification {
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
     while (true) {
-      let offChainClaim = await this._credentialResolver.getCredential(
+      const offChainClaim = await this._credentialResolver.getCredential(
         subjectDID,
         role
       );
