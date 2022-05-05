@@ -18,12 +18,13 @@ import {
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
 import { claimManagerTests } from './claim-manager-tests/claim-manager-testuite';
 import { revocationRegistryTests } from './revocation-registry-testsuite';
+import { revocationTests } from './revocation-testsuite';
 import { eip712test } from '../src/eip712.spec';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-describe('[ONCHAIN ROLE ENROLMENT]', function () {
+describe('[ONCHAIN CLAIMS]', function () {
   this.timeout(0);
   const provider = new JsonRpcProvider('http://localhost:8544');
   const deployer = provider.getSigner(1);
@@ -65,5 +66,6 @@ describe('[ONCHAIN ROLE ENROLMENT]', function () {
 
   describe('EIP712 Test', eip712test);
   describe('ClaimManager Test', claimManagerTests);
-  describe('Revocation Test', revocationRegistryTests);
+  describe('Revocation Registry Test', revocationRegistryTests);
+  describe('Revocation Test', revocationTests);
 });

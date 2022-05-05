@@ -1,7 +1,7 @@
 import { Signer, utils } from 'ethers';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager } from '../../ethers/ClaimManager';
-import { RevocationRegistryOnChain as RevocationRegistry } from '../../ethers/RevocationRegistryOnChain';
+import { ClaimsRevocationRegistry as RevocationRegistry } from '../../ethers/ClaimsRevocationRegistry';
 
 const { solidityKeccak256, defaultAbiCoder, arrayify } = utils;
 

@@ -5,20 +5,25 @@ import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
 } from './test_utils/ERC1056.json';
+import {
+  ProviderSettings,
+  ProviderTypes,
+} from '@ew-did-registry/did-resolver-interface';
+import { Keys } from '@ew-did-registry/keys';
+import { EwSigner } from '@ew-did-registry/did-ethr-resolver';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
 import { ClaimManager__factory as ClaimManagerFactory } from '../ethers/factories/ClaimManager__factory';
 import { ClaimManager } from '../ethers/ClaimManager';
-import { ClaimsRevocationRegistry__factory as RevocationRegistryOnChainFactory } from '../ethers/factories/ClaimsRevocationRegistry__factory';
+import { ClaimsRevocationRegistry__factory as ClaimsRevocationRegistryFactory } from '../ethers/factories/ClaimsRevocationRegistry__factory';
 import { ClaimsRevocationRegistry } from '../ethers/ClaimsRevocationRegistry';
 import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src/domain-transaction-factory-v2';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
+import { ClaimRevocation } from '../src';
 import {
   defaultVersion,
   requestRole,
-  revokeRole,
-  revokeRoles,
 } from './test_utils/role-utils';
 
 chai.use(chaiAsPromised);
@@ -40,21 +45,27 @@ let roleResolver: RoleDefinitionResolverV2;
 let erc1056: Contract;
 let provider: JsonRpcProvider;
 let revocationRegistry: ClaimsRevocationRegistry;
+let claimRevocation: ClaimRevocation;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
-let device: JsonRpcSigner;
+let device: EwSigner;
 let deviceAddr: string;
-let installer: JsonRpcSigner;
+let deviceJS: JsonRpcSigner;
+let installer: EwSigner;
 let installerAddr: string;
-let installer1: JsonRpcSigner;
+let installerJS: JsonRpcSigner;
+let installer1: EwSigner;
 let installer1Addr: string;
-let authority: JsonRpcSigner;
+let installer1JS: JsonRpcSigner;
+let authority: EwSigner;
 let authorityAddr: string;
-let admin: JsonRpcSigner;
+let authorityJS: JsonRpcSigner;
+let admin: EwSigner;
 let adminAddr: string;
+let adminJS: JsonRpcSigner;
 
-export function revocationRegistryTests(): void {
+export function revocationTests(): void {
   describe('Tests on ganache', testsOnGanache);
 }
 
@@ -63,16 +74,53 @@ export function testsOnGanache(): void {
     ({ provider } = this);
     deployer = provider.getSigner(1);
     deployerAddr = await deployer.getAddress();
-    device = provider.getSigner(3);
-    installer = provider.getSigner(4);
-    authority = provider.getSigner(5);
-    admin = provider.getSigner(6);
-    installer1 = provider.getSigner(7);
-    deviceAddr = await device.getAddress();
-    installerAddr = await installer.getAddress();
-    installer1Addr = await installer1.getAddress();
-    authorityAddr = await authority.getAddress();
-    adminAddr = await admin.getAddress();
+    const providerSettings: ProviderSettings = {
+      type: ProviderTypes.HTTP,
+    };
+    const deviceKeys = new Keys({
+      privateKey:
+        'c88b703fb08cbea894b6aeff5a544fb92e78a18e19814cd85da83b71f772aa6c',
+    });
+    deviceAddr = deviceKeys.getAddress();
+    device = EwSigner.fromPrivateKey(deviceKeys.privateKey, providerSettings);
+    const adminKeys = new Keys({
+      privateKey:
+        '82d052c865f5763aad42add438569276c00d3d88a2d062d36b2bae914d58b8c8',
+    });
+    adminAddr = adminKeys.getAddress();
+    admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
+    const installerKeys = new Keys({
+      privateKey:
+        '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418',
+    });
+    installerAddr = installerKeys.getAddress();
+    installer = EwSigner.fromPrivateKey(
+      installerKeys.privateKey,
+      providerSettings
+    );
+    const authorityKeys = new Keys({
+      privateKey:
+        '659cbb0e2411a44db63778987b1e22153c086a95eb6b18bdf89de078917abc63',
+    });
+    authorityAddr = authorityKeys.getAddress();
+    authority = EwSigner.fromPrivateKey(
+      authorityKeys.privateKey,
+      providerSettings
+    );
+    const installer1Keys = new Keys({
+      privateKey:
+        'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7',
+    });
+    installer1Addr = installer1Keys.getAddress();
+    installer1 = EwSigner.fromPrivateKey(
+      installer1Keys.privateKey,
+      providerSettings
+    );
+    deviceJS = provider.getSigner(3);
+    installerJS = provider.getSigner(4);
+    authorityJS = provider.getSigner(5);
+    adminJS = provider.getSigner(6);
+    installer1JS = provider.getSigner(7);
   });
 
   testSuite();
@@ -110,7 +158,7 @@ function testSuite() {
     });
 
     revocationRegistry = await (
-      await new RevocationRegistryOnChainFactory(authority).deploy(
+      await new ClaimsRevocationRegistryFactory(authority).deploy(
         erc1056.address,
         ensRegistry.address,
         claimManager.address
@@ -182,11 +230,11 @@ function testSuite() {
             issuerFields: [],
             issuer: {
               issuerType: 'DID',
-              did: [`did:ethr:${await authority.getAddress()}`],
+              did: [`did:ethr:${authorityAddr}`],
             },
             revoker: {
               revokerType: 'DID',
-              did: [`did:ethr:${await authority.getAddress()}`],
+              did: [`did:ethr:${authorityAddr}`],
             },
             metadata: [],
             roleType: '',
@@ -207,7 +255,7 @@ function testSuite() {
             issuerFields: [],
             issuer: {
               issuerType: 'DID',
-              did: [`did:ethr:${await authority.getAddress()}`],
+              did: [`did:ethr:${authorityAddr}`],
             },
             revoker: { revokerType: 'ROLE', roleName: installerRole },
             metadata: [],
@@ -257,75 +305,12 @@ function testSuite() {
     ).wait();
   });
 
-  it('Role can be revoked only if the revokers are specified', async () => {
-    await requestRole({
-      claimManager,
-      roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
-    });
-    await requestRole({
-      claimManager,
-      roleName: adminRole,
-      agreementSigner: admin,
-      proofSigner: authority,
-    });
-
-    expect(
-      revokeRole({
-        revocationRegistry,
-        revoker: authority,
-        subject: admin,
-        subjectRole: adminRole,
-      })
-    ).to.eventually.rejectedWith(
-      'Revocation Registry: Role revokers are not specified'
-    );
-  });
-
-  it('Role can be revoked only by authorised revoker', async () => {
-    await requestRole({
-      claimManager,
-      roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
-    });
-    await requestRole({
-      claimManager,
-      roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
-    });
-
-    expect(
-      revokeRole({
-        revocationRegistry,
-        revoker: provider.getSigner(13),
-        subject: authority,
-        subjectRole: authorityRole,
-      })
-    ).to.eventually.rejectedWith(
-      'Revocation Registry: Revoker is not listed in role revokers list'
-    );
-
-    expect(
-      revokeRole({
-        revocationRegistry,
-        revoker: provider.getSigner(13),
-        subject: installer,
-        subjectRole: installerRole,
-      })
-    ).to.eventually.rejectedWith(
-      'Revocation Registry: Revoker does not have required role'
-    );
-  });
-
   it('Role can be revoked where revokerType is DID', async () => {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -334,17 +319,20 @@ function testSuite() {
         defaultVersion
       )
     ).true;
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: authority,
-      subjectRole: authorityRole,
-    });
+    await claimRevocation.revokeClaim(
+      authorityRole,
+      `did:ethr:${await authority.getAddress()}`,
+      `did:ethr:${await authority.getAddress()}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(authorityRole),
-        authorityAddr
+      await claimRevocation.isClaimRevoked(
+        authorityRole,
+        `did:ethr:${await authority.getAddress()}`
       )
     ).true;
   });
@@ -353,14 +341,14 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -369,17 +357,20 @@ function testSuite() {
         defaultVersion
       )
     ).true;
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: installer,
-      subjectRole: installerRole,
-    });
+    await claimRevocation.revokeClaim(
+      installerRole,
+      `did:ethr:${installerAddr}`,
+      `did:ethr:${authorityAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(installerRole),
-        installerAddr
+      await claimRevocation.isClaimRevoked(
+        installerRole,
+        `did:ethr:${installerAddr}`
       )
     ).true;
   });
@@ -388,30 +379,33 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: deviceRole,
-      agreementSigner: device,
-      proofSigner: authority,
+      agreementSigner: deviceJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
+    claimRevocation = new ClaimRevocation(
+      installer,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: installer,
-      subject: device,
-      subjectRole: deviceRole,
-    });
+    await claimRevocation.revokeClaim(
+      deviceRole,
+      `did:ethr:${deviceAddr}`,
+      `did:ethr:${installerAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(utils.namehash(deviceRole), deviceAddr)
+      await claimRevocation.isClaimRevoked(deviceRole, `did:ethr:${deviceAddr}`)
     ).true;
   });
 
@@ -419,8 +413,8 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -429,17 +423,20 @@ function testSuite() {
         defaultVersion
       )
     ).true;
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: authority,
-      subjectRole: authorityRole,
-    });
+    await claimRevocation.revokeClaim(
+      authorityRole,
+      `did:ethr:${authorityAddr}`,
+      `did:ethr:${authorityAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(authorityRole),
-        authorityAddr
+      await claimRevocation.isClaimRevoked(
+        authorityRole,
+        `did:ethr:${authorityAddr}`
       )
     ).true;
   });
@@ -448,30 +445,33 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: deviceRole,
-      agreementSigner: device,
-      proofSigner: authority,
+      agreementSigner: deviceJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
+    claimRevocation = new ClaimRevocation(
+      installer,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: installer,
-      subject: device,
-      subjectRole: deviceRole,
-    });
+    await claimRevocation.revokeClaim(
+      deviceRole,
+      `did:ethr:${deviceAddr}`,
+      `did:ethr:${installerAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(utils.namehash(deviceRole), deviceAddr)
+      await claimRevocation.isClaimRevoked(deviceRole, `did:ethr:${deviceAddr}`)
     ).true;
   });
 
@@ -479,14 +479,14 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -495,124 +495,20 @@ function testSuite() {
         defaultVersion
       )
     ).true;
-
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: installer,
-      subjectRole: installerRole,
-    });
-    expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(installerRole),
-        installerAddr
-      )
-    ).true;
-  });
-
-  it('Role cannot be revoked if the revokers role has been revoked', async () => {
-    await requestRole({
-      claimManager,
-      roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
-    });
-    await requestRole({
-      claimManager,
-      roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
-    });
-
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: authority,
-      subjectRole: authorityRole,
-    });
-    expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(authorityRole),
-        authorityAddr
-      )
-    ).true;
-
-    expect(
-      revokeRole({
-        revocationRegistry,
-        revoker: authority,
-        subject: installer,
-        subjectRole: installerRole,
-      })
-    ).to.eventually.rejectedWith(
-      "Revocation Registry: Revoker's role has been revoked"
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
     );
-  });
 
-  it('A revoked role cannot be revoked again', async () => {
-    await requestRole({
-      claimManager,
-      roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
-    });
-
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: authority,
-      subjectRole: authorityRole,
-    });
+    await claimRevocation.revokeClaim(
+      installerRole,
+      `did:ethr:${installerAddr}`,
+      `did:ethr:${authorityAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(authorityRole),
-        authorityAddr
-      )
-    ).true;
-
-    expect(
-      revokeRole({
-        revocationRegistry,
-        revoker: authority,
-        subject: authority,
-        subjectRole: authorityRole,
-      })
-    ).to.eventually.rejectedWith('The claim is already revoked');
-  });
-
-  it('Role can be revoked by revokers delegate', async () => {
-    const delegate = provider.getSigner(6);
-    const delegateAddr = await delegate.getAddress();
-    const veriKey =
-      '0x766572694b657900000000000000000000000000000000000000000000000000';
-
-    await erc1056
-      .connect(authority)
-      .addDelegate(authorityAddr, veriKey, delegateAddr, 60 * 60);
-    await requestRole({
-      claimManager,
-      roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
-    });
-
-    const revocationRegistry = await (
-      await new RevocationRegistryOnChainFactory(delegate).deploy(
-        erc1056.address,
-        ensRegistry.address,
-        claimManager.address
-      )
-    ).deployed();
-    await revokeRole({
-      revocationRegistry,
-      revoker: delegate,
-      subject: authority,
-      subjectRole: authorityRole,
-    });
-    expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(authorityRole),
-        authorityAddr
+      await claimRevocation.isClaimRevoked(
+        installerRole,
+        `did:ethr:${installerAddr}`
       )
     ).true;
   });
@@ -621,20 +517,20 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer1,
-      proofSigner: authority,
+      agreementSigner: installer1JS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -650,23 +546,27 @@ function testSuite() {
         defaultVersion
       )
     ).true;
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
+    );
 
-    await revokeRoles({
-      revocationRegistry,
-      revoker: authority,
-      subjects: [installer, installer1],
-      subjectRole: installerRole,
-    });
+    await claimRevocation.revokeClaimforDIDs(
+      installerRole,
+      [`did:ethr:${installer1Addr}`, `did:ethr:${installerAddr}`],
+      `did:ethr:${authorityAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(installerRole),
-        installerAddr
+      await claimRevocation.isClaimRevoked(
+        installerRole,
+        `did:ethr:${installerAddr}`
       )
     ).true;
+
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(installerRole),
-        installer1Addr
+      await claimRevocation.isClaimRevoked(
+        installerRole,
+        `did:ethr:${installer1Addr}`
       )
     ).true;
   });
@@ -675,14 +575,14 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: installerRole,
-      agreementSigner: installer,
-      proofSigner: authority,
+      agreementSigner: installerJS,
+      proofSigner: authorityJS,
     });
     expect(
       await claimManager.hasRole(
@@ -691,23 +591,26 @@ function testSuite() {
         defaultVersion
       )
     ).true;
+    claimRevocation = new ClaimRevocation(
+      authority,
+      revocationRegistry.address
+    );
 
-    await revokeRole({
-      revocationRegistry,
-      revoker: authority,
-      subject: installer,
-      subjectRole: installerRole,
-    });
+    await claimRevocation.revokeClaim(
+      installerRole,
+      `did:ethr:${installerAddr}`,
+      `did:ethr:${authorityAddr}`
+    );
     expect(
-      await revocationRegistry.isRevoked(
-        utils.namehash(installerRole),
-        installerAddr
+      await claimRevocation.isClaimRevoked(
+        installerRole,
+        `did:ethr:${installerAddr}`
       )
     ).true;
 
-    const result = await revocationRegistry.getRevocationDetail(
-      utils.namehash(installerRole),
-      installerAddr
+    const result = await claimRevocation.getRevocationDetail(
+      installerRole,
+      `did:ethr:${installerAddr}`
     );
     expect(result.length).to.equal(2);
     expect(result[0]).equal(authorityAddr);
@@ -717,18 +620,18 @@ function testSuite() {
     await requestRole({
       claimManager,
       roleName: authorityRole,
-      agreementSigner: authority,
-      proofSigner: authority,
+      agreementSigner: authorityJS,
+      proofSigner: authorityJS,
     });
     await requestRole({
       claimManager,
       roleName: adminRole,
-      agreementSigner: admin,
-      proofSigner: authority,
+      agreementSigner: adminJS,
+      proofSigner: authorityJS,
     });
 
     expect(
-      await revocationRegistry.isRevoked(utils.namehash(adminRole), adminAddr)
+      await claimRevocation.isClaimRevoked(adminRole, `did:ethr:${adminAddr}`)
     ).false;
   });
 }

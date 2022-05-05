@@ -14,9 +14,9 @@
   ],
   "scripts": {
     "build": "npm run compile:contracts && npm run build:typechain && npm run compile:ts && copyfiles build/contracts/**/*.json -u 1 dist && copyfiles \"ethers/**/*.d.ts\" dist && copyfiles \"contracts/**/*\" -u 1 dist/contracts",
-    "build:typechain": "npm run build:typechain:claimmanager && npm run build:typechain:revocationregistryonchain",
+    "build:typechain": "npm run build:typechain:claimmanager && npm run build:typechain:claimsrevocationregistry",
     "build:typechain:claimmanager": "typechain --target ethers-v5 --out-dir ethers './build/contracts/ClaimManager.json'",
-    "build:typechain:revocationregistryonchain": "typechain --target ethers-v5 --out-dir ethers './build/contracts/RevocationRegistryOnChain.json'",
+    "build:typechain:claimsrevocationregistry": "typechain --target ethers-v5 --out-dir ethers './build/contracts/ClaimsRevocationRegistry.json'",
     "compile": "npm run compile:contracts && npm run build",
     "compile:contracts": "truffle compile",
     "compile:ts": "bili",
