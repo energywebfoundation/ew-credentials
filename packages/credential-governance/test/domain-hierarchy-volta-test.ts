@@ -3,6 +3,7 @@ import {
   VOLTA_DOMAIN_NOTIFER_ADDRESS,
   VOLTA_ENS_REGISTRY_ADDRESS,
   VOLTA_PUBLIC_RESOLVER_ADDRESS,
+  VOLTA_RESOLVER_V2_ADDRESS,
 } from '../src/chain-constants';
 import { DomainHierarchy } from '../src/domain-hierarchy';
 import { DomainReader } from '../src';
@@ -26,7 +27,7 @@ xdescribe('[DomainHierarchy VOLTA]', async function () {
     ensRegistryAddress: VOLTA_ENS_REGISTRY_ADDRESS,
     provider,
     domainNotifierAddress: VOLTA_DOMAIN_NOTIFER_ADDRESS,
-    publicResolverAddress: VOLTA_PUBLIC_RESOLVER_ADDRESS,
+    resolverAddress: VOLTA_RESOLVER_V2_ADDRESS,
   });
 
   const domain = 'iam.ewc';

@@ -1,4 +1,4 @@
-import { ContractFactory, utils, providers } from 'ethers';
+import { ContractFactory, utils, providers, constants } from 'ethers';
 import { DomainHierarchy } from '../src/domain-hierarchy';
 import {
   DomainReader,
@@ -15,6 +15,8 @@ import { hashLabel } from './credential-governance-test';
 import { expect } from 'chai';
 import { LegacyDomainDefTransactionFactory } from './legacy-domain-def-transaction-factory';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
+
+const { AddressZero } = constants;
 
 let ensFactory: ContractFactory;
 let domainNotifierFactory: ContractFactory;
@@ -33,11 +35,7 @@ let domainHierarchy: DomainHierarchy;
 const domain = 'ewc';
 const node = utils.namehash(domain);
 
-const addSubdomain = async (
-  parentDomain: string,
-  label: string,
-  resolverType: 'PUBLIC' | 'ROLEDEF'
-) => {
+const addSubdomain = async (parentDomain: string, label: string) => {
   const rootNode = utils.namehash(parentDomain);
   const subdomain = `${label}.${parentDomain}`;
   const subNode = utils.namehash(subdomain);
@@ -47,25 +45,14 @@ const addSubdomain = async (
     await owner.getAddress()
   );
   let call: EncodedCall;
-  if (resolverType === 'ROLEDEF') {
-    await ensRegistry.setResolver(subNode, ensRoleDefResolverV2.address);
-    const domainDefTxFactory = new DomainTransactionFactoryV2({
-      domainResolverAddress: ensRoleDefResolverV2.address,
-    });
-    call = domainDefTxFactory.newRole({
-      domain: subdomain,
-      roleDefinition: role,
-    });
-  } else {
-    await ensRegistry.setResolver(subNode, ensPublicResolver.address);
-    const legacyDomainFactory = new LegacyDomainDefTransactionFactory(
-      ensPublicResolver
-    );
-    call = legacyDomainFactory.newRole({
-      domain: subdomain,
-      roleDefinition: role,
-    });
-  }
+  await ensRegistry.setResolver(subNode, ensRoleDefResolverV2.address);
+  const domainDefTxFactory = new DomainTransactionFactoryV2({
+    domainResolverAddress: ensRoleDefResolverV2.address,
+  });
+  call = domainDefTxFactory.newRole({
+    domain: subdomain,
+    roleDefinition: role,
+  });
   await (await owner.sendTransaction(call)).wait();
 };
 
@@ -136,7 +123,7 @@ export function domainHierarchyTestSuite(): void {
         provider,
         ensRegistryAddress: ensRegistry.address,
         domainNotifierAddress: domainNotifier.address,
-        publicResolverAddress: ensPublicResolver.address,
+        resolverAddress: ensRoleDefResolverV2.address,
       });
 
       // Register and set resolver for parent node
@@ -162,8 +149,8 @@ export function domainHierarchyTestSuite(): void {
     describe('getSubdomainsUsingResolver', () => {
       it('returns subdomains using RoleDefResolver', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -174,16 +161,15 @@ export function domainHierarchyTestSuite(): void {
 
       it("continues even if domain isn't registered", async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
 
         // deregister namespace by setting resolver to zero address
-        const emptyAddress = '0x'.padEnd(42, '0');
-        await ensRegistry.setResolver(utils.namehash('iam.ewc'), emptyAddress);
+        await ensRegistry.setResolver(utils.namehash('iam.ewc'), AddressZero);
 
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
-          domain: domain,
+          domain,
           mode: 'ALL',
         });
         expect(subDomains.length).to.equal(1);
@@ -191,8 +177,8 @@ export function domainHierarchyTestSuite(): void {
 
       it('returns subdomains using PublicResolver', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'PUBLIC'),
-          addSubdomain('ewc', 'iam', 'PUBLIC'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -203,8 +189,8 @@ export function domainHierarchyTestSuite(): void {
 
       it('returns subdomains using PublicResolver and RoleDefResolver', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'PUBLIC'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -214,19 +200,19 @@ export function domainHierarchyTestSuite(): void {
       });
 
       it('filter out apps and roles domains and subdomains (mode: ALL)', async () => {
-        await addSubdomain('ewc', 'iam', 'PUBLIC');
+        await addSubdomain('ewc', 'iam');
         await Promise.all([
-          addSubdomain('iam.ewc', 'apps', 'ROLEDEF'),
-          addSubdomain('iam.ewc', 'roles', 'ROLEDEF'),
+          addSubdomain('iam.ewc', 'apps'),
+          addSubdomain('iam.ewc', 'roles'),
         ]);
         await Promise.all([
-          addSubdomain('apps.iam.ewc', 'flex', 'ROLEDEF'),
-          addSubdomain('roles.iam.ewc', 'operator', 'ROLEDEF'),
+          addSubdomain('apps.iam.ewc', 'flex'),
+          addSubdomain('roles.iam.ewc', 'operator'),
         ]);
-        await addSubdomain('flex.apps.iam.ewc', 'roles', 'ROLEDEF');
+        await addSubdomain('flex.apps.iam.ewc', 'roles');
         await Promise.all([
-          addSubdomain('roles.flex.apps.iam.ewc', 'tso', 'ROLEDEF'),
-          addSubdomain('roles.flex.apps.iam.ewc', 'dso', 'ROLEDEF'),
+          addSubdomain('roles.flex.apps.iam.ewc', 'tso'),
+          addSubdomain('roles.flex.apps.iam.ewc', 'dso'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -243,20 +229,20 @@ export function domainHierarchyTestSuite(): void {
 
       it('filter out apps and roles domains and subdomains (mode: FIRSTLEVEL)', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'apps', 'ROLEDEF'),
-          addSubdomain('ewc', 'roles', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'PUBLIC'),
-          addSubdomain('ewc', 'flex', 'PUBLIC'),
+          addSubdomain('ewc', 'apps'),
+          addSubdomain('ewc', 'roles'),
+          addSubdomain('ewc', 'iam'),
+          addSubdomain('ewc', 'flex'),
         ]);
         await Promise.all([
-          addSubdomain('iam.ewc', 'apps', 'ROLEDEF'),
-          addSubdomain('iam.ewc', 'roles', 'ROLEDEF'),
-          addSubdomain('apps.ewc', 'flex', 'ROLEDEF'),
-          addSubdomain('roles.ewc', 'operator', 'ROLEDEF'),
+          addSubdomain('iam.ewc', 'apps'),
+          addSubdomain('iam.ewc', 'roles'),
+          addSubdomain('apps.ewc', 'flex'),
+          addSubdomain('roles.ewc', 'operator'),
         ]);
         await Promise.all([
-          addSubdomain('apps.iam.ewc', 'flex', 'ROLEDEF'),
-          addSubdomain('roles.iam.ewc', 'operator', 'ROLEDEF'),
+          addSubdomain('apps.iam.ewc', 'flex'),
+          addSubdomain('roles.iam.ewc', 'operator'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -272,8 +258,8 @@ export function domainHierarchyTestSuite(): void {
     describe('getSubdomainsUsingRegistry', () => {
       it('returns subdomains', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingRegistry({
           domain: domain,
@@ -283,8 +269,8 @@ export function domainHierarchyTestSuite(): void {
 
       it("continues even if domain isn't registered", async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain('ewc', 'test'),
+          addSubdomain('ewc', 'iam'),
         ]);
 
         // deregister namespace by setting resolver to zero address
