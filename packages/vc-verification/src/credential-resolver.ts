@@ -1,4 +1,4 @@
-import { OffChainClaim } from './models';
+import { IVerifiableCredential, OffChainClaim } from './models';
 
 /**
  * An interface for a credential resolver
@@ -11,6 +11,17 @@ export interface CredentialResolver {
    * @returns Offchain claim of the holder for the namespace
    */
   getCredential(
+    did: string,
+    namespace: string
+  ): Promise<IVerifiableCredential | undefined>;
+
+  /**
+   * Fetches OffChainClaims belonging to a DID for the provided namespace
+   * @param did
+   * @param namespace
+   * @returns Offchain claim of the holder for the namespace
+   */
+  getOffChainClaim(
     did: string,
     namespace: string
   ): Promise<OffChainClaim | undefined>;
