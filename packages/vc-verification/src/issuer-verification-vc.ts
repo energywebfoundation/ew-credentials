@@ -1,16 +1,12 @@
 import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
-import { ProofVerifier } from '@ew-did-registry/claims';
 import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
-import {
-  IVerifiableCredential,
-  VerificationResult,
-  OffChainClaim,
-} from './models';
+import { IVerifiableCredential, VerificationResult } from './models';
+import { verifyCredential } from '@spruceid/didkit-wasm';
 
-export class IssuerVerification {
+export class VCIssuerVerification {
   private _resolver: Resolver;
   private _issuerDefResolver: IssuerDefinitionResolver;
   private _credentialResolver: CredentialResolver;
@@ -65,16 +61,16 @@ export class IssuerVerification {
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
     while (true) {
-      const offChainClaim = await this._credentialResolver.getCredential(
-        subjectDID,
-        role
-      );
-      if (!offChainClaim) {
+      const vc = await this._credentialResolver.getCredential(subjectDID, role);
+      if (!vc) {
         throw new Error('No credential found');
       } else {
         let issuerDID;
-        if (offChainClaim.issuedToken) {
-          issuerDID = await this.verifyIssuedToken(offChainClaim.issuedToken);
+        if (vc.proof) {
+          issuerDID = await verifyCredential(
+            JSON.stringify(vc),
+            JSON.stringify({})
+          );
         }
         if (issuerDID) {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
@@ -159,21 +155,6 @@ export class IssuerVerification {
   }
 
   /**
-   * Verify issued token signature
-   * @param {string} token
-   */
-  async verifyIssuedToken(token: string) {
-    const offChainClaim = jwt.decode(token) as OffChainClaim;
-    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
-    const verifier = new ProofVerifier(issuerDIDDoc);
-    if (await verifier.verifyAssertionProof(token)) {
-      return offChainClaim.iss;
-    } else {
-      throw new Error('Invalid Credential');
-    }
-  }
-
-  /**
    * Verifies issuer's authority to issue credential
    * @param {string} namespace
    * @param {string} issuerDID
@@ -193,18 +174,19 @@ export class IssuerVerification {
         }
       }
     }
-    let offChainClaim;
+    let vc;
     if (issuers && issuers.roleName) {
-      offChainClaim = await this._credentialResolver.getCredential(
+      vc = await this._credentialResolver.getCredential(
         issuerDID,
         issuers.roleName
       );
     }
-    if (!offChainClaim) {
+    if (!vc) {
       return false;
     }
-    const isClaimVerified = await this.verifyIssuedToken(
-      offChainClaim.issuedToken
+    const isClaimVerified = await verifyCredential(
+      JSON.stringify(vc),
+      JSON.stringify({})
     );
     return typeof isClaimVerified === 'string';
   }

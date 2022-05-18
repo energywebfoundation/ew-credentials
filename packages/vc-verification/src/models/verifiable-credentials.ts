@@ -30,6 +30,7 @@ export interface Proof {
   created: string;
   proofPurpose: string;
   type: string;
+  proofValue: string;
 }
 
 export interface VerificationResult {
