@@ -6,6 +6,7 @@ import {
 } from '../src/chain-constants';
 import { DomainHierarchy } from '../src/domain-hierarchy';
 import { DomainReader } from '../src';
+import { expect } from 'chai';
 
 const { JsonRpcProvider } = providers;
 
@@ -29,30 +30,19 @@ xdescribe('[DomainHierarchy VOLTA]', async function () {
     publicResolverAddress: VOLTA_PUBLIC_RESOLVER_ADDRESS,
   });
 
-  const domain = 'iam.ewc';
-  let subDomains;
-  let subDomains_usingRegistry;
+  const domain = 'dmitryfesenko.iam.ewc';
 
-  it('getSubdomains', async () => {
-    subDomains = await domainHierarchy.getSubdomainsUsingResolver({
+  it('getSubdomainsUsingResolver and getSubdomainsUsingRegistry should return same domains', async () => {
+    const resolverDomains = await domainHierarchy.getSubdomainsUsingResolver({
       domain: domain,
       mode: 'ALL',
     });
-    console.log(subDomains.length);
+    console.dir(resolverDomains);
 
-    const subDomains2 = await domainHierarchy.getSubdomainsUsingResolver({
+    const registryDomains = await domainHierarchy.getSubdomainsUsingRegistry({
       domain: domain,
-      mode: 'FIRSTLEVEL',
     });
-    console.log(subDomains2.length);
-  });
-
-  it('getSubdomains using ENS Registry', async () => {
-    subDomains_usingRegistry = await domainHierarchy.getSubdomainsUsingRegistry(
-      {
-        domain: domain,
-      }
-    );
-    console.log(subDomains_usingRegistry.length);
+    console.dir(registryDomains);
+    expect(resolverDomains).equal(registryDomains);
   });
 });
