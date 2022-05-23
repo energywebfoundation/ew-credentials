@@ -320,6 +320,17 @@ function testSuite() {
     );
   });
 
+  it('Role can be revoked only if it issued', async () => {
+    expect(
+      revokeRole({
+        revocationRegistry,
+        revoker: authority,
+        subject: authority,
+        subjectRole: authorityRole,
+      })
+    ).to.eventually.rejectedWith('The claim has not been issued');
+  });
+
   it('Role can be revoked where revokerType is DID', async () => {
     await requestRole({
       claimManager,
@@ -615,6 +626,17 @@ function testSuite() {
         authorityAddr
       )
     ).true;
+  });
+
+  it('Roles can be revoked in bulk, only if they are issued', async () => {
+    expect(
+      revokeRoles({
+        revocationRegistry,
+        revoker: authority,
+        subjects: [installer, installer1],
+        subjectRole: installerRole,
+      })
+    ).to.eventually.rejectedWith('The claim has not been issued');
   });
 
   it('Role can be revoked for multiple DIDs by authorised revoker, bulk revocation ', async () => {
