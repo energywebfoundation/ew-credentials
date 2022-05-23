@@ -629,6 +629,12 @@ function testSuite() {
   });
 
   it('Roles can be revoked in bulk, only if they are issued', async () => {
+    await requestRole({
+      claimManager,
+      roleName: authorityRole,
+      agreementSigner: authority,
+      proofSigner: authority,
+    });
     expect(
       revokeRoles({
         revocationRegistry,
