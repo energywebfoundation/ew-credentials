@@ -110,7 +110,7 @@ export function testsOnGanache(): void {
         '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1',
     });
     userAddress = userKeys.getAddress();
-    userDid = `did:${Methods.Erc1056}:${userAddress}`;
+    userDid = `did:${Methods.Erc1056}:volta:${userAddress}`;
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
     adminKeys = new Keys({
@@ -118,7 +118,7 @@ export function testsOnGanache(): void {
         '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418',
     });
     adminAddress = adminKeys.getAddress();
-    adminDid = `did:${Methods.Erc1056}:${adminAddress}`;
+    adminDid = `did:${Methods.Erc1056}:volta:${adminAddress}`;
     admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
 
     managerKeys = new Keys({
@@ -126,7 +126,7 @@ export function testsOnGanache(): void {
         'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7',
     });
     managerAddress = managerKeys.getAddress();
-    managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
+    managerDid = `did:${Methods.Erc1056}:volta:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
     verifierKeys = new Keys({
@@ -134,7 +134,7 @@ export function testsOnGanache(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
+    verifierDid = `did:${Methods.Erc1056}:volta:${verifierAddress}`;
     verifier = EwSigner.fromPrivateKey(
       verifierKeys.privateKey,
       providerSettings

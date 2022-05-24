@@ -188,7 +188,7 @@ export class IssuerVerification {
     );
     if (issuers && issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] == addressOf(issuerDID)) {
+        if (issuers.did[i] == issuerDID) {
           return true;
         }
       }
