@@ -69,7 +69,7 @@ export class ClaimRevocation {
   ): Promise<boolean> {
     const namespaceHash = utils.namehash(namespace);
     const revokerAddress = addressOf(revoker);
-    const revocationSubjects = subjects.map(subject => addressOf(subject));
+    const revocationSubjects = subjects.map((subject) => addressOf(subject));
     try {
       const tx = await this._revocationRegistry.revokeClaimsInList(
         namespaceHash,

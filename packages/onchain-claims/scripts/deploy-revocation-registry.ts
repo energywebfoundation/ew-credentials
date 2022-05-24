@@ -3,8 +3,8 @@ import {
   VOLTA_IDENTITY_MANAGER_ADDRESS,
   VOLTA_ENS_REGISTRY_ADDRESS,
   VOLTA_CLAIM_MANAGER_ADDRESS,
-} from '../src';
-import { RevocationRegistryOnChain__factory } from '../ethers/factories/RevocationRegistryOnChain__factory';
+} from '@energyweb/credential-governance';
+import { ClaimsRevocationRegistry__factory } from '../ethers/factories/ClaimsRevocationRegistry__factory';
 
 const provider = new providers.JsonRpcProvider(
   'https://volta-rpc.energyweb.org'
@@ -15,15 +15,15 @@ const deployer = new Wallet(
 ).connect(provider);
 
 async function deployRevocationRegistry() {
-  const revocationRegistryOnChain = await (
-    await new RevocationRegistryOnChain__factory(deployer).deploy(
+  const revocationRegistry = await (
+    await new ClaimsRevocationRegistry__factory(deployer).deploy(
       VOLTA_IDENTITY_MANAGER_ADDRESS,
       VOLTA_CLAIM_MANAGER_ADDRESS,
       VOLTA_ENS_REGISTRY_ADDRESS
     )
   ).deployed();
 
-  console.log('revocation registry : ', revocationRegistryOnChain.address);
+  console.log('revocation registry : ', revocationRegistry.address);
 }
 
 deployRevocationRegistry();

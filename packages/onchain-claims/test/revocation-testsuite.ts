@@ -21,10 +21,7 @@ import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { ClaimRevocation } from '../src';
-import {
-  defaultVersion,
-  requestRole,
-} from './test_utils/role-utils';
+import { defaultVersion, requestRole } from './test_utils/role-utils';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

@@ -36,6 +36,8 @@ contract ClaimsRevocationRegistry {
     }
 
     function revokeClaim(bytes32 role, address subject, address revoker) public {
+        ClaimManager cm = ClaimManager(claimManager);
+        require(cm.hasRole(subject, role, 0), "The claim has not been issued");
         require(revokedClaims[role][subject].revokedTimestamp == 0, "The claim is already revoked");
         verifyRevoker(role, revoker);
         revokedClaims[role][subject].revoker = revoker;
@@ -46,6 +48,8 @@ contract ClaimsRevocationRegistry {
     function revokeClaimsInList(bytes32 role, address [] memory subjects, address revoker) public{
         verifyRevoker(role, revoker);
         for(uint i=0; i<subjects.length ; i++) {
+            ClaimManager cm = ClaimManager(claimManager);
+            require(cm.hasRole(subjects[i], role, 0), "The claim has not been issued");
             require(revokedClaims[role][subjects[i]].revokedTimestamp == 0, "The claim is already revoked");
             revokedClaims[role][subjects[i]].revoker = revoker;
             revokedClaims[role][subjects[i]].revokedTimestamp = block.number;
