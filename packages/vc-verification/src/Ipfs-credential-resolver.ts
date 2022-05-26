@@ -45,12 +45,16 @@ export class IpfsCredentialResolver implements CredentialResolver {
    * @param role
    * @returns
    */
-  async getOffChainClaim(did: string, role: string) {
+  async getClaimIssuedToken(
+    did: string,
+    namespace: string
+  ): Promise<string | undefined> {
     const offChainClaims = await this.offchainClaimsOf(did);
     return offChainClaims.find(
       (claim) =>
-        claim.claimType === role || utils.namehash(claim.claimType) === role
-    );
+        claim.claimType === namespace ||
+        utils.namehash(claim.claimType) === namespace
+    )?.issuedToken;
   }
 
   async isOffchainClaim(claim: unknown): Promise<boolean> {
@@ -123,8 +127,10 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return (
       await Promise.all(
         services.map(async ({ serviceEndpoint }) => {
-          const claimToken = await this._ipfsStore.get(serviceEndpoint);
-          return jwt.decode(claimToken) as IVerifiableCredential;
+          const credential = await this._ipfsStore.get(serviceEndpoint);
+          const vc = JSON.parse(credential);
+          delete vc.iat;
+          return vc as IVerifiableCredential;
         })
       )
     )

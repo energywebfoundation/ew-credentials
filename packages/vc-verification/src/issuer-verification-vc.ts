@@ -4,7 +4,7 @@ import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
 import { IVerifiableCredential, VerificationResult } from './models';
-import { verifyCredential } from '@spruceid/didkit-wasm';
+import { verifyCredential } from 'didkit-wasm-node';
 
 export class VCIssuerVerification {
   private _resolver: Resolver;
@@ -67,10 +67,8 @@ export class VCIssuerVerification {
       } else {
         let issuerDID;
         if (vc.proof) {
-          issuerDID = await verifyCredential(
-            JSON.stringify(vc),
-            JSON.stringify({})
-          );
+          await verifyCredential(JSON.stringify(vc), JSON.stringify({}));
+          issuerDID = vc.issuer;
         }
         if (issuerDID) {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
@@ -169,7 +167,8 @@ export class VCIssuerVerification {
     );
     if (issuers && issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] == addressOf(issuerDID)) {
+        const issuerAddr = addressOf(issuerDID);
+        if (issuers.did[i].toUpperCase() === issuerAddr.toUpperCase()) {
           return true;
         }
       }

@@ -45,27 +45,21 @@ export class ClaimIssuerVerification {
       if (await this.isRoleIssuerDID(role)) {
         return true;
       } else if (roleIssuers && roleIssuers.roleName) {
-        const offChainClaim = await this._credentialResolver.getOffChainClaim(
+        const issuedToken = await this._credentialResolver.getClaimIssuedToken(
           currentIssuerDID,
           roleIssuers.roleName
         );
-        if (!offChainClaim) {
-          throw new Error('No credential found');
+        if (!issuedToken) {
+          throw new Error(
+            'Unable to resolve the issuer credential to verify their authority'
+          );
+        }
+        const nextIssuerDID = await this.verifyIssuedToken(issuedToken);
+        if (nextIssuerDID) {
+          currentIssuerDID = nextIssuerDID;
+          role = roleIssuers.roleName;
         } else {
-          let nextIssuerDID;
-          if (offChainClaim.issuedToken) {
-            nextIssuerDID = await this.verifyIssuedToken(
-              offChainClaim.issuedToken
-            );
-          }
-          if (nextIssuerDID) {
-            currentIssuerDID = nextIssuerDID;
-            if (roleIssuers && roleIssuers.roleName) {
-              role = roleIssuers.roleName;
-            }
-          } else {
-            throw new Error('The credential is invalid');
-          }
+          throw new Error('The credential is invalid');
         }
       }
     }
@@ -116,19 +110,17 @@ export class ClaimIssuerVerification {
         }
       }
     }
-    let offChainClaim;
+    let issuedToken;
     if (issuers && issuers.roleName) {
-      offChainClaim = await this._credentialResolver.getOffChainClaim(
+      issuedToken = await this._credentialResolver.getClaimIssuedToken(
         issuerDID,
         issuers.roleName
       );
     }
-    if (!offChainClaim) {
+    if (!issuedToken) {
       return false;
     }
-    const isClaimVerified = await this.verifyIssuedToken(
-      offChainClaim.issuedToken
-    );
+    const isClaimVerified = await this.verifyIssuedToken(issuedToken);
     return typeof isClaimVerified === 'string';
   }
 }
