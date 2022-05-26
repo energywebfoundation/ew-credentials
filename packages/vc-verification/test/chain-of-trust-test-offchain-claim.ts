@@ -20,7 +20,7 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
-  IssuerVerification,
+  ClaimIssuerVerification,
   IssuerDefinitionResolver,
   IpfsCredentialResolver,
   EthersProviderIssuerDefinitionResolver,
@@ -58,7 +58,7 @@ let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
 let provider: JsonRpcProvider;
-let issuerVerification: IssuerVerification;
+let issuerVerification: ClaimIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
 let issuerDefinitionResolver: IssuerDefinitionResolver;
@@ -92,7 +92,7 @@ let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
-export function IssuanceVerificationTest(): void {
+export function IssuanceVerificationTestClaims(): void {
   describe('Tests on ganache', testsOnGanache);
 }
 
@@ -213,7 +213,7 @@ function testSuite() {
       provider,
       roleResolver.address
     );
-    issuerVerification = new IssuerVerification(
+    issuerVerification = new ClaimIssuerVerification(
       provider,
       registrySettings,
       credentialResolver,
@@ -394,30 +394,10 @@ function testSuite() {
         updateData,
         validity
       );
-      const vc: IVerifiableCredential = {
-        '@context': [],
-        id: adminDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: adminDid,
-          role: {
-            namespace: adminRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-        },
-      };
 
-      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
+      expect(
+        await issuerVerification.verifyChainOfTrustClaims(adminDid, adminRole)
+      ).true;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -495,30 +475,10 @@ function testSuite() {
         updateDataManager,
         validity
       );
-      const managerVC: IVerifiableCredential = {
-        '@context': [],
-        id: managerDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: managerDid,
-          role: {
-            namespace: managerRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-        },
-      };
 
-      expect(await issuerVerification.verifyChainOfTrust(managerVC)).true;
+      expect(
+        await issuerVerification.verifyChainOfTrustClaims(adminDid, managerRole)
+      ).true;
     });
 
     it('rejects credential for any unauthorised issuer in the chain', async () => {
@@ -596,29 +556,10 @@ function testSuite() {
         updateDataUser,
         validity
       );
-      const userVC: IVerifiableCredential = {
-        '@context': [],
-        id: userDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: userDid,
-          role: {
-            namespace: userRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-        },
-      };
-      const res = issuerVerification.verifyChainOfTrust(userVC);
+      const res = issuerVerification.verifyChainOfTrustClaims(
+        adminDid,
+        userRole
+      );
       await expect(res).to.be.rejectedWith(
         'Issuer is not allowed to issue credential'
       );

@@ -16,7 +16,8 @@ import {
   abi as ensAbi,
   bytecode as ensBytecode,
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
-import { IssuanceVerificationTest } from './chain-of-trust-test';
+import { IssuanceVerificationTestClaims } from './chain-of-trust-test-offchain-claim';
+import { IssuanceVerificationTestVC } from './chain-of-trust-test-vc';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
@@ -61,5 +62,12 @@ describe('[Credential Verificaiton]', function () {
     });
   });
 
-  describe('VC Verification Code', IssuanceVerificationTest);
+  describe(
+    'VC Verification with OffChainClaims',
+    IssuanceVerificationTestClaims
+  );
+  describe(
+    'VC Verification with Verifiable Credentials',
+    IssuanceVerificationTestVC
+  );
 });
