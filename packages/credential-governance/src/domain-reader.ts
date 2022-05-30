@@ -1,4 +1,4 @@
-import { providers, utils } from 'ethers';
+import { providers, utils, constants } from 'ethers';
 import {
   IAppDefinition,
   IIssuerDefinition,
@@ -26,6 +26,8 @@ import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefin
 import { ResolverContractType } from './types/resolver-contract-type';
 import { ERROR_MESSAGES } from './types/error-messages';
 import { ENSRegistry } from '../ethers/ENSRegistry';
+
+const { HashZero } = constants;
 
 export class DomainReader {
   public static isOrgDefinition = (
@@ -364,7 +366,7 @@ export class DomainReader {
           (address) => `did:ethr:${networkName}:${address}`
         ),
       };
-    } else if (issuersData.role != '') {
+    } else if (issuersData.role !== HashZero) {
       issuer = {
         issuerType: 'ROLE',
         roleName: await this.readName(issuersData.role),
@@ -379,7 +381,7 @@ export class DomainReader {
           (address) => `did:ethr:${networkName}:${address}`
         ),
       };
-    } else if (revokersData.role != '') {
+    } else if (revokersData.role !== HashZero) {
       revoker = {
         revokerType: 'ROLE',
         roleName: await this.readName(revokersData.role),
