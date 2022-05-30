@@ -40,7 +40,7 @@ import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
-import { adminVC } from './Fixtures/sample-vc';
+import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -121,7 +121,7 @@ export function testsOnGanache(): void {
     adminAddress = adminKeys.getAddress();
     adminDid = `did:${Methods.Erc1056}:${adminAddress}`;
     admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
-    
+
     managerKeys = new Keys({
       privateKey:
         'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7',
@@ -401,189 +401,128 @@ function testSuite() {
       expect(await issuerVerification.verifyChainOfTrust(vc)).true;
     });
 
-    // it('verifies issuer, where the role is issued by role', async () => {
-    //   let ipfsCID = await didStore.save(JSON.stringify(adminVC));
-    //   const serviceId = adminRole;
-    //   const updateData: IUpdateData = {
-    //     type: DIDAttribute.ServicePoint,
-    //     value: {
-    //       id: `${adminDid}#service-${serviceId}`,
-    //       type: 'ClaimStore',
-    //       serviceEndpoint: ipfsCID,
-    //     },
-    //   };
-    //   await adminOperator.update(
-    //     adminDid,
-    //     DIDAttribute.ServicePoint,
-    //     updateData,
-    //     validity
-    //   );
+    it('verifies issuer, where the role is issued by role', async () => {
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const serviceId = adminRole;
+      const updateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
 
-    //   const roleClaimManager = {
-    //     iss: adminDid,
-    //     subject: managerDid,
-    //     role: managerRole,
-    //   };
-    //   const roleTokenManager = await adminJWT.sign(roleClaimManager);
-    //   const claimManager = {
-    //     claimTypeVersion: 1,
-    //     issuedToken: roleTokenManager,
-    //     iss: adminDid,
-    //     claimType: managerRole,
-    //   };
-    //   let tokenManager: string = '';
-    //   let ipfsCIDManager: string = 'ipfsUrlManager';
-    //   if (admin.privateKey) {
-    //     tokenManager = await adminJWT.sign(claimManager);
+      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      const VC: IVerifiableCredential = {
+        '@context': [],
+        id: managerDid,
+        type: ['Claims'],
+        issuer: adminDid,
+        issaunceDate: '02/02/2022',
+        credentialSubject: {
+          id: managerDid,
+          role: {
+            namespace: managerRole,
+            version: '1',
+          },
+          issuerFields: [],
+        },
+        proof: {
+          '@context': 'string',
+          verificationMethod: 'string',
+          created: 'string',
+          proofPurpose: 'string',
+          type: 'string',
+          proofValue: 'string',
+        },
+      };
 
-    //     if (tokenManager) {
-    //       ipfsCIDManager = await didStore.save(tokenManager);
-    //     }
-    //   }
-    //   const serviceIdManager = managerRole;
-    //   const updateDataManager: IUpdateData = {
-    //     type: DIDAttribute.ServicePoint,
-    //     value: {
-    //       id: `${managerDid}#service-${serviceIdManager}`,
-    //       type: 'ClaimStore',
-    //       serviceEndpoint: ipfsCIDManager,
-    //     },
-    //   };
-    //   await managerOperator.update(
-    //     managerDid,
-    //     DIDAttribute.ServicePoint,
-    //     updateDataManager,
-    //     validity
-    //   );
-    //   const managerVC: IVerifiableCredential = {
-    //     '@context': [],
-    //     id: managerDid,
-    //     type: ['Claims'],
-    //     issuer: adminDid,
-    //     issaunceDate: '02/02/2022',
-    //     credentialSubject: {
-    //       id: managerDid,
-    //       role: {
-    //         namespace: managerRole,
-    //         version: '1',
-    //       },
-    //       issuerFields: [],
-    //     },
-    //     proof: {
-    //       '@context': 'string',
-    //       verificationMethod: 'string',
-    //       created: 'string',
-    //       proofPurpose: 'string',
-    //       type: 'string',
-    //       proofValue: 'string',
-    //     },
-    //   };
+      expect(await issuerVerification.verifyChainOfTrust(VC)).true;
+    });
 
-    //   expect(await issuerVerification.verifyChainOfTrust(managerVC)).true;
-    // });
+    it('rejects credential for any unauthorised issuer in the chain', async () => {
+      let ipfsCIDAdmin = await didStore.save(JSON.stringify(adminVC));
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
 
-    // it('rejects credential for any unauthorised issuer in the chain', async () => {
-    //   let adminJWT = new JWT(adminKeys);
-    //   const roleClaimAdmin = {
-    //     iss: adminDid,
-    //     subject: adminDid,
-    //     role: adminRole,
-    //   };
-    //   const roleTokenAdmin = await adminJWT.sign(roleClaimAdmin);
-    //   const claimAdmin = {
-    //     claimTypeVersion: 1,
-    //     issuedToken: roleTokenAdmin,
-    //     iss: adminDid,
-    //     claimType: adminRole,
-    //   };
-    //   let tokenAdmin: string = '';
-    //   let ipfsCIDAdmin: string = 'ipfsUrl';
-    //   if (admin.privateKey) {
-    //     tokenAdmin = await adminJWT.sign(claimAdmin);
-
-    //     if (tokenAdmin) {
-    //       ipfsCIDAdmin = await didStore.save(tokenAdmin);
-    //     }
-    //   }
-    //   const serviceIdAdmin = adminRole;
-    //   const updateDataAdmin: IUpdateData = {
-    //     type: DIDAttribute.ServicePoint,
-    //     value: {
-    //       id: `${adminDid}#service-${serviceIdAdmin}`,
-    //       type: 'ClaimStore',
-    //       serviceEndpoint: ipfsCIDAdmin,
-    //     },
-    //   };
-    //   await adminOperator.update(
-    //     adminDid,
-    //     DIDAttribute.ServicePoint,
-    //     updateDataAdmin,
-    //     validity
-    //   );
-
-    //   const roleClaimUser = {
-    //     iss: adminDid,
-    //     subject: userDid,
-    //     role: userRole,
-    //   };
-    //   const roleTokenUser = await adminJWT.sign(roleClaimUser);
-    //   const claimsUser = {
-    //     claimTypeVersion: 1,
-    //     issuedToken: roleTokenUser,
-    //     iss: adminDid,
-    //     claimType: userRole,
-    //   };
-    //   let tokenUser: string = '';
-    //   let ipfsCIDUser: string = 'ipfsUrUser';
-    //   if (admin.privateKey) {
-    //     tokenUser = await adminJWT.sign(claimsUser);
-
-    //     if (tokenUser) {
-    //       ipfsCIDUser = await didStore.save(tokenUser);
-    //     }
-    //   }
-    //   const serviceIdUser = userRole;
-    //   const updateDataUser: IUpdateData = {
-    //     type: DIDAttribute.ServicePoint,
-    //     value: {
-    //       id: `${userDid}#service-${serviceIdUser}`,
-    //       type: 'ClaimStore',
-    //       serviceEndpoint: ipfsCIDUser,
-    //     },
-    //   };
-    //   await userOperator.update(
-    //     userDid,
-    //     DIDAttribute.ServicePoint,
-    //     updateDataUser,
-    //     validity
-    //   );
-    //   const userVC: IVerifiableCredential = {
-    //     '@context': [],
-    //     id: userDid,
-    //     type: ['Claims'],
-    //     issuer: adminDid,
-    //     issaunceDate: '02/02/2022',
-    //     credentialSubject: {
-    //       id: userDid,
-    //       role: {
-    //         namespace: userRole,
-    //         version: '1',
-    //       },
-    //       issuerFields: [],
-    //     },
-    //     proof: {
-    //       '@context': 'string',
-    //       verificationMethod: 'string',
-    //       created: 'string',
-    //       proofPurpose: 'string',
-    //       type: 'string',
-    //       proofValue: 'string',
-    //     },
-    //   };
-    //   const res = issuerVerification.verifyChainOfTrust(userVC);
-    //   await expect(res).to.be.rejectedWith(
-    //     'Issuer is not allowed to issue credential'
-    //   );
-    // });
+      let ipfsCIDUser = await didStore.save(JSON.stringify(userVC));
+      const serviceIdUser = userRole;
+      const updateDataUser: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${userDid}#service-${serviceIdUser}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDUser,
+        },
+      };
+      await userOperator.update(
+        userDid,
+        DIDAttribute.ServicePoint,
+        updateDataUser,
+        validity
+      );
+      const VC: IVerifiableCredential = {
+        '@context': [],
+        id: userDid,
+        type: ['Claims'],
+        issuer: adminDid,
+        issaunceDate: '02/02/2022',
+        credentialSubject: {
+          id: userDid,
+          role: {
+            namespace: userRole,
+            version: '1',
+          },
+          issuerFields: [],
+        },
+        proof: {
+          '@context': 'string',
+          verificationMethod: 'string',
+          created: 'string',
+          proofPurpose: 'string',
+          type: 'string',
+          proofValue: 'string',
+        },
+      };
+      const res = issuerVerification.verifyChainOfTrust(VC);
+      await expect(res).to.be.rejectedWith(
+        'Issuer is not allowed to issue credential'
+      );
+    });
   });
 }
