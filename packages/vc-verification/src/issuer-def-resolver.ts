@@ -1,7 +1,9 @@
-import { IIssuerDefinition } from '@energyweb/credential-governance';
+import {
+  IIssuerDefinition,
+  RoleDefinitionResolverV2__factory,
+  RoleDefinitionResolverV2,
+} from '@energyweb/credential-governance';
 import { providers, utils } from 'ethers';
-import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 
 /**
  * An interface for Resolution of issuers for a namespace
