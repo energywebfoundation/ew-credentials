@@ -128,7 +128,13 @@ export class IssuerVerification {
           credential.issuer,
           role
         );
-        if (issuerCredential && await verifyCredentialProofCallback(issuerCredential)) {        
+
+        if (
+          issuerCredential &&
+          // @ts-expect-error: will be fixed in https://github.com/energywebfoundation/ew-credentials/pull/19
+          (await verifyCredentialProofCallback(issuerCredential))
+        ) {
+          // @ts-expect-error: will be fixed in https://github.com/energywebfoundation/ew-credentials/pull/19
           credential = issuerCredential;
         } else {
           throw new Error('Invalid credential');
