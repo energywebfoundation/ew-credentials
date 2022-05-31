@@ -64,6 +64,7 @@ export class IssuerVerification {
   async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
+    /**@todo eslint no-constant-condition */
     while (true) {
       const offChainClaim = await this._credentialResolver.getCredential(
         subjectDID,
