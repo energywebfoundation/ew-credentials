@@ -128,10 +128,7 @@ export class IssuerVerification {
           credential.issuer,
           role
         );
-        // @ts-ignore
-        const result = await verifyCredentialProofCallback(issuerCredential);
-        if (result) {
-          // @ts-ignore
+        if (issuerCredential && await verifyCredentialProofCallback(issuerCredential)) {        
           credential = issuerCredential;
         } else {
           throw new Error('Invalid credential');
