@@ -15,7 +15,6 @@ export function upgradeChainId(offChainClaim: OffChainClaim) {
     if (didFormatFields.includes(key)) {
       const expectedEthrDID = offChainClaim[key] as string;
       if (isValidErc1056(expectedEthrDID)) {
-        // @ts-ignore
         offChainClaim[key] = upgradeDidWithChainId(expectedEthrDID);
       } else {
         invalidDIDProperty = true;
