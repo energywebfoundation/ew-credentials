@@ -40,3 +40,5 @@ export * from './chain-constants';
 export { PRINCIPAL_THRESHOLD, WITHDRAW_DELAY } from './constants';
 export { ResolverContractType };
 export { DomainHierarchy };
+export { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
+export { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
