@@ -25,22 +25,22 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fethces credential for the given did and role
+   * Fetches credential for the given did and role for a vc issuance hierarchy
    * @param did
-   * @param role
+   * @param namespace
    * @returns
    */
-  async getCredential(did: string, role: string) {
+  async getCredential(did: string, namespace: string) {
     const credentials = await this.credentialsOf(did);
     return credentials.find(
       (claim) =>
-        claim.credentialSubject.role.namespace === role ||
-        utils.namehash(claim.credentialSubject.role.namespace) === role
+        claim.credentialSubject.role.namespace === namespace ||
+        utils.namehash(claim.credentialSubject.role.namespace) === namespace
     );
   }
 
   /**
-   * Fethces credential for the given did and role
+   * Fetches issued token for the given did and role for an OffChainClaim issuance hierarchy
    * @param did
    * @param role
    * @returns
@@ -99,9 +99,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
       .filter(filterOutMaliciousClaims);
   }
 
-  async isCredential(credential: unknown): Promise<boolean> {
-    if (!credential) return false;
-    if (typeof credential !== 'object') return false;
+  isVerifiableCredential(
+    vc: IVerifiableCredential | unknown
+  ): vc is IVerifiableCredential {
+    if (!vc) return false;
+    if (typeof vc !== 'object') return false;
     const credentialProps = [
       '@context',
       'id',
@@ -111,17 +113,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
       'credentialSubject',
       'proof',
     ];
-    const credProps = Object.keys(credential);
+    const credProps = Object.keys(vc);
     return credentialProps.every((p) => credProps.includes(p));
   }
 
   private async credentialsOf(did: string): Promise<IVerifiableCredential[]> {
-    const filterOutMaliciousCredentials = (
-      item: IVerifiableCredential | undefined
-    ): item is IVerifiableCredential => {
-      return !!item;
-    };
-
     const didDocument = await this._resolver.read(did);
     const services: IServiceEndpoint[] = didDocument.service || [];
     return (
@@ -133,8 +129,6 @@ export class IpfsCredentialResolver implements CredentialResolver {
           return vc as IVerifiableCredential;
         })
       )
-    )
-      .filter(this.isCredential)
-      .filter(filterOutMaliciousCredentials);
+    ).filter(this.isVerifiableCredential);
   }
 }
