@@ -1,4 +1,4 @@
-import { utils, ContractFactory, Contract, Signer } from 'ethers';
+import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {
@@ -10,7 +10,12 @@ import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/c
 import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
 import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
+import {
+  DomainReader,
+  DomainTransactionFactoryV2,
+  ResolverContractType,
+  VOLTA_CHAIN_ID,
+} from '@energyweb/credential-governance';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
@@ -25,17 +30,15 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerDefinitionResolver,
 } from '../src';
-import { IVerifiableCredential, OffChainClaim } from '../src/models';
+import { IVerifiableCredential } from '../src/models';
 import {
   DIDAttribute,
-  PubKeyType,
   ProviderTypes,
   ProviderSettings,
   RegistrySettings,
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import { JWT } from '@ew-did-registry/jwt';
 import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
@@ -209,14 +212,20 @@ function testSuite() {
     await userOperator.create();
     await adminOperator.create();
     await managerOperator.create();
+    let domainReader = new DomainReader({
+      ensRegistryAddress: ensRegistry.address,
+      provider: provider,
+    });
+    domainReader.addKnownResolver({
+      chainId: VOLTA_CHAIN_ID,
+      address: roleResolver.address,
+      type: ResolverContractType.RoleDefinitionResolver_v2,
+    });
 
     issuerDefinitionResolver = new EthersProviderIssuerDefinitionResolver(
-      provider,
-      roleResolver.address
+      domainReader
     );
     issuerVerification = new VCIssuerVerification(
-      provider,
-      registrySettings,
       credentialResolver,
       issuerDefinitionResolver
     );
