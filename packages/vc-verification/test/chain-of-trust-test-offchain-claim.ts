@@ -1,4 +1,4 @@
-import { utils, ContractFactory, Contract, Signer } from 'ethers';
+import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {
@@ -17,7 +17,7 @@ import { PreconditionType } from '@energyweb/credential-governance/src/types/dom
 import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
 import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
-import { Methods } from '@ew-did-registry/did';
+import { Methods, Chain } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   ClaimIssuerVerification,
@@ -25,10 +25,8 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerDefinitionResolver,
 } from '../src';
-import { IVerifiableCredential, OffChainClaim } from '../src/models';
 import {
   DIDAttribute,
-  PubKeyType,
   ProviderTypes,
   ProviderSettings,
   RegistrySettings,
@@ -40,6 +38,11 @@ import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
+import {
+  DomainReader,
+  ResolverContractType,
+  VOLTA_CHAIN_ID,
+} from '@energyweb/credential-governance';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -110,7 +113,7 @@ export function testsOnGanache(): void {
         '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1',
     });
     userAddress = userKeys.getAddress();
-    userDid = `did:${Methods.Erc1056}:${userAddress}`;
+    userDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${userAddress}`;
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
     adminKeys = new Keys({
@@ -118,7 +121,7 @@ export function testsOnGanache(): void {
         '388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418',
     });
     adminAddress = adminKeys.getAddress();
-    adminDid = `did:${Methods.Erc1056}:${adminAddress}`;
+    adminDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${adminAddress}`;
     admin = EwSigner.fromPrivateKey(adminKeys.privateKey, providerSettings);
 
     managerKeys = new Keys({
@@ -126,7 +129,7 @@ export function testsOnGanache(): void {
         'aa3680d5d48a8283413f7a108367c7299ca73f553735860a87b08f39395618b7',
     });
     managerAddress = managerKeys.getAddress();
-    managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
+    managerDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
     verifierKeys = new Keys({
@@ -134,7 +137,7 @@ export function testsOnGanache(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
+    verifierDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${verifierAddress}`;
     verifier = EwSigner.fromPrivateKey(
       verifierKeys.privateKey,
       providerSettings
@@ -208,11 +211,20 @@ function testSuite() {
     await userOperator.create();
     await adminOperator.create();
     await managerOperator.create();
+    let domainReader = new DomainReader({
+      ensRegistryAddress: ensRegistry.address,
+      provider: provider,
+    });
+    domainReader.addKnownResolver({
+      chainId: VOLTA_CHAIN_ID,
+      address: roleResolver.address,
+      type: ResolverContractType.RoleDefinitionResolver_v2,
+    });
 
     issuerDefinitionResolver = new EthersProviderIssuerDefinitionResolver(
-      provider,
-      roleResolver.address
+      domainReader
     );
+
     issuerVerification = new ClaimIssuerVerification(
       provider,
       registrySettings,
