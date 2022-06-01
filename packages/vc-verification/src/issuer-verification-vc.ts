@@ -1,36 +1,31 @@
-import * as jwt from 'jsonwebtoken';
-import { providers } from 'ethers';
-import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
-import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
 import { IVerifiableCredential, VerificationResult } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
 
+/**
+ * A class to verify chain of trust for a Verifiable Credential
+ * The hierachy must only consist of VC issuance
+ */
 export class VCIssuerVerification {
-  private _resolver: Resolver;
   private _issuerDefResolver: IssuerDefinitionResolver;
   private _credentialResolver: CredentialResolver;
 
   /**
    *
-   * @param provider
-   * @param registrySetting
    * @param credentialResolver
    * @param issuerDefResolver
    */
   constructor(
-    provider: providers.Provider,
-    registrySetting: RegistrySettings,
     credentialResolver: CredentialResolver,
     issuerDefResolver: IssuerDefinitionResolver
   ) {
     this._issuerDefResolver = issuerDefResolver;
-    this._resolver = new Resolver(provider, registrySetting);
     this._credentialResolver = credentialResolver;
   }
 
   /**
-   * Verifies chain of trust for a holder's credential
+   * Verifies chain of trust for the provided verifiable credential
    * @param credential
    * @param verifyCredentialProofCallback verification callback approach to verify all issuers in hierarchy. By default the chain is verified against RoleDefinition
    * @returns
@@ -54,7 +49,7 @@ export class VCIssuerVerification {
   }
 
   /**
-   * Verifies chain of trust for a given holder's DID and role
+   * Verifies chain of trust for a given credential
    * @param {string} credential
    */
   async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
@@ -151,11 +146,11 @@ export class VCIssuerVerification {
    */
   private async isRoleIssuerDID(role: string) {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
-    return issuers && issuers.did && issuers.did.length > 0;
+    return issuers && issuers.issuerType === 'DID';
   }
 
   /**
-   * Verifies issuer's authority to issue credential
+   * Verifies issuer's authority to issue credential for a namespace
    * @param {string} namespace
    * @param {string} issuerDID
    * @returns boolean
@@ -170,7 +165,8 @@ export class VCIssuerVerification {
     if (issuers && issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
         const issuerAddr = addressOf(issuerDID);
-        if (issuers.did[i].toUpperCase() === issuerAddr.toUpperCase()) {
+        const roleIssuerAddr = addressOf(issuers.did[i]);
+        if (roleIssuerAddr.toUpperCase() === issuerAddr.toUpperCase()) {
           return true;
         }
       }

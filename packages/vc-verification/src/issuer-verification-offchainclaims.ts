@@ -1,11 +1,15 @@
 import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
-import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
 import { OffChainClaim } from './models';
 
+/**
+ * A class to verify chain of trust for an issued OffChainClaim
+ * The hierachy must only consist of OffchainClaim issuance
+ */
 export class ClaimIssuerVerification {
   private _resolver: Resolver;
   private _issuerDefResolver: IssuerDefinitionResolver;
@@ -31,7 +35,8 @@ export class ClaimIssuerVerification {
 
   /**
    * Verifies chain of trust for a given holder's DID and role
-   * @param {string} credential
+   * @param {string} issuerDID
+   * @param {string} role
    */
   async verifyChainOfTrustClaims(issuerDID: string, role: string) {
     let currentIssuerDID = issuerDID;
@@ -72,7 +77,7 @@ export class ClaimIssuerVerification {
    */
   private async isRoleIssuerDID(role: string) {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
-    return issuers && issuers.did && issuers.did.length > 0;
+    return issuers && issuers.issuerType === 'DID';
   }
 
   /**
@@ -91,7 +96,7 @@ export class ClaimIssuerVerification {
   }
 
   /**
-   * Verifies issuer's authority to issue credential
+   * Verifies issuer's authority to issue credential for a namespace
    * @param {string} namespace
    * @param {string} issuerDID
    * @returns boolean
@@ -103,9 +108,9 @@ export class ClaimIssuerVerification {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(
       namespace
     );
-    if (issuers && issuers.did && issuers.did.length > 0) {
+    if (issuers && issuers.did && issuers.issuerType === 'DID') {
       for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] == addressOf(issuerDID)) {
+        if (issuers.did[i] === issuerDID) {
           return true;
         }
       }

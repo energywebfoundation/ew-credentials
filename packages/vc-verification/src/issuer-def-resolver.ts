@@ -1,9 +1,9 @@
 import {
+  DomainReader,
   IIssuerDefinition,
-  RoleDefinitionResolverV2__factory,
-  RoleDefinitionResolverV2,
+  IRoleDefinitionV2,
 } from '@energyweb/credential-governance';
-import { providers, utils } from 'ethers';
+import { utils } from 'ethers';
 
 /**
  * An interface for Resolution of issuers for a namespace
@@ -25,13 +25,10 @@ export interface IssuerDefinitionResolver {
 export class EthersProviderIssuerDefinitionResolver
   implements IssuerDefinitionResolver
 {
-  private _roleDefResolver: RoleDefinitionResolverV2;
+  private _domainReader: DomainReader;
 
-  constructor(provider: providers.Provider, roleDefResolverAddr: string) {
-    this._roleDefResolver = RoleDefinitionResolverV2__factory.connect(
-      roleDefResolverAddr,
-      provider
-    );
+  constructor(domainReader: DomainReader) {
+    this._domainReader = domainReader;
   }
 
   /**
@@ -42,22 +39,13 @@ export class EthersProviderIssuerDefinitionResolver
   async getIssuerDefinition(
     namespace: string
   ): Promise<IIssuerDefinition | undefined> {
-    let issuers: IIssuerDefinition;
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
-    const [result, type] = await Promise.all([
-      this._roleDefResolver.issuers(resolvedNamespace),
-      this._roleDefResolver.issuerType(resolvedNamespace),
-    ]);
-    if (result.dids.length > 0 || result.role.length > 0) {
-      return (issuers = {
-        did: result.dids,
-        roleName: result.role,
-        //confirm the type representation TODO
-        issuerType: type.toString(),
-      });
-    }
+    const roleDefinition = (await this._domainReader.read({
+      node: resolvedNamespace,
+    })) as IRoleDefinitionV2;
+    if (roleDefinition) return roleDefinition.issuer;
     return undefined;
   }
 }
