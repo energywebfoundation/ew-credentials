@@ -54,6 +54,15 @@ export class DomainReader {
   ): domainDefinition is IRoleDefinition =>
     (domainDefinition as IRoleDefinition).roleName !== undefined;
 
+  public static isRoleDefinitionV2 = (
+    domainDefinition:
+      | IRoleDefinitionText
+      | IOrganizationDefinition
+      | IAppDefinition
+  ): domainDefinition is IRoleDefinitionV2 =>
+    (domainDefinition as IRoleDefinitionV2).roleName !== undefined &&
+    (domainDefinition as IRoleDefinitionV2).revoker !== undefined;
+
   private readonly _provider: providers.Provider;
   private readonly _ensRegistry: ENSRegistry;
   private readonly _knownEnsResolvers: Record<
