@@ -42,4 +42,5 @@ export interface OffChainClaim {
   claimTypeVersion: number;
   issuedToken: string;
   iss: string;
+  [x: string]: string | number;
 }

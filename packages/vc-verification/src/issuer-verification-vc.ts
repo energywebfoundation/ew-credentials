@@ -60,6 +60,7 @@ export class VCIssuerVerification {
   async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
+    /**@todo eslint no-constant-condition */
     while (true) {
       const vc = await this._credentialResolver.getCredential(subjectDID, role);
       if (!vc) {
@@ -121,10 +122,11 @@ export class VCIssuerVerification {
           credential.issuer,
           role
         );
-        // @ts-ignore
-        const result = await verifyCredentialProofCallback(issuerCredential);
-        if (result) {
-          // @ts-ignore
+
+        if (
+          issuerCredential &&
+          (await verifyCredentialProofCallback(issuerCredential))
+        ) {
           credential = issuerCredential;
         } else {
           throw new Error('Invalid credential');
