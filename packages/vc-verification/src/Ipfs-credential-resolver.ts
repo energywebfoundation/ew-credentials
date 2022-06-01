@@ -1,7 +1,7 @@
 import { providers, utils } from 'ethers';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
-import { OffChainClaim } from './models';
+import { IVerifiableCredential, OffChainClaim } from './models';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
   RegistrySettings,
@@ -25,17 +25,36 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fethces credential for the given did and role
+   * Fetches credential for the given did and role for a vc issuance hierarchy
+   * @param did
+   * @param namespace
+   * @returns
+   */
+  async getCredential(did: string, namespace: string) {
+    const credentials = await this.credentialsOf(did);
+    return credentials.find(
+      (claim) =>
+        claim.credentialSubject.role.namespace === namespace ||
+        utils.namehash(claim.credentialSubject.role.namespace) === namespace
+    );
+  }
+
+  /**
+   * Fetches issued token for the given did and role for an OffChainClaim issuance hierarchy
    * @param did
    * @param role
    * @returns
    */
-  async getCredential(did: string, role: string) {
+  async getClaimIssuedToken(
+    did: string,
+    namespace: string
+  ): Promise<string | undefined> {
     const offChainClaims = await this.offchainClaimsOf(did);
     return offChainClaims.find(
       (claim) =>
-        claim.claimType === role || utils.namehash(claim.claimType) === role
-    );
+        claim.claimType === namespace ||
+        utils.namehash(claim.claimType) === namespace
+    )?.issuedToken;
   }
 
   async isOffchainClaim(claim: unknown): Promise<boolean> {
@@ -78,5 +97,38 @@ export class IpfsCredentialResolver implements CredentialResolver {
       .filter(this.isOffchainClaim)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
+  }
+
+  isVerifiableCredential(
+    vc: IVerifiableCredential | unknown
+  ): vc is IVerifiableCredential {
+    if (!vc) return false;
+    if (typeof vc !== 'object') return false;
+    const credentialProps = [
+      '@context',
+      'id',
+      'type',
+      'issuer',
+      'issuanceDate',
+      'credentialSubject',
+      'proof',
+    ];
+    const credProps = Object.keys(vc);
+    return credentialProps.every((p) => credProps.includes(p));
+  }
+
+  private async credentialsOf(did: string): Promise<IVerifiableCredential[]> {
+    const didDocument = await this._resolver.read(did);
+    const services: IServiceEndpoint[] = didDocument.service || [];
+    return (
+      await Promise.all(
+        services.map(async ({ serviceEndpoint }) => {
+          const credential = await this._ipfsStore.get(serviceEndpoint);
+          const vc = JSON.parse(credential);
+          delete vc.iat;
+          return vc as IVerifiableCredential;
+        })
+      )
+    ).filter(this.isVerifiableCredential);
   }
 }
