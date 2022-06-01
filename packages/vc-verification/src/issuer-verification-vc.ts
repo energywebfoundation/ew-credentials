@@ -1,16 +1,12 @@
 import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
-import { ProofVerifier } from '@ew-did-registry/claims';
 import { Resolver, addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerDefinitionResolver } from '.';
-import {
-  IVerifiableCredential,
-  VerificationResult,
-  OffChainClaim,
-} from './models';
+import { IVerifiableCredential, VerificationResult } from './models';
+import { verifyCredential } from 'didkit-wasm-node';
 
-export class IssuerVerification {
+export class VCIssuerVerification {
   private _resolver: Resolver;
   private _issuerDefResolver: IssuerDefinitionResolver;
   private _credentialResolver: CredentialResolver;
@@ -66,16 +62,14 @@ export class IssuerVerification {
     let role = await this.parseRoleFromCredential(credential);
     /**@todo eslint no-constant-condition */
     while (true) {
-      const offChainClaim = await this._credentialResolver.getCredential(
-        subjectDID,
-        role
-      );
-      if (!offChainClaim) {
+      const vc = await this._credentialResolver.getCredential(subjectDID, role);
+      if (!vc) {
         throw new Error('No credential found');
       } else {
         let issuerDID;
-        if (offChainClaim.issuedToken) {
-          issuerDID = await this.verifyIssuedToken(offChainClaim.issuedToken);
+        if (vc.proof) {
+          await verifyCredential(JSON.stringify(vc), JSON.stringify({}));
+          issuerDID = vc.issuer;
         }
         if (issuerDID) {
           if (await this.verifyIssuerAuthority(role, issuerDID)) {
@@ -131,10 +125,8 @@ export class IssuerVerification {
 
         if (
           issuerCredential &&
-          // @ts-expect-error: will be fixed in https://github.com/energywebfoundation/ew-credentials/pull/19
           (await verifyCredentialProofCallback(issuerCredential))
         ) {
-          // @ts-expect-error: will be fixed in https://github.com/energywebfoundation/ew-credentials/pull/19
           credential = issuerCredential;
         } else {
           throw new Error('Invalid credential');
@@ -163,21 +155,6 @@ export class IssuerVerification {
   }
 
   /**
-   * Verify issued token signature
-   * @param {string} token
-   */
-  async verifyIssuedToken(token: string) {
-    const offChainClaim = jwt.decode(token) as OffChainClaim;
-    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
-    const verifier = new ProofVerifier(issuerDIDDoc);
-    if (await verifier.verifyAssertionProof(token)) {
-      return offChainClaim.iss;
-    } else {
-      throw new Error('Invalid Credential');
-    }
-  }
-
-  /**
    * Verifies issuer's authority to issue credential
    * @param {string} namespace
    * @param {string} issuerDID
@@ -192,23 +169,25 @@ export class IssuerVerification {
     );
     if (issuers && issuers.did && issuers.did.length > 0) {
       for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] == addressOf(issuerDID)) {
+        const issuerAddr = addressOf(issuerDID);
+        if (issuers.did[i].toUpperCase() === issuerAddr.toUpperCase()) {
           return true;
         }
       }
     }
-    let offChainClaim;
+    let vc;
     if (issuers && issuers.roleName) {
-      offChainClaim = await this._credentialResolver.getCredential(
+      vc = await this._credentialResolver.getCredential(
         issuerDID,
         issuers.roleName
       );
     }
-    if (!offChainClaim) {
+    if (!vc) {
       return false;
     }
-    const isClaimVerified = await this.verifyIssuedToken(
-      offChainClaim.issuedToken
+    const isClaimVerified = await verifyCredential(
+      JSON.stringify(vc),
+      JSON.stringify({})
     );
     return typeof isClaimVerified === 'string';
   }
