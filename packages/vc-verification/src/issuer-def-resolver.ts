@@ -42,10 +42,12 @@ export class EthersProviderIssuerDefinitionResolver
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
-    const roleDefinition = (await this._domainReader.read({
+    const roleDefinition = await this._domainReader.read({
       node: resolvedNamespace,
-    })) as IRoleDefinitionV2;
-    if (roleDefinition) return roleDefinition.issuer;
+    });
+    if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
+      return roleDefinition.issuer;
+    }
     return undefined;
   }
 }
