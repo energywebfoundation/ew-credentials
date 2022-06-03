@@ -1,6 +1,6 @@
 import { Wallet, providers } from 'ethers';
 import {
-  VOLTA_IDENTITY_MANAGER_ADDRESS,
+  VOLTA_ERC_1056_ADDRESS,
   VOLTA_ENS_REGISTRY_ADDRESS,
   VOLTA_CLAIM_MANAGER_ADDRESS,
 } from '@energyweb/credential-governance';
@@ -17,9 +17,9 @@ const deployer = new Wallet(
 async function deployRevocationRegistry() {
   const revocationRegistry = await (
     await new ClaimsRevocationRegistry__factory(deployer).deploy(
-      VOLTA_IDENTITY_MANAGER_ADDRESS,
-      VOLTA_CLAIM_MANAGER_ADDRESS,
-      VOLTA_ENS_REGISTRY_ADDRESS
+      VOLTA_ERC_1056_ADDRESS,
+      VOLTA_ENS_REGISTRY_ADDRESS,
+      VOLTA_CLAIM_MANAGER_ADDRESS
     )
   ).deployed();
 
