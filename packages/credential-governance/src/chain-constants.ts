@@ -16,6 +16,8 @@ export const VOLTA_REWARD_POOL_ADDRESS =
   '0x6d832DDd386F1dFA53d5b0cACcFF509f95D345Ca';
 export const VOLTA_RESOLVER_V2_ADDRESS =
   '0xcf72f16Ab886776232bea2fcf3689761a0b74EfE';
+export const VOLTA_ERC_1056_ADDRESS =
+  '0xc15d5a57a8eb0e1dcbe5d88b8f9a82017e5cc4af';
 
 // EWC chain
 export const EWC_CHAIN_ID = 246;
