@@ -18,6 +18,7 @@ import {
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
 import { IssuanceVerificationTestClaims } from './chain-of-trust-test-offchain-claim';
 import { IssuanceVerificationTestVC } from './chain-of-trust-test-vc';
+import { RevocationVerificationTestVC } from './vc-revocation-test';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
@@ -70,4 +71,5 @@ describe('[Credential Verificaiton]', function () {
     'VC Verification with Verifiable Credentials',
     IssuanceVerificationTestVC
   );
+  describe('VC Revocation verification tests', RevocationVerificationTestVC);
 });
