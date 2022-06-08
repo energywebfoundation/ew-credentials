@@ -25,12 +25,13 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
-  VCIssuerVerification,
   IssuerResolver,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
+  RevocationVerification,
+  RevokerResolver,
+  EthersProviderRevokerResolver,
 } from '../src';
-import { IVerifiableCredential } from '../src/models';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -43,7 +44,12 @@ import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
-import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
+import { adminVC, managerVC } from './Fixtures/sample-vc';
+import {
+  statusListCredentialAdmin,
+  statusListCredentialManager,
+  statusListCredentialInValid,
+} from './Fixtures/sample-statuslist-credential';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -62,10 +68,11 @@ let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
 let provider: JsonRpcProvider;
-let issuerVerification: VCIssuerVerification;
+let revocationVerification: RevocationVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
-let issuerDefinitionResolver: IssuerResolver;
+let revokerResolver: RevokerResolver;
+let issuerResolver: IssuerResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -96,7 +103,7 @@ let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
-export function IssuanceVerificationTestVC(): void {
+export function RevocationVerificationTestVC(): void {
   describe('Tests on ganache', testsOnGanache);
 }
 
@@ -222,10 +229,13 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
-    issuerVerification = new VCIssuerVerification(
-      credentialResolver,
-      issuerDefinitionResolver
+    revokerResolver = new EthersProviderRevokerResolver(domainReader);
+
+    issuerResolver = new EthersProviderIssuerResolver(domainReader);
+    revocationVerification = new RevocationVerification(
+      issuerResolver,
+      revokerResolver,
+      credentialResolver
     );
 
     await (
@@ -363,8 +373,8 @@ function testSuite() {
     ).wait();
   });
 
-  describe('chainOfTrustTests', () => {
-    it('verifies issuer, where the role is issued by did', async () => {
+  describe('Verifies Revocation for Verifiable Credentials', () => {
+    it('should return false if the statusPurpose is not revocation', async () => {
       let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
@@ -381,34 +391,42 @@ function testSuite() {
         updateData,
         validity
       );
-      const vc: IVerifiableCredential = {
-        '@context': [],
-        id: adminDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: adminDid,
-          role: {
-            namespace: adminRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
 
-      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
+      expect(
+        await revocationVerification.verifyRevocation(
+          adminRole,
+          statusListCredentialInValid
+        )
+      ).false;
     });
 
-    it('verifies issuer, where the role is issued by role', async () => {
+    it('verifies revocation, where the role is revoked by did', async () => {
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const serviceId = adminRole;
+      const updateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
+
+      expect(
+        await revocationVerification.verifyRevocation(
+          adminRole,
+          statusListCredentialAdmin
+        )
+      ).true;
+    });
+
+    it('verifies revocation, where the role is revoked by role', async () => {
       let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
@@ -442,94 +460,13 @@ function testSuite() {
         updateDataManager,
         validity
       );
-      const VC: IVerifiableCredential = {
-        '@context': [],
-        id: managerDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: managerDid,
-          role: {
-            namespace: managerRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
 
-      expect(await issuerVerification.verifyChainOfTrust(VC)).true;
-    });
-
-    it('rejects credential for any unauthorised issuer in the chain', async () => {
-      let ipfsCIDAdmin = await didStore.save(JSON.stringify(adminVC));
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
-        type: DIDAttribute.ServicePoint,
-        value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
-          type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
-        },
-      };
-      await adminOperator.update(
-        adminDid,
-        DIDAttribute.ServicePoint,
-        updateDataAdmin,
-        validity
-      );
-
-      let ipfsCIDUser = await didStore.save(JSON.stringify(userVC));
-      const serviceIdUser = userRole;
-      const updateDataUser: IUpdateData = {
-        type: DIDAttribute.ServicePoint,
-        value: {
-          id: `${userDid}#service-${serviceIdUser}`,
-          type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDUser,
-        },
-      };
-      await userOperator.update(
-        userDid,
-        DIDAttribute.ServicePoint,
-        updateDataUser,
-        validity
-      );
-      const VC: IVerifiableCredential = {
-        '@context': [],
-        id: userDid,
-        type: ['Claims'],
-        issuer: adminDid,
-        issaunceDate: '02/02/2022',
-        credentialSubject: {
-          id: userDid,
-          role: {
-            namespace: userRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
-      const res = issuerVerification.verifyChainOfTrust(VC);
-      await expect(res).to.be.rejectedWith(
-        'Issuer is not allowed to issue credential'
-      );
+      expect(
+        await revocationVerification.verifyRevocation(
+          userRole,
+          statusListCredentialManager
+        )
+      ).true;
     });
   });
 }

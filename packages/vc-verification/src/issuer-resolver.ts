@@ -1,17 +1,16 @@
 import {
   DomainReader,
   IIssuerDefinition,
-  IRoleDefinitionV2,
 } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
 
 /**
- * An interface for Resolution of issuers for a namespace
+ * An interface for Resolution of Issuers for a namespace
  */
-export interface IssuerDefinitionResolver {
+export interface IssuerResolver {
   /**
    * Fetches authorised issuers for the provided namespace
-   * @param namespace
+   * @param namespace for which the issuers needs to be fetched
    * @returns IIssuerDefinition for the namespace
    */
   getIssuerDefinition(
@@ -20,11 +19,9 @@ export interface IssuerDefinitionResolver {
 }
 
 /**
- * Resolves an issuer definition by reading smart contract state via an Ethers provider
+ * Resolves issuers definition by reading smart contract state via an Ethers provider
  */
-export class EthersProviderIssuerDefinitionResolver
-  implements IssuerDefinitionResolver
-{
+export class EthersProviderIssuerResolver implements IssuerResolver {
   private _domainReader: DomainReader;
 
   constructor(domainReader: DomainReader) {
@@ -32,9 +29,9 @@ export class EthersProviderIssuerDefinitionResolver
   }
 
   /**
-   *
-   * @param namespace
-   * @returns issuers for the namespace from blockchain contract
+   * Fetches authorised issuers for the provided namespace
+   * @param namespace for which the issuers need to be fetched
+   * @returns IIssuerDefinition for the namespace from blockchain contract
    */
   async getIssuerDefinition(
     namespace: string
