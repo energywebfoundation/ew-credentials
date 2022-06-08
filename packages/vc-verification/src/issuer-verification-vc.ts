@@ -1,5 +1,5 @@
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
-import { CredentialResolver, AuthorityResolver } from '.';
+import { CredentialResolver, IssuerResolver } from '.';
 import { IVerifiableCredential, VerificationResult } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
 
@@ -8,17 +8,12 @@ import { verifyCredential } from 'didkit-wasm-node';
  * The hierachy must only consist of VC issuance
  */
 export class VCIssuerVerification {
-  private _issuerDefResolver: AuthorityResolver;
+  private _issuerDefResolver: IssuerResolver;
   private _credentialResolver: CredentialResolver;
 
-  /**
-   *
-   * @param credentialResolver
-   * @param issuerDefResolver
-   */
   constructor(
     credentialResolver: CredentialResolver,
-    issuerDefResolver: AuthorityResolver
+    issuerDefResolver: IssuerResolver
   ) {
     this._issuerDefResolver = issuerDefResolver;
     this._credentialResolver = credentialResolver;

@@ -3,7 +3,7 @@ import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { CredentialResolver, AuthorityResolver } from '.';
+import { CredentialResolver, IssuerResolver } from '.';
 import { OffChainClaim } from './models';
 
 /**
@@ -12,7 +12,7 @@ import { OffChainClaim } from './models';
  */
 export class ClaimIssuerVerification {
   private _resolver: Resolver;
-  private _issuerDefResolver: AuthorityResolver;
+  private _issuerDefResolver: IssuerResolver;
   private _credentialResolver: CredentialResolver;
 
   /**
@@ -26,7 +26,7 @@ export class ClaimIssuerVerification {
     provider: providers.Provider,
     registrySetting: RegistrySettings,
     credentialResolver: CredentialResolver,
-    issuerDefResolver: AuthorityResolver
+    issuerDefResolver: IssuerResolver
   ) {
     this._issuerDefResolver = issuerDefResolver;
     this._resolver = new Resolver(provider, registrySetting);

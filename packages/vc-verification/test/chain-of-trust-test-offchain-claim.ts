@@ -21,9 +21,9 @@ import { Methods, Chain } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   ClaimIssuerVerification,
-  AuthorityResolver,
+  IssuerResolver,
   IpfsCredentialResolver,
-  EthersProviderAuthorityResolver,
+  EthersProviderIssuerResolver,
 } from '../src';
 import {
   DIDAttribute,
@@ -64,7 +64,7 @@ let provider: JsonRpcProvider;
 let issuerVerification: ClaimIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
-let issuerDefinitionResolver: AuthorityResolver;
+let issuerDefinitionResolver: IssuerResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -221,9 +221,7 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerDefinitionResolver = new EthersProviderAuthorityResolver(
-      domainReader
-    );
+    issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
 
     issuerVerification = new ClaimIssuerVerification(
       provider,
