@@ -26,9 +26,9 @@ import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   VCIssuerVerification,
-  AuthorityResolver,
+  IssuerResolver,
   IpfsCredentialResolver,
-  EthersProviderAuthorityResolver,
+  EthersProviderIssuerResolver,
 } from '../src';
 import { IVerifiableCredential } from '../src/models';
 import {
@@ -65,7 +65,7 @@ let provider: JsonRpcProvider;
 let issuerVerification: VCIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
-let issuerDefinitionResolver: AuthorityResolver;
+let issuerDefinitionResolver: IssuerResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -222,9 +222,7 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerDefinitionResolver = new EthersProviderAuthorityResolver(
-      domainReader
-    );
+    issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
     issuerVerification = new VCIssuerVerification(
       credentialResolver,
       issuerDefinitionResolver

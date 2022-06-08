@@ -25,12 +25,13 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
-  AuthorityResolver,
+  IssuerResolver,
   IpfsCredentialResolver,
-  EthersProviderAuthorityResolver,
+  EthersProviderIssuerResolver,
   RevocationVerification,
+  RevokerResolver,
+  EthersProviderRevokerResolver,
 } from '../src';
-import { IVerifiableCredential } from '../src/models';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -70,7 +71,8 @@ let provider: JsonRpcProvider;
 let revocationVerification: RevocationVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
-let revocationDefinitionResolver: AuthorityResolver;
+let revokerResolver: RevokerResolver;
+let issuerResolver: IssuerResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -227,11 +229,12 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    revocationDefinitionResolver = new EthersProviderAuthorityResolver(
-      domainReader
-    );
+    revokerResolver = new EthersProviderRevokerResolver(domainReader);
+
+    issuerResolver = new EthersProviderIssuerResolver(domainReader);
     revocationVerification = new RevocationVerification(
-      revocationDefinitionResolver,
+      issuerResolver,
+      revokerResolver,
       credentialResolver
     );
 

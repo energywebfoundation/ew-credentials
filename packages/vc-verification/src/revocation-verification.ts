@@ -1,39 +1,34 @@
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { verifyCredential } from 'didkit-wasm-node';
-import { AuthorityResolver, CredentialResolver } from '.';
 import { StatusPurpose, StatusListCredential } from './models';
 import { VCIssuerVerification } from './issuer-verification-vc';
+import { IssuerResolver, RevokerResolver, CredentialResolver } from '.';
 
 /**
  * A class to validate if the revocation is valid or not
  */
 export class RevocationVerification {
-  private _authorityResolver: AuthorityResolver;
+  private _revokerResolver: RevokerResolver;
   private _credentialResolver: CredentialResolver;
   private _issuerVerification: VCIssuerVerification;
 
-  /**
-   *
-   * @param revokerDefResolver
-   * @param credentialResolver
-   */
   constructor(
-    authorityResolver: AuthorityResolver,
+    issuerResolver: IssuerResolver,
+    revokerResolver: RevokerResolver,
     credentialResolver: CredentialResolver
   ) {
-    this._authorityResolver = authorityResolver;
+    this._revokerResolver = revokerResolver;
     this._credentialResolver = credentialResolver;
     this._issuerVerification = new VCIssuerVerification(
       credentialResolver,
-      authorityResolver
+      issuerResolver
     );
   }
 
   /**
-   * Verify revocation for the provided credential or namespace and revoker
-   * @param credential
-   * @param namespace
-   * @param revokerDID
+   * Verifies VC revocation for the given namespace and StatusListCredential
+   * @param namespace for which the revocation was executed
+   * @param credential StatusListCredential to verify
    * @returns
    */
   async verifyRevocation(namespace: string, credential: StatusListCredential) {
@@ -49,7 +44,7 @@ export class RevocationVerification {
   }
 
   /**
-   *
+   * Verifies revoker's authority
    * @param namespace for which the revoker's authority is to be verified
    * @param revokerDID whose authority needs to be verified
    * @returns
@@ -58,12 +53,12 @@ export class RevocationVerification {
     namespace: string,
     revokerDID: string
   ): Promise<boolean> {
-    const revokers = await this._authorityResolver.getRevokerDefinition(
+    const revokers = await this._revokerResolver.getRevokerDefinition(
       namespace
     );
-    if (revokers && revokers.did) {
+    if (revokers?.did) {
+      const revokerAddr = addressOf(revokerDID);
       for (let i = 0; i < revokers.did.length; i++) {
-        const revokerAddr = addressOf(revokerDID);
         const roleRevokerAddr = addressOf(revokers.did[i]);
         if (roleRevokerAddr.toUpperCase() === revokerAddr.toUpperCase()) {
           return true;
@@ -72,7 +67,7 @@ export class RevocationVerification {
     }
     let isCredentialVerified = false;
     let isCredentialIssuerVerified = false;
-    if (revokers && revokers.roleName) {
+    if (revokers?.roleName) {
       const vc = await this._credentialResolver.getCredential(
         revokerDID,
         revokers.roleName
@@ -98,7 +93,7 @@ export class RevocationVerification {
 
   /**
    * Checks if the purpose of the issued credential is revocation
-   * @param purpose
+   * @param purpose statusPurpose from StatusListCredential
    * @returns
    */
   private isStatusPurposeRevocation(purpose: string) {
