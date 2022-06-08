@@ -1,4 +1,4 @@
-import { IVerifiableCredential, OffChainClaim } from './models';
+import { IVerifiableCredential } from './models';
 
 /**
  * An interface for a credential resolver

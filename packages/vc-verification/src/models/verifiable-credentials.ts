@@ -3,7 +3,7 @@ export interface IVerifiableCredential {
   id: string;
   type: string[];
   issuer: string;
-  issaunceDate: string;
+  issuanceDate: string;
   credentialSubject: CredentialSubject;
   proof: Proof;
 }
