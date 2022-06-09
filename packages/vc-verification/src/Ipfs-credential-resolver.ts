@@ -1,13 +1,13 @@
 import { providers, utils } from 'ethers';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
-import { IVerifiableCredential, OffChainClaim } from './models';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
   RegistrySettings,
   IServiceEndpoint,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
+import { IVerifiableCredential, OffChainClaim } from './models';
 import { upgradeChainId } from './upgrade-chainid';
 import { CredentialResolver } from './credential-resolver';
 
