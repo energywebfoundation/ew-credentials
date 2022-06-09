@@ -386,7 +386,7 @@ function testSuite() {
         id: adminDid,
         type: ['Claims'],
         issuer: adminDid,
-        issaunceDate: '02/02/2022',
+        issuanceDate: '02/02/2022',
         credentialSubject: {
           id: adminDid,
           role: {
@@ -447,7 +447,7 @@ function testSuite() {
         id: managerDid,
         type: ['Claims'],
         issuer: adminDid,
-        issaunceDate: '02/02/2022',
+        issuanceDate: '02/02/2022',
         credentialSubject: {
           id: managerDid,
           role: {
@@ -508,7 +508,7 @@ function testSuite() {
         id: userDid,
         type: ['Claims'],
         issuer: adminDid,
-        issaunceDate: '02/02/2022',
+        issuanceDate: '02/02/2022',
         credentialSubject: {
           id: userDid,
           role: {
