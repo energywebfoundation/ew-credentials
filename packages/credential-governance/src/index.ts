@@ -14,6 +14,7 @@ import {
   IIssuerDefinition,
   IRevokerDefinition,
 } from './types/domain-definitions';
+import { RoleCredentialSubject, IssuerFields } from './types/role-credential';
 import { ResolverContractType } from './types/resolver-contract-type';
 import { EncodedCall } from './types/transaction';
 
@@ -35,6 +36,7 @@ export {
   IIssuerDefinition,
   IRevokerDefinition,
 };
+export { RoleCredentialSubject, IssuerFields };
 export { EncodedCall };
 export * from './chain-constants';
 export { PRINCIPAL_THRESHOLD, WITHDRAW_DELAY } from './constants';
