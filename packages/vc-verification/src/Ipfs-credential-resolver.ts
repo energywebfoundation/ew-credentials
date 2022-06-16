@@ -7,9 +7,11 @@ import {
   IServiceEndpoint,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
-import { IVerifiableCredential, OffChainClaim } from './models';
+import { OffChainClaim } from './models';
 import { upgradeChainId } from './upgrade-chainid';
 import { CredentialResolver } from './credential-resolver';
+import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import { RoleCredentialSubject } from '@energyweb/credential-governance';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
@@ -100,8 +102,8 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   isVerifiableCredential(
-    vc: IVerifiableCredential | unknown
-  ): vc is IVerifiableCredential {
+    vc: VerifiableCredential<RoleCredentialSubject> | unknown
+  ): vc is VerifiableCredential<RoleCredentialSubject> {
     if (!vc) return false;
     if (typeof vc !== 'object') return false;
     const credentialProps = [
@@ -117,7 +119,9 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return credentialProps.every((p) => credProps.includes(p));
   }
 
-  private async credentialsOf(did: string): Promise<IVerifiableCredential[]> {
+  private async credentialsOf(
+    did: string
+  ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
     const didDocument = await this._resolver.read(did);
     const services: IServiceEndpoint[] = didDocument.service || [];
     return (
@@ -126,7 +130,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
           const credential = await this._ipfsStore.get(serviceEndpoint);
           const vc = JSON.parse(credential);
           delete vc.iat;
-          return vc as IVerifiableCredential;
+          return vc as VerifiableCredential<RoleCredentialSubject>;
         })
       )
     ).filter(this.isVerifiableCredential);

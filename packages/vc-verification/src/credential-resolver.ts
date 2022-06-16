@@ -1,4 +1,5 @@
-import { IVerifiableCredential } from './models';
+import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 
 /**
  * An interface for a credential resolver
@@ -13,7 +14,7 @@ export interface CredentialResolver {
   getCredential(
     did: string,
     namespace: string
-  ): Promise<IVerifiableCredential | undefined>;
+  ): Promise<VerifiableCredential<RoleCredentialSubject> | undefined>;
 
   /**
    * Fetches OffChainClaims belonging to a DID for the provided namespace

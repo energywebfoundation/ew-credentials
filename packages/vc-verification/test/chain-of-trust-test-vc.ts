@@ -16,6 +16,7 @@ import {
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
+import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
@@ -26,11 +27,10 @@ import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   VCIssuerVerification,
-  IssuerResolver,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
+  IssuerResolver,
 } from '../src';
-import { IVerifiableCredential } from '../src/models';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -44,6 +44,7 @@ import {
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
+import { RoleCredentialSubject } from '@energyweb/credential-governance';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -381,7 +382,7 @@ function testSuite() {
         updateData,
         validity
       );
-      const vc: IVerifiableCredential = {
+      const vc: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: adminDid,
         type: ['Claims'],
@@ -442,7 +443,7 @@ function testSuite() {
         updateDataManager,
         validity
       );
-      const VC: IVerifiableCredential = {
+      const VC: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: managerDid,
         type: ['Claims'],
@@ -503,7 +504,7 @@ function testSuite() {
         updateDataUser,
         validity
       );
-      const VC: IVerifiableCredential = {
+      const VC: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: userDid,
         type: ['Claims'],
