@@ -80,7 +80,7 @@ export class RevocationVerification {
         isCredentialIssuerVerified =
           await this._issuerVerification.verifyIssuerAuthority(
             revokers.roleName,
-            vc.issuer
+            vc.issuer as string
           );
       } else {
         throw new Error('No authoritative credential found for revoker');

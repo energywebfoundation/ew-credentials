@@ -211,7 +211,7 @@ function testSuite() {
     await userOperator.create();
     await adminOperator.create();
     await managerOperator.create();
-    let domainReader = new DomainReader({
+    const domainReader = new DomainReader({
       ensRegistryAddress: ensRegistry.address,
       provider: provider,
     });
@@ -367,7 +367,7 @@ function testSuite() {
 
   describe('chainOfTrustTests', () => {
     it('verifies issuer, where the role is issued by did', async () => {
-      let adminJWT = new JWT(adminKeys);
+      const adminJWT = new JWT(adminKeys);
       const roleClaim = {
         iss: adminDid,
         subject: adminDid,
@@ -411,7 +411,7 @@ function testSuite() {
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
-      let adminJWT = new JWT(adminKeys);
+      const adminJWT = new JWT(adminKeys);
       const roleClaimAdmin = {
         iss: adminDid,
         subject: adminDid,

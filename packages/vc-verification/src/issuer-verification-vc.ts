@@ -1,8 +1,9 @@
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { CredentialResolver, IssuerResolver } from '.';
-import { IVerifiableCredential, VerificationResult } from './models';
+import { VerificationResult } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
-
+import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import { RoleCredentialSubject } from '@energyweb/credential-governance';
 /**
  * A class to verify chain of trust for a Verifiable Credential
  * The hierachy must only consist of VC issuance
@@ -26,9 +27,9 @@ export class VCIssuerVerification {
    * @returns
    */
   async verifyChainOfTrust(
-    credential: IVerifiableCredential,
+    credential: VerifiableCredential<RoleCredentialSubject>,
     verifyCredentialProofCallback?: (
-      credential: IVerifiableCredential
+      credential: VerifiableCredential<RoleCredentialSubject>
     ) => Promise<VerificationResult>
   ) {
     if (credential && verifyCredentialProofCallback) {
@@ -47,7 +48,9 @@ export class VCIssuerVerification {
    * Verifies chain of trust for a given credential
    * @param {string} credential
    */
-  async verifyChainOfTrustByRoleDefinition(credential: IVerifiableCredential) {
+  async verifyChainOfTrustByRoleDefinition(
+    credential: VerifiableCredential<RoleCredentialSubject>
+  ) {
     let subjectDID = credential.credentialSubject.id;
     let role = await this.parseRoleFromCredential(credential);
     /**@todo eslint no-constant-condition */
@@ -62,8 +65,8 @@ export class VCIssuerVerification {
           issuerDID = vc.issuer;
         }
         if (issuerDID) {
-          if (await this.verifyIssuerAuthority(role, issuerDID)) {
-            subjectDID = issuerDID;
+          if (await this.verifyIssuerAuthority(role, issuerDID as string)) {
+            subjectDID = issuerDID as string;
             if (await this.isRoleIssuerDID(role)) {
               return true;
             }
@@ -89,9 +92,9 @@ export class VCIssuerVerification {
    * TO BE COMPLETED
    */
   async verifyChainOfTrustCallback(
-    credential: IVerifiableCredential,
+    credential: VerifiableCredential<RoleCredentialSubject>,
     verifyCredentialProofCallback: (
-      credential: IVerifiableCredential
+      credential: VerifiableCredential<RoleCredentialSubject>
     ) => Promise<VerificationResult>
   ) {
     let hasParent = true;
@@ -109,7 +112,7 @@ export class VCIssuerVerification {
         }
       } else {
         const issuerCredential = await this._credentialResolver.getCredential(
-          credential.issuer,
+          credential.issuer as string,
           role
         );
 
@@ -130,7 +133,9 @@ export class VCIssuerVerification {
    * @param credential
    * @returns
    */
-  private async parseRoleFromCredential(credential: IVerifiableCredential) {
+  private async parseRoleFromCredential(
+    credential: VerifiableCredential<RoleCredentialSubject>
+  ) {
     return credential.credentialSubject.role.namespace;
   }
 

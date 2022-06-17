@@ -1,29 +1,3 @@
-export interface IVerifiableCredential {
-  '@context': string[];
-  id: string;
-  type: string[];
-  issuer: string;
-  issuanceDate: string;
-  credentialSubject: CredentialSubject;
-  proof: Proof;
-}
-
-export interface CredentialSubject {
-  id: string;
-  role: Role;
-  issuerFields: IssuerFields[];
-}
-
-export interface Role {
-  namespace: string;
-  version: string;
-}
-
-export interface IssuerFields {
-  key: string;
-  value: string;
-}
-
 export interface Proof {
   '@context': string;
   verificationMethod: string;
