@@ -139,12 +139,12 @@ export function domainCrudTestSuiteWithRevocation(): void {
         });
         const call = domainDefTxFactoryV2.newRole({
           domain: domain2,
-          roleDefinition: role2,
+          roleDefinition: role,
         });
         await (await owner.sendTransaction(call)).wait();
 
         const roleDef = await domainReader.read({ node: node2 });
-        expect(roleDef).to.eql(role2);
+        expect(roleDef).to.eql(role);
 
         const reverseName = await ensRoleDefResolverV2.name(node2);
         expect(reverseName).to.equal(domain2);
@@ -152,11 +152,11 @@ export function domainCrudTestSuiteWithRevocation(): void {
         role.version = role.version + 1;
         const updateRole = domainDefTxFactoryV2.editDomain({
           domain: domain2,
-          domainDefinition: role2,
+          domainDefinition: role,
         });
         await (await owner.sendTransaction(updateRole)).wait();
         const updatedRoleDef = await domainReader.read({ node: node2 });
-        expect(updatedRoleDef).to.eql(role2);
+        expect(updatedRoleDef).to.eql(role);
 
         const logs = await getDomainUpdatedLogs();
         expect(logs.length).to.equal(2); // One log for create, one for update
@@ -171,6 +171,39 @@ export function domainCrudTestSuiteWithRevocation(): void {
           ...role2,
           issuer: { issuerType: 'ROLE', roleName: domain2 },
         });
+      });
+
+      it('should add domain with `defaultValidityPeriod` property', async () => {
+        await roleCRUDtests({ ...role2, defaultValidityPeriod: 1000 });
+      });
+
+      it('should update domain with additional `defaultValidityPeriod` property', async () => {
+        const role = role2;
+        await ensRegistry.setResolver(node2, ensRoleDefResolverV2.address);
+        const domainDefTxFactoryV2 = new DomainTransactionFactoryV2({
+          domainResolverAddress: ensRoleDefResolverV2.address,
+        });
+        const call = domainDefTxFactoryV2.newRole({
+          domain: domain2,
+          roleDefinition: role,
+        });
+        await (await owner.sendTransaction(call)).wait();
+        role.version += 1;
+        const updateRole = domainDefTxFactoryV2.editDomain({
+          domain: domain2,
+          domainDefinition: {
+            ...role,
+            defaultValidityPeriod: 1000,
+          },
+        });
+        await (await owner.sendTransaction(updateRole)).wait();
+        const updatedRoleDef = await domainReader.read({ node: node2 });
+
+        console.log(updatedRoleDef);
+
+        expect(updatedRoleDef)
+          .to.have.property('defaultValidityPeriod')
+          .that.eq(1000);
       });
     });
 

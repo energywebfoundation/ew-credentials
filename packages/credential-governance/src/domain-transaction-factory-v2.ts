@@ -183,6 +183,7 @@ export class DomainTransactionFactoryV2 {
         requestorFields: roleDef.requestorFields,
         issuerFields: roleDef.issuerFields,
         metadata: roleDef.metadata,
+        defaultValidityPeriod: roleDef.defaultValidityPeriod,
       };
     })(data);
     const setTextTx = this.setTextTx({ domain, data: textProps });
