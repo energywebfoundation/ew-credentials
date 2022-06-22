@@ -13,4 +13,11 @@ module.exports = {
   parserOptions: {
     project: ['tsconfig.json', 'tsconfig.eslint.json', 'test/tsconfig.json'],
   },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.ts'],
+      },
+    },
+  },
 };
