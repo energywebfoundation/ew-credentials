@@ -98,14 +98,12 @@ export class VCIssuerVerification {
     ) => Promise<VerificationResult>
   ) {
     let hasParent = true;
-    let didMatched = false;
     while (hasParent) {
       const role = await this.parseRoleFromCredential(credential);
       const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
       if (issuers && issuers.did && issuers.did.length > 0) {
         for (let i = 0; i < issuers.did.length; i++) {
           if (issuers.did[i] == credential.issuer) {
-            didMatched = true;
             hasParent = false;
             break;
           }
