@@ -1,4 +1,4 @@
-import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 
 /**

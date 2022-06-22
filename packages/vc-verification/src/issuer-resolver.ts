@@ -1,7 +1,5 @@
-import {
-  DomainReader,
-  IIssuerDefinition,
-} from '@energyweb/credential-governance';
+import { DomainReader } from '@energyweb/credential-governance';
+import type { IIssuerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
 
 /**

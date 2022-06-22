@@ -3,7 +3,7 @@ import { CredentialResolver, IssuerResolver } from '.';
 import { VerificationResult } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 /**
  * A class to verify chain of trust for a Verifiable Credential
  * The hierachy must only consist of VC issuance

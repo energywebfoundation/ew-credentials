@@ -1,4 +1,6 @@
-import { EventFilter, utils, providers } from 'ethers';
+import { utils, providers } from 'ethers';
+import type { Result } from '@ethersproject/abi';
+import type { EventFilter } from 'ethers';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { ENSRegistry__factory } from '../ethers/factories/ENSRegistry__factory';
 import { abi as ensRegistryContract } from '../build/contracts/ENS.json';
@@ -10,7 +12,6 @@ import { PublicResolver__factory } from '../ethers/factories/PublicResolver__fac
 import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__factory';
 import { PublicResolver } from '../ethers/PublicResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
-import { Result } from '@ethersproject/abi';
 
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
