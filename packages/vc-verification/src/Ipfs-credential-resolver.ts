@@ -11,7 +11,7 @@ import { OffChainClaim } from './models';
 import { upgradeChainId } from './upgrade-chainid';
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;

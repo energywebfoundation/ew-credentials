@@ -3,7 +3,7 @@ import { CredentialResolver, IssuerResolver } from '.';
 import { VerificationResult } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 /**
  * A class to verify chain of trust for a Verifiable Credential
  * The hierachy must only consist of VC issuance
@@ -98,14 +98,12 @@ export class VCIssuerVerification {
     ) => Promise<VerificationResult>
   ) {
     let hasParent = true;
-    let didMatched = false;
     while (hasParent) {
       const role = await this.parseRoleFromCredential(credential);
       const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
       if (issuers && issuers.did && issuers.did.length > 0) {
         for (let i = 0; i < issuers.did.length; i++) {
           if (issuers.did[i] == credential.issuer) {
-            didMatched = true;
             hasParent = false;
             break;
           }

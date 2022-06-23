@@ -1,7 +1,5 @@
-import {
-  DomainReader,
-  IRevokerDefinition,
-} from '@energyweb/credential-governance';
+import { DomainReader } from '@energyweb/credential-governance';
+import type { IRevokerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
 
 /**

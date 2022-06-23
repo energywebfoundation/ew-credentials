@@ -1,4 +1,5 @@
-import { Event, utils } from 'ethers';
+import { utils } from 'ethers';
+import type { Event } from 'ethers';
 import { addressOf, EwSigner } from '@ew-did-registry/did-ethr-resolver';
 import {
   ClaimsRevocationRegistry,
