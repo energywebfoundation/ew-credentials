@@ -16,7 +16,10 @@ import {
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
-import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import {
+  VerifiableCredential,
+  CredentialType,
+} from '@ew-did-registry/credentials-interface';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
@@ -45,6 +48,7 @@ import {
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import { IssuerNotAuthorized } from '../src/errors';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -66,7 +70,7 @@ let provider: JsonRpcProvider;
 let issuerVerification: VCIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
-let issuerDefinitionResolver: IssuerResolver;
+let issuerResolver: IssuerResolver;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -76,7 +80,6 @@ let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
 let adminAddress: string;
-let verifier: EwSigner;
 let verifierAddress: string;
 
 let userKeys: Keys;
@@ -86,7 +89,6 @@ let adminDid: string;
 let managerKeys: Keys;
 let managerDid: string;
 let verifierKeys: Keys;
-let verifierDid: string;
 
 let userOperator: Operator;
 let adminOperator: Operator;
@@ -139,11 +141,6 @@ export function testsOnGanache(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-    verifier = EwSigner.fromPrivateKey(
-      verifierKeys.privateKey,
-      providerSettings
-    );
     ipfsUrl = await spawnIpfsDaemon();
   });
 
@@ -223,10 +220,10 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
+    issuerResolver = new EthersProviderIssuerResolver(domainReader);
     issuerVerification = new VCIssuerVerification(
-      credentialResolver,
-      issuerDefinitionResolver
+      issuerResolver,
+      credentialResolver
     );
 
     await (
@@ -385,7 +382,7 @@ function testSuite() {
       const vc: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: adminDid,
-        type: ['Claims'],
+        type: [CredentialType.VerifiableCredential],
         issuer: adminDid,
         issuanceDate: '02/02/2022',
         credentialSubject: {
@@ -406,7 +403,7 @@ function testSuite() {
         },
       };
 
-      expect(await issuerVerification.verifyChainOfTrust(vc)).true;
+      return expect(issuerVerification.verifyChainOfTrust(vc)).to.be.fulfilled;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -446,7 +443,7 @@ function testSuite() {
       const VC: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: managerDid,
-        type: ['Claims'],
+        type: [CredentialType.VerifiableCredential],
         issuer: adminDid,
         issuanceDate: '02/02/2022',
         credentialSubject: {
@@ -507,7 +504,7 @@ function testSuite() {
       const VC: VerifiableCredential<RoleCredentialSubject> = {
         '@context': [],
         id: userDid,
-        type: ['Claims'],
+        type: [CredentialType.VerifiableCredential],
         issuer: adminDid,
         issuanceDate: '02/02/2022',
         credentialSubject: {
@@ -527,10 +524,9 @@ function testSuite() {
           proofValue: 'string',
         },
       };
-      const res = issuerVerification.verifyChainOfTrust(VC);
-      await expect(res).to.be.rejectedWith(
-        'Issuer is not allowed to issue credential'
-      );
+      await expect(
+        issuerVerification.verifyChainOfTrust(VC)
+      ).to.be.rejectedWith(IssuerNotAuthorized);
     });
   });
 }

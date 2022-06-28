@@ -1,5 +1,6 @@
 import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
+import nock from 'nock';
 import chaiAsPromised from 'chai-as-promised';
 import {
   abi as erc1056Abi,
@@ -31,6 +32,7 @@ import {
   RevocationVerification,
   RevokerResolver,
   EthersProviderRevokerResolver,
+  VCIssuerVerification,
 } from '../src';
 import {
   DIDAttribute,
@@ -44,11 +46,11 @@ import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
-import { adminVC, managerVC } from './Fixtures/sample-vc';
+import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import {
-  statusListCredentialAdmin,
-  statusListCredentialManager,
-  statusListCredentialInValid,
+  adminStatusList,
+  managerStatusList,
+  statusListCredentialWithInvalidPurpose,
 } from './Fixtures/sample-statuslist-credential';
 
 chai.use(chaiAsPromised);
@@ -82,7 +84,6 @@ let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
 let adminAddress: string;
-let verifier: EwSigner;
 let verifierAddress: string;
 
 let userKeys: Keys;
@@ -146,10 +147,6 @@ export function testsOnGanache(): void {
     });
     verifierAddress = verifierKeys.getAddress();
     verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-    verifier = EwSigner.fromPrivateKey(
-      verifierKeys.privateKey,
-      providerSettings
-    );
     ipfsUrl = await spawnIpfsDaemon();
   });
 
@@ -233,8 +230,8 @@ function testSuite() {
 
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
     revocationVerification = new RevocationVerification(
-      issuerResolver,
       revokerResolver,
+      issuerResolver,
       credentialResolver
     );
 
@@ -374,7 +371,7 @@ function testSuite() {
   });
 
   describe('Verifies Revocation for Verifiable Credentials', () => {
-    it('should return false if the statusPurpose is not revocation', async () => {
+    it('Revocation without revocation or suspension purpose should not be verified', async () => {
       let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
@@ -392,23 +389,25 @@ function testSuite() {
         validity
       );
 
-      expect(
-        await revocationVerification.verifyRevocation(
-          adminRole,
-          statusListCredentialInValid
+      nock(adminVC.credentialStatus!.statusListCredential)
+        .get('')
+        .reply(200, statusListCredentialWithInvalidPurpose);
+
+      return expect(
+        revocationVerification.verifyStatusList(
+          statusListCredentialWithInvalidPurpose,
+          adminRole
         )
-      ).false;
+      ).rejectedWith('StatusList2021 does not have revocation purpose');
     });
 
-    it('verifies revocation, where the role is revoked by did', async () => {
-      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
-      const serviceId = adminRole;
+    it('Revocation by DID type revoker should be verified', async () => {
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceId}`,
+          id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCID,
+          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
         },
       };
       await adminOperator.update(
@@ -418,23 +417,23 @@ function testSuite() {
         validity
       );
 
-      expect(
-        await revocationVerification.verifyRevocation(
-          adminRole,
-          statusListCredentialAdmin
-        )
-      ).true;
+      nock(adminVC.credentialStatus!.statusListCredential)
+        .get('')
+        .reply(200, adminStatusList);
+
+      return expect(
+        revocationVerification.verifyStatusList(adminStatusList, adminRole)
+      ).fulfilled;
     });
 
-    it('verifies revocation, where the role is revoked by role', async () => {
-      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
-      const serviceId = adminRole;
-      const updateData: IUpdateData = {
+    // `user` role can be revoked by `manager`. `manager` can be issued by `admin`
+    it('Revocation by ROLE type revoker should be verified', async () => {
+      let updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceId}`,
+          id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCID,
+          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
         },
       };
       await adminOperator.update(
@@ -444,29 +443,43 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      updateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${userDid}#service-${userRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: await didStore.save(JSON.stringify(userVC)),
+        },
+      };
+      await userOperator.update(
+        userDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
+
+      updateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${managerRole}`,
+          type: 'ClaimStore',
+          serviceEndpoint: await didStore.save(JSON.stringify(managerVC)),
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        updateData,
         validity
       );
 
-      expect(
-        await revocationVerification.verifyRevocation(
-          userRole,
-          statusListCredentialManager
-        )
-      ).true;
+      nock(userVC.credentialStatus!.statusListCredential)
+        .get('')
+        .reply(200, managerStatusList);
+
+      return expect(
+        revocationVerification.verifyStatusList(managerStatusList, userRole)
+      ).fulfilled;
     });
   });
 }

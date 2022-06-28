@@ -199,8 +199,6 @@ export function domainCrudTestSuiteWithRevocation(): void {
         await (await owner.sendTransaction(updateRole)).wait();
         const updatedRoleDef = await domainReader.read({ node: node2 });
 
-        console.log(updatedRoleDef);
-
         expect(updatedRoleDef)
           .to.have.property('defaultValidityPeriod')
           .that.eq(1000);
