@@ -337,7 +337,7 @@ function testSuite() {
     ).wait();
   });
 
-  describe('chainOfTrustTests', () => {
+  describe('Issuer verification', () => {
     it('verifies issuer, where the role is issued by did', async () => {
       let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
@@ -356,8 +356,8 @@ function testSuite() {
         validity
       );
 
-      return expect(issuerVerification.verifyCredential(adminDid, adminRole)).to
-        .be.fulfilled;
+      return expect(issuerVerification.verifyIssuer(adminDid, adminRole)).to.be
+        .fulfilled;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -395,9 +395,8 @@ function testSuite() {
         validity
       );
 
-      return expect(
-        issuerVerification.verifyCredential(managerDid, managerRole)
-      ).to.be.fulfilled;
+      return expect(issuerVerification.verifyIssuer(adminDid, managerRole)).to
+        .be.fulfilled;
     });
 
     it('rejects credential for any unauthorised issuer in the chain', async () => {
@@ -434,8 +433,9 @@ function testSuite() {
         updateDataUser,
         validity
       );
+      // only manager is authorized to issue user
       return expect(
-        issuerVerification.verifyCredential(userDid, userRole)
+        issuerVerification.verifyIssuer(adminDid, userRole)
       ).to.be.rejectedWith(IssuerNotAuthorized);
     });
   });

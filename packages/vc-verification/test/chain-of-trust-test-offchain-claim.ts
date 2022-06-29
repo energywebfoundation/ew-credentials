@@ -346,7 +346,7 @@ function testSuite() {
     ).wait();
   });
 
-  describe('chainOfTrustTests', () => {
+  describe('Issuance verification', () => {
     it('verifies issuer, where the role is issued by did', async () => {
       const adminJWT = new JWT(adminKeys);
       const roleClaim = {

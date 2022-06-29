@@ -10,6 +10,7 @@ import {
   NoCredential,
   NoIssuers,
 } from './errors';
+import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 /**
  * A class to verify chain of trust for a Verifiable Credential
  * The hierachy must only consist of VC issuance
@@ -21,23 +22,22 @@ export class VCIssuerVerification {
   ) {}
 
   /**
-   * Fetches role form a credential
-   * @param credential
-   * @returns
+   * Verifies that `issuer` is authorized to issue `role`
+   * @param issuer DID of the issuer
+   * @param role name of the role verifiable credential
    */
-  private async parseRoleFromCredential(
-    credential: VerifiableCredential<RoleCredentialSubject>
-  ) {
-    return credential.credentialSubject.role.namespace;
-  }
-
   async verifyIssuer(issuer: string, role: string) {
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
     if (!issuers) {
       throw new NoIssuers(role);
     }
     if (issuers.issuerType === 'DID' && issuers.did) {
-      if (!issuers.did?.some((i) => i.toUpperCase() === issuer.toUpperCase())) {
+      // issuers in role definition are addresses, but in credential are DID's
+      if (
+        !issuers.did?.some(
+          (i) => addressOf(i).toUpperCase() === addressOf(issuer).toUpperCase()
+        )
+      ) {
         throw new IssuerNotAuthorized(
           issuer,
           role,
@@ -46,7 +46,7 @@ export class VCIssuerVerification {
       }
     } else if (issuers.issuerType === 'ROLE' && issuers.roleName) {
       try {
-        await this.verifyCredential(issuer, issuers.roleName);
+        await this.verifyIssuerCredential(issuer, issuers.roleName);
       } catch (e) {
         throw new IssuerNotAuthorized(issuer, role, (<Error>e).message);
       }
@@ -56,13 +56,12 @@ export class VCIssuerVerification {
   }
 
   /**
-   * Verifies that role credential was issued to subject by authorized issuer
-   * @param subject DID of revoker
-   * @param role fully qualified role credential name
-   *
+   * Verifies that `role` credential was issued to `subject`
+   * @param subject DID of the subject
+   * @param role name of the role credential
    * @returns verified role credential
    */
-  async verifyCredential(
+  async verifyIssuance(
     subject: string,
     role: string
   ): Promise<VerifiableCredential<RoleCredentialSubject>> {
@@ -79,8 +78,16 @@ export class VCIssuerVerification {
         issuerDID(roleVC.issuer)
       );
     }
-    await this.verifyIssuer(issuerDID(roleVC.issuer), role);
-
     return roleVC;
+  }
+
+  /**
+   * Verifies that issuer has required `role` credential
+   * @param issuer DID of revoker
+   * @param role name of the role credential
+   */
+  private async verifyIssuerCredential(issuer: string, role: string) {
+    const vc = await this.verifyIssuance(issuer, role);
+    await this.verifyIssuer(issuerDID(vc.issuer), role);
   }
 }

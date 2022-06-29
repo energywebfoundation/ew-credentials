@@ -365,7 +365,7 @@ function testSuite() {
     ).wait();
   });
 
-  describe('Verifies Revocation for Verifiable Credentials', () => {
+  describe('Revocation verification', () => {
     it('Revocation without revocation or suspension purpose should not be verified', async () => {
       let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;

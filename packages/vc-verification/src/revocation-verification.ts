@@ -8,6 +8,7 @@ import { RevokerResolver } from './revoker-resolver';
 import { VCIssuerVerification } from './issuer-verification-vc';
 import { InvalidRevokerType, NoRevokers, RevokerNotAuthorized } from './errors';
 import { issuerDID } from './models';
+import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 
 /**
  * Provides verification of revocation of EnergyWeb role verifiable credential
@@ -40,18 +41,22 @@ export class RevocationVerification {
   }
 
   /**
-   * Verifies that revoker is authorized to revoke role credential
+   * Verifies that `revoker` is authorized to revoke `role` credential
    * @param revoker DID of revoker
-   * @param role role name
+   * @param role name of the role verifiable credential
    */
   private async verifyRevoker(revoker: string, role: string) {
     const revokers = await this.revokerResolver.getRevokerDefinition(role);
     if (!revokers) {
       throw new NoRevokers(role);
     }
-    if (revokers.revokerType === 'DID' && revokers.did) {
+    const { did, revokerType, roleName: revokerRole } = revokers;
+    if (revokerType === 'DID' && did) {
+      // revokers in role definition are addresses, but in credential are DID's
       if (
-        !revokers.did.some((r) => r.toUpperCase() === revoker.toUpperCase())
+        !did.some(
+          (r) => addressOf(r).toUpperCase() === addressOf(revoker).toUpperCase()
+        )
       ) {
         throw new RevokerNotAuthorized(
           revoker,
@@ -59,11 +64,15 @@ export class RevocationVerification {
           'revoker is not in DID list'
         );
       }
-    } else if (revokers.roleName) {
+    } else if (revokerRole) {
       try {
-        await this.issuerVerification.verifyCredential(
+        const revokerVC = await this.issuerVerification.verifyIssuance(
           revoker,
-          revokers.roleName
+          revokerRole
+        );
+        await this.issuerVerification.verifyIssuer(
+          issuerDID(revokerVC.issuer),
+          revokerRole
         );
       } catch (e) {
         throw new RevokerNotAuthorized(revoker, role, (<Error>e).message);
