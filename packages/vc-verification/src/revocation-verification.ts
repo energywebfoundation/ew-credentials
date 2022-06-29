@@ -2,8 +2,6 @@ import {
   StatusList2021Credential,
   validateStatusList,
 } from '@ew-did-registry/credentials-interface';
-import { StatusListEntryVerification } from '@ew-did-registry/revocation';
-import { verifyCredential } from 'didkit-wasm-node';
 import { CredentialResolver } from './credential-resolver';
 import { IssuerResolver } from './issuer-resolver';
 import { RevokerResolver } from './revoker-resolver';
@@ -16,9 +14,6 @@ import { issuerDID } from './models';
  */
 export class RevocationVerification {
   private issuerVerification: VCIssuerVerification;
-  private readonly statusVerifier = new StatusListEntryVerification(
-    verifyCredential
-  );
 
   constructor(
     private revokerResolver: RevokerResolver,

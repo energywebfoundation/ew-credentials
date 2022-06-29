@@ -32,7 +32,6 @@ import {
   RevocationVerification,
   RevokerResolver,
   EthersProviderRevokerResolver,
-  VCIssuerVerification,
 } from '../src';
 import {
   DIDAttribute,
@@ -104,11 +103,7 @@ let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
-export function RevocationVerificationTestVC(): void {
-  describe('Tests on ganache', testsOnGanache);
-}
-
-export function testsOnGanache(): void {
+export function revocationVerificationTests(): void {
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);

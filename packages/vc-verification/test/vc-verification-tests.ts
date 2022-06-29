@@ -16,14 +16,14 @@ import {
   abi as ensAbi,
   bytecode as ensBytecode,
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
-import { IssuanceVerificationTestClaims } from './chain-of-trust-test-offchain-claim';
-import { IssuanceVerificationTestVC } from './chain-of-trust-test-vc';
-import { RevocationVerificationTestVC } from './vc-revocation-test';
+import { offchainClaimVerificationTests } from './chain-of-trust-test-offchain-claim';
+import { vcVerificationTests } from './chain-of-trust-test-vc';
+import { revocationVerificationTests } from './vc-revocation-test';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-describe('[Credential Verificaiton]', function () {
+describe('[VC Verificaiton]', function () {
   this.timeout(0);
   const provider = new JsonRpcProvider('http://localhost:8544');
   const deployer = provider.getSigner(1);
@@ -63,13 +63,10 @@ describe('[Credential Verificaiton]', function () {
     });
   });
 
-  describe(
-    'VC Verification with OffChainClaims',
-    IssuanceVerificationTestClaims
-  );
-  describe(
-    'VC Verification with Verifiable Credentials',
-    IssuanceVerificationTestVC
-  );
-  describe('VC Revocation verification tests', RevocationVerificationTestVC);
+  describe('Verification of issued credential', () => {
+    describe('OffChain claims', offchainClaimVerificationTests);
+    describe('Verifiable Credentials', vcVerificationTests);
+  });
+
+  describe('Verification of revocation', revocationVerificationTests);
 });

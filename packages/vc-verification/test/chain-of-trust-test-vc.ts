@@ -6,8 +6,6 @@ import {
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/credential-governance/ethers/factories/IdentityManager__factory';
-import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
 import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import {
@@ -16,10 +14,6 @@ import {
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
-import {
-  VerifiableCredential,
-  CredentialType,
-} from '@ew-did-registry/credentials-interface';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
@@ -47,7 +41,6 @@ import {
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
-import { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { IssuerNotAuthorized } from '../src/errors';
 
 chai.use(chaiAsPromised);
@@ -62,7 +55,6 @@ const managerRole = 'manager';
 const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-let proxyIdentityManager: IdentityManager;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
@@ -80,7 +72,6 @@ let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
 let adminAddress: string;
-let verifierAddress: string;
 
 let userKeys: Keys;
 let userDid: string;
@@ -88,7 +79,6 @@ let adminKeys: Keys;
 let adminDid: string;
 let managerKeys: Keys;
 let managerDid: string;
-let verifierKeys: Keys;
 
 let userOperator: Operator;
 let adminOperator: Operator;
@@ -99,11 +89,7 @@ let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
-export function IssuanceVerificationTestVC(): void {
-  describe('Tests on ganache', testsOnGanache);
-}
-
-export function testsOnGanache(): void {
+export function vcVerificationTests(): void {
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -136,11 +122,6 @@ export function testsOnGanache(): void {
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    verifierKeys = new Keys({
-      privateKey:
-        '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
-    });
-    verifierAddress = verifierKeys.getAddress();
     ipfsUrl = await spawnIpfsDaemon();
   });
 
@@ -177,11 +158,6 @@ function testSuite() {
 
     const offerableIdentity = await (
       await new OfferableIdentityFactory(deployer).deploy()
-    ).deployed();
-    proxyIdentityManager = await (
-      await new IdentityManagerFactory(deployer).deploy(
-        offerableIdentity.address
-      )
     ).deployed();
     roleFactory = new DomainTransactionFactoryV2({
       domainResolverAddress: roleResolver.address,
@@ -379,31 +355,9 @@ function testSuite() {
         updateData,
         validity
       );
-      const vc: VerifiableCredential<RoleCredentialSubject> = {
-        '@context': [],
-        id: adminDid,
-        type: [CredentialType.VerifiableCredential],
-        issuer: adminDid,
-        issuanceDate: '02/02/2022',
-        credentialSubject: {
-          id: adminDid,
-          role: {
-            namespace: adminRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
 
-      return expect(issuerVerification.verifyChainOfTrust(vc)).to.be.fulfilled;
+      return expect(issuerVerification.verifyCredential(adminDid, adminRole)).to
+        .be.fulfilled;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -440,31 +394,10 @@ function testSuite() {
         updateDataManager,
         validity
       );
-      const VC: VerifiableCredential<RoleCredentialSubject> = {
-        '@context': [],
-        id: managerDid,
-        type: [CredentialType.VerifiableCredential],
-        issuer: adminDid,
-        issuanceDate: '02/02/2022',
-        credentialSubject: {
-          id: managerDid,
-          role: {
-            namespace: managerRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
 
-      expect(await issuerVerification.verifyChainOfTrust(VC)).true;
+      return expect(
+        issuerVerification.verifyCredential(managerDid, managerRole)
+      ).to.be.fulfilled;
     });
 
     it('rejects credential for any unauthorised issuer in the chain', async () => {
@@ -501,31 +434,8 @@ function testSuite() {
         updateDataUser,
         validity
       );
-      const VC: VerifiableCredential<RoleCredentialSubject> = {
-        '@context': [],
-        id: userDid,
-        type: [CredentialType.VerifiableCredential],
-        issuer: adminDid,
-        issuanceDate: '02/02/2022',
-        credentialSubject: {
-          id: userDid,
-          role: {
-            namespace: userRole,
-            version: '1',
-          },
-          issuerFields: [],
-        },
-        proof: {
-          '@context': 'string',
-          verificationMethod: 'string',
-          created: 'string',
-          proofPurpose: 'string',
-          type: 'string',
-          proofValue: 'string',
-        },
-      };
-      await expect(
-        issuerVerification.verifyChainOfTrust(VC)
+      return expect(
+        issuerVerification.verifyCredential(userDid, userRole)
       ).to.be.rejectedWith(IssuerNotAuthorized);
     });
   });

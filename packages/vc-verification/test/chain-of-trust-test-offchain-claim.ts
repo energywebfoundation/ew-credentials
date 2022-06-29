@@ -6,8 +6,6 @@ import {
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/credential-governance/ethers/factories/IdentityManager__factory';
-import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
 import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
@@ -56,7 +54,6 @@ const managerRole = 'manager';
 const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-let proxyIdentityManager: IdentityManager;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
@@ -74,7 +71,6 @@ let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
 let adminAddress: string;
-let verifier: EwSigner;
 let verifierAddress: string;
 
 let userKeys: Keys;
@@ -84,7 +80,6 @@ let adminDid: string;
 let managerKeys: Keys;
 let managerDid: string;
 let verifierKeys: Keys;
-let verifierDid: string;
 
 let userOperator: Operator;
 let adminOperator: Operator;
@@ -95,11 +90,7 @@ let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
-export function IssuanceVerificationTestClaims(): void {
-  describe('Tests on ganache', testsOnGanache);
-}
-
-export function testsOnGanache(): void {
+export function offchainClaimVerificationTests(): void {
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -137,11 +128,6 @@ export function testsOnGanache(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    verifierDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${verifierAddress}`;
-    verifier = EwSigner.fromPrivateKey(
-      verifierKeys.privateKey,
-      providerSettings
-    );
     ipfsUrl = await spawnIpfsDaemon();
   });
 
@@ -178,11 +164,6 @@ function testSuite() {
 
     const offerableIdentity = await (
       await new OfferableIdentityFactory(deployer).deploy()
-    ).deployed();
-    proxyIdentityManager = await (
-      await new IdentityManagerFactory(deployer).deploy(
-        offerableIdentity.address
-      )
     ).deployed();
     roleFactory = new DomainTransactionFactoryV2({
       domainResolverAddress: roleResolver.address,

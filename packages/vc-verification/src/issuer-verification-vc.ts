@@ -1,5 +1,5 @@
 import { CredentialResolver, IssuerResolver } from '.';
-import { issuerDID, VerificationResult } from './models';
+import { issuerDID } from './models';
 import { verifyCredential } from 'didkit-wasm-node';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
@@ -21,104 +21,6 @@ export class VCIssuerVerification {
   ) {}
 
   /**
-   * Verifies chain of trust for the provided verifiable credential
-   * @param credential
-   * @param verifyCredentialProofCallback verification callback approach to verify all issuers in hierarchy. By default the chain is verified against RoleDefinition
-   * @returns
-   */
-  async verifyChainOfTrust(
-    credential: VerifiableCredential<RoleCredentialSubject>,
-    verifyCredentialProofCallback?: (
-      credential: VerifiableCredential<RoleCredentialSubject>
-    ) => Promise<VerificationResult>
-  ) {
-    if (credential && verifyCredentialProofCallback) {
-      return this.verifyChainOfTrustCallback(
-        credential,
-        verifyCredentialProofCallback
-      );
-    } else if (credential) {
-      return this.verifyChainOfTrustByRoleDefinition(credential);
-    } else {
-      throw new Error('Not sufficient information');
-    }
-  }
-
-  /**
-   * Verifies chain of trust for a given credential
-   * @param {string} credential
-   */
-  async verifyChainOfTrustByRoleDefinition(
-    credential: VerifiableCredential<RoleCredentialSubject>
-  ) {
-    let subjectDID = credential.credentialSubject.id;
-    let role = await this.parseRoleFromCredential(credential);
-    /**@todo eslint no-constant-condition */
-    while (true) {
-      const vc = await this.credentialResolver.getCredential(subjectDID, role);
-      if (!vc) {
-        throw new NoCredential(role, subjectDID);
-      } else {
-        if (vc.proof) {
-          await verifyCredential(JSON.stringify(vc), JSON.stringify({}));
-        }
-        const issuer = issuerDID(vc.issuer);
-        await this.verifyIssuer(issuer, role);
-        subjectDID = issuer;
-        if (await this.isRoleIssuerDID(role)) {
-          return true;
-        }
-        const issuers = await this.issuerResolver.getIssuerDefinition(role);
-        if (issuers && issuers.roleName) {
-          role = issuers.roleName;
-        }
-      }
-    }
-  }
-
-  /**
-   * Verifies credential and chain of trust with callback function
-   *
-   * TO BE COMPLETED
-   */
-  async verifyChainOfTrustCallback(
-    credential: VerifiableCredential<RoleCredentialSubject>,
-    verifyCredentialProofCallback: (
-      credential: VerifiableCredential<RoleCredentialSubject>
-    ) => Promise<VerificationResult>
-  ) {
-    let hasParent = true;
-    while (hasParent) {
-      const role = await this.parseRoleFromCredential(credential);
-      const issuers = await this.issuerResolver.getIssuerDefinition(role);
-      if (issuers && issuers.did && issuers.did.length > 0) {
-        for (let i = 0; i < issuers.did.length; i++) {
-          if (issuers.did[i] == credential.issuer) {
-            hasParent = false;
-            break;
-          }
-        }
-      } else {
-        const issuerCredential = await this.credentialResolver.getCredential(
-          credential.issuer as string,
-          role
-        );
-        if (!issuerCredential) {
-          throw new NoCredential(role, issuerDID(credential.issuer));
-        }
-        if (
-          issuerCredential &&
-          (await verifyCredentialProofCallback(issuerCredential))
-        ) {
-          credential = issuerCredential;
-        } else {
-          throw new Error('Invalid credential');
-        }
-      }
-    }
-  }
-
-  /**
    * Fetches role form a credential
    * @param credential
    * @returns
@@ -129,21 +31,6 @@ export class VCIssuerVerification {
     return credential.credentialSubject.role.namespace;
   }
 
-  /**
-   * Returns true if the role issuer type is DID
-   * @param role
-   * @returns
-   */
-  private async isRoleIssuerDID(role: string) {
-    const issuers = await this.issuerResolver.getIssuerDefinition(role);
-    return issuers && issuers.issuerType === 'DID';
-  }
-
-  /**
-   * Verifies issuer's authority to issue credential for a namespace
-   * @param {string} role role credential name
-   * @param {string} issuer DID of issuer
-   */
   async verifyIssuer(issuer: string, role: string) {
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
     if (!issuers) {
