@@ -1,3 +1,5 @@
+import { Chain } from '@ew-did-registry/did';
+
 // Volta chain
 export const VOLTA_CHAIN_ID = 73799;
 export const VOLTA_PUBLIC_RESOLVER_ADDRESS =
@@ -34,3 +36,16 @@ export const EWC_DOMAIN_NOTIFER_ADDRESS =
 export const EWC_IDENTITY_MANAGER_ADDRESS =
   '0x2d1569f3a2006d21c0dc60eb13c8557b63ce5a8d';
 export const EWC_ADDRESS_1056 = '0xE29672f34e92b56C9169f9D485fFc8b9A136BCE4';
+
+export const chainIdToChainName = (chainId: number) => {
+  switch (chainId) {
+    case VOLTA_CHAIN_ID:
+      return Chain.VOLTA;
+    case EWC_CHAIN_ID:
+      return Chain.EWC;
+    case 1337: // test chain
+      return Chain.VOLTA;
+    default:
+      throw new Error(`Unsupported chain ${chainId}`);
+  }
+};

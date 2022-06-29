@@ -1,4 +1,4 @@
-import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import type { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 export * from './issuer-verification-vc';
 export * from './Ipfs-credential-resolver';
 export * from './issuer-resolver';
@@ -11,7 +11,5 @@ export {
   CredentialResolverIpfsSettings,
   VerificationResult,
   OffChainClaim,
-  StatusListCredential,
-  StatusPurpose,
 } from './models';
 export { VerifiableCredential };
