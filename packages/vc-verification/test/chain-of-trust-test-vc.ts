@@ -42,6 +42,7 @@ import {
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { IssuerNotAuthorized } from '../src/errors';
+import { verifyCredential } from 'didkit-wasm-node';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -199,7 +200,8 @@ function testSuite() {
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
     issuerVerification = new VCIssuerVerification(
       issuerResolver,
-      credentialResolver
+      credentialResolver,
+      verifyCredential
     );
 
     await (

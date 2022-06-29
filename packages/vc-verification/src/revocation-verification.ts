@@ -19,11 +19,13 @@ export class RevocationVerification {
   constructor(
     private revokerResolver: RevokerResolver,
     issuerResolver: IssuerResolver,
-    credentialResolver: CredentialResolver
+    credentialResolver: CredentialResolver,
+    verifyProof: (vc: string, proof_options: string) => Promise<any>
   ) {
     this.issuerVerification = new VCIssuerVerification(
       issuerResolver,
-      credentialResolver
+      credentialResolver,
+      verifyProof
     );
   }
 

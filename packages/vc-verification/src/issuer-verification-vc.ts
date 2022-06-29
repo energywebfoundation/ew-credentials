@@ -1,6 +1,5 @@
 import { CredentialResolver, IssuerResolver } from '.';
 import { issuerDID } from './models';
-import { verifyCredential } from 'didkit-wasm-node';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import {
@@ -18,7 +17,8 @@ import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 export class VCIssuerVerification {
   constructor(
     private issuerResolver: IssuerResolver,
-    private credentialResolver: CredentialResolver
+    private credentialResolver: CredentialResolver,
+    private verifyProof: (vc: string, proof_options: string) => Promise<any>
   ) {}
 
   /**
@@ -70,7 +70,7 @@ export class VCIssuerVerification {
       throw new NoCredential(role, subject);
     }
     const { errors } = JSON.parse(
-      await verifyCredential(JSON.stringify(roleVC), JSON.stringify({}))
+      await this.verifyProof(JSON.stringify(roleVC), JSON.stringify({}))
     );
     if (errors.length) {
       throw new InvalidCredentialProof(

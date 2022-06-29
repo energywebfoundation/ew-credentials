@@ -51,6 +51,7 @@ import {
   managerStatusList,
   statusListCredentialWithInvalidPurpose,
 } from './Fixtures/sample-statuslist-credential';
+import { verifyCredential } from 'didkit-wasm-node';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -227,7 +228,8 @@ function testSuite() {
     revocationVerification = new RevocationVerification(
       revokerResolver,
       issuerResolver,
-      credentialResolver
+      credentialResolver,
+      verifyCredential
     );
 
     await (
