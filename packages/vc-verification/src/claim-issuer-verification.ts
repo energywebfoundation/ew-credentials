@@ -5,6 +5,7 @@ import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerResolver } from '.';
 import { OffChainClaim } from './models';
+import { InvalidIssuerType } from './errors';
 
 /**
  * A class to verify chain of trust for an issued OffChainClaim
@@ -34,12 +35,12 @@ export class ClaimIssuerVerification {
   }
 
   /**
-   * Verifies chain of trust for a given holder's DID and role
-   * @param {string} issuerDID
-   * @param {string} role
+   * Verifies that `issuer` is authorized to issue `role` claim
+   * @param issuer DID of the issuer
+   * @param role name of the role claim
    */
-  async verifyChainOfTrustClaims(issuerDID: string, role: string) {
-    let currentIssuerDID = issuerDID;
+  async verifyIssuer(issuer: string, role: string) {
+    let currentIssuerDID = issuer;
     while (true) {
       if (!(await this.verifyIssuerAuthority(role, currentIssuerDID))) {
         throw new Error('Issuer is not allowed to issue credential');
@@ -50,16 +51,10 @@ export class ClaimIssuerVerification {
       if (await this.isRoleIssuerDID(role)) {
         return true;
       } else if (roleIssuers && roleIssuers.roleName) {
-        const issuedToken = await this._credentialResolver.getClaimIssuedToken(
+        const nextIssuerDID = await this.verifyIssuance(
           currentIssuerDID,
           roleIssuers.roleName
         );
-        if (!issuedToken) {
-          throw new Error(
-            'Unable to resolve the issuer credential to verify their authority'
-          );
-        }
-        const nextIssuerDID = await this.verifyIssuedToken(issuedToken);
         if (nextIssuerDID) {
           currentIssuerDID = nextIssuerDID;
           role = roleIssuers.roleName;
@@ -67,6 +62,32 @@ export class ClaimIssuerVerification {
           throw new Error('The credential is invalid');
         }
       }
+    }
+  }
+
+  /**
+   * Verifies that `role` claim was issued to `subject`
+   * @param subject DID of the subject
+   * @param role name of the role claim
+   * @returns issuer of the role claim
+   */
+  async verifyIssuance(subject: string, role: string) {
+    const token = await this._credentialResolver.getClaimIssuedToken(
+      subject,
+      role
+    );
+    if (!token) {
+      throw new Error(
+        'Unable to resolve the issuer credential to verify their authority'
+      );
+    }
+    const offChainClaim = jwt.decode(token) as OffChainClaim;
+    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
+    const verifier = new ProofVerifier(issuerDIDDoc);
+    if (await verifier.verifyAssertionProof(token)) {
+      return offChainClaim.iss;
+    } else {
+      throw new Error('Invalid Credential');
     }
   }
 
@@ -81,27 +102,14 @@ export class ClaimIssuerVerification {
   }
 
   /**
-   * Verify issued token signature
-   * @param {string} token
-   */
-  async verifyIssuedToken(token: string) {
-    const offChainClaim = jwt.decode(token) as OffChainClaim;
-    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
-    const verifier = new ProofVerifier(issuerDIDDoc);
-    if (await verifier.verifyAssertionProof(token)) {
-      return offChainClaim.iss;
-    } else {
-      throw new Error('Invalid Credential');
-    }
-  }
-
-  /**
    * Verifies issuer's authority to issue credential for a namespace
    * @param {string} namespace
    * @param {string} issuerDID
    * @returns boolean
+   *
+   * @todo remove as duplicate of this.verifyIssuer
    */
-  async verifyIssuerAuthority(
+  private async verifyIssuerAuthority(
     namespace: string,
     issuerDID: string
   ): Promise<boolean> {
@@ -115,17 +123,12 @@ export class ClaimIssuerVerification {
         }
       }
     }
-    let issuedToken;
+    let isClaimVerified;
     if (issuers && issuers.roleName) {
-      issuedToken = await this._credentialResolver.getClaimIssuedToken(
-        issuerDID,
-        issuers.roleName
-      );
+      isClaimVerified = await this.verifyIssuance(issuerDID, issuers.roleName);
+    } else {
+      throw new InvalidIssuerType(namespace, issuers?.issuerType);
     }
-    if (!issuedToken) {
-      return false;
-    }
-    const isClaimVerified = await this.verifyIssuedToken(issuedToken);
     return typeof isClaimVerified === 'string';
   }
 }

@@ -16,8 +16,8 @@ import {
   abi as ensAbi,
   bytecode as ensBytecode,
 } from '@ensdomains/ens-contracts/artifacts/contracts/registry/ENSRegistry.sol/ENSRegistry.json';
-import { offchainClaimVerificationTests } from './chain-of-trust-test-offchain-claim';
-import { vcVerificationTests } from './chain-of-trust-test-vc';
+import { claimIssuerVerificationTests } from './claim-issuer-verification';
+import { vcIssuerVerificationTests } from './vc-issuer-verification';
 import { revocationVerificationTests } from './vc-revocation-test';
 
 export const hashLabel = (label: string): string =>
@@ -64,8 +64,8 @@ describe('[VC Verificaiton]', function () {
   });
 
   describe('Verification of issued credential', () => {
-    describe('OffChain claims', offchainClaimVerificationTests);
-    describe('Verifiable Credentials', vcVerificationTests);
+    describe('OffChain claims', claimIssuerVerificationTests);
+    describe('Verifiable Credentials', vcIssuerVerificationTests);
   });
 
   describe('Verification of revocation', revocationVerificationTests);

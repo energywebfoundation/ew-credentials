@@ -5,7 +5,7 @@ import {
 import { CredentialResolver } from './credential-resolver';
 import { IssuerResolver } from './issuer-resolver';
 import { RevokerResolver } from './revoker-resolver';
-import { VCIssuerVerification } from './issuer-verification-vc';
+import { VCIssuerVerification } from './vc-issuer-verification';
 import { InvalidRevokerType, NoRevokers, RevokerNotAuthorized } from './errors';
 import { issuerDID } from './models';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
