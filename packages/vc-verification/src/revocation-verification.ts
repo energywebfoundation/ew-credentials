@@ -32,14 +32,14 @@ export class RevocationVerification {
   /**
    * Verifies that status list is issued by revoker specified in role definition
    * Revoker authorization must be verified by verifiable credential
-   * 
+   *
    * ```typescript
    * const revocationVerification = new RevocationVerification(
    * revokerResolver,
    * vcIssuerVerification,
    * claimIssuerVerification,
    * verifyCredential );
-   * 
+   *
    * let credential : StatusList2021Credential;
    * const role = 'role';
    * await revocationVerification.verifyStatusList(credential, role);
@@ -56,10 +56,22 @@ export class RevocationVerification {
 
   /**
    * Verifies that `revoker` is authorized to revoke `role` credential
+   *
+   * ```typescript
+   * const revocationVerification = new RevocationVerification(
+   * revokerResolver,
+   * vcIssuerVerification,
+   * claimIssuerVerification,
+   * verifyCredential );
+   *
+   * const revoker = 'did:ethr:ewc:0x...';
+   * const role = 'role';
+   * await revocationVerification.verifyRevoker(credential, role);
+   * ```
    * @param revoker DID of revoker
    * @param role name of the role verifiable credential
    */
-  private async verifyRevoker(revoker: string, role: string) {
+  async verifyRevoker(revoker: string, role: string) {
     const revokers = await this.revokerResolver.getRevokerDefinition(role);
     if (!revokers) {
       throw new NoRevokers(role);
