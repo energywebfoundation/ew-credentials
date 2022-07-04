@@ -28,6 +28,12 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
 
   /**
    * Fetches authorised issuers for the provided namespace
+   * 
+   * ```typescript
+   * const issuerResolver = new EthersProviderIssuerResolver(domainReader);
+   * const role = 'sampleRole';
+   * const issuers = issuerResolver.getIssuerDefinition(sampleRole);
+   * ```
    * @param namespace for which the issuers need to be fetched
    * @returns IIssuerDefinition for the namespace from blockchain contract
    */

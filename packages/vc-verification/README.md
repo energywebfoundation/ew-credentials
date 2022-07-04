@@ -1,21 +1,149 @@
 <p align="center">
-  <a href="https://www.energyweb.org" target="blank"><img src="./images/EW.png" width="120" alt="Energy Web Foundation Logo" /></a>
+  <a href="https://www.energyweb.org" target="blank"><img src="../../images/EW.png" width="120" alt="Energy Web Foundation Logo" /></a>
 </p>
 
 
-# @energyweb/vc-verification
+# VC Verification
 
 ## Description
-This package is a typescript lirary that provides functionality to verify a verifiable credential and it's chain of trust (hierarchy of issuers for the given credential).
+This package provides implementation for verification of Verifiable Credential and OffChainClaim. The verification can be done for issuer or revoker authority, credential proof and revocation verificaiton.
+[`@energyweb/vc-verification`](../vc-verification/) is a typescript module. 
 
-[`@energyweb/vc-verification`](../vc-verification/) is a component of the [Energy Web Decentralized Operating System](#ew-dos)
+{vc-verification} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
+
+## Usage
+
+### VC Verification
+
+The `VCIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of Verifiable Credential.
+```typescript
+import {
+  CredentialResolver,
+  IssuerResolver,
+  VCIssuerVerification,
+  EthersProviderIssuerResolver,
+  IpfsCredentialResolver,
+} from '@energyweb/vc-verification';
+import { DidStore } from '@ew-did-registry/did-ipfs-store';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { DomainReader } from '@energyweb/credential-governance';
+import { verifyCredential } from 'didkit-wasm-node';
+
+(async () => {
+  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
+    DomainReader
+  );
+  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
+    DIDStore,
+    Resolver
+  );
+  const issuerVerification = new VCIssuerVerification(
+    issuerResolver,
+    credentialResolver,
+    verifyCredential
+  );
+  await issuerVerification.verifyIssuer('issuerDID', 'role');
+})();
+```
+
+### Claim Verification
+
+The `ClaimIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of OffChainClaims.
+```typescript
+import {
+  CredentialResolver,
+  IssuerResolver,
+  ClaimIssuerVerification,
+  EthersProviderIssuerResolver,
+  IpfsCredentialResolver,
+} from '@energyweb/vc-verification';
+import { DidStore } from '@ew-did-registry/did-ipfs-store';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { DomainReader } from '@energyweb/credential-governance';
+import { providers } from 'ethers';
+import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+
+(async () => {
+  let provider: providers.provider;
+  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
+    DomainReader
+  );
+  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
+    DIDStore,
+    Resolver
+  );
+  const issuerVerification = new ClaimIssuerVerification(
+    provider,
+    RegistrySettings,
+    issuerResolver,
+    credentialResolver
+  );
+  await issuerVerification.verifyIssuer('issuerDID', 'role');
+})();
+```
+
+### Revocation Verification
+
+The `RevocationVerification` class can be used to verify statusList2021Credential and revoker's authority.
+```typescript
+import {
+  CredentialResolver,
+  IssuerResolver,
+  VCIssuerVerification,
+  ClaimIssuerVerification,
+  RevocationVerification,
+  RevokerResolver,
+  EthersProviderIssuerResolver,
+  IpfsCredentialResolver,
+} from '@energyweb/vc-verification';
+import {
+  StatusList2021Credential,
+} from '@ew-did-registry/credentials-interface';
+import { DidStore } from '@ew-did-registry/did-ipfs-store';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { DomainReader } from '@energyweb/credential-governance';
+import { providers } from 'ethers';
+import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import { verifyCredential } from 'didkit-wasm-node';
+
+(async () => {
+  let provider: providers.provider;
+  let revokerResolver: RevokerResolver = new EthersProviderIssuerResolver(
+    DomainReader
+  );
+  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
+    DIDStore,
+    Resolver
+  );
+  const vcIssuerVerification = new VCIssuerVerification(
+    issuerResolver,
+    credentialResolver,
+    verifyCredential
+  );
+  const claimIssuerVerification = new ClaimIssuerVerification(
+    provider,
+    RegistrySettings,
+    issuerResolver,
+    credentialResolver
+  );
+  const revocationVerification = new RevocationVerification(
+    revokerResolver,
+    vcIssuerVerification,
+    claimIssuerVerification,
+    verifyCredential
+  );
+  let credential : StatusList2021Credential;
+  const role = 'role';
+  revocationVerification.verifyStatusList(credential, role);
+})();
+```
 
 ## Installation
 This is a Node.js module available through the npm registry.
 
 ### Requirements
 
-Before installing, download and install Node.js. Node.js 16.0 or higher is required.
+Before installing, download and install Node.js. Node.js 16.10.0 or higher is required.
 
 Installation is done using the following commands:
 
@@ -23,57 +151,18 @@ Installation is done using the following commands:
 $ npm install
 ```
 
-## Setup
-``` sh
-$ npm run setup
-```
-
 ## Build
 ``` sh
 $ npm run build
 ```
 
-## Testing
+## Run
+``` sh
+$ npm run start
+```
+## Testing 
+
+### Unit Tests
 ``` sh
 $ npm run test-rpc
 ```
-
-## Contributing Guidelines 
-See [contributing.md](./contributing.md)
-
-
-## Questions and Support
-For questions and support please use Energy Web's [Discord channel](https://discord.com/channels/706103009205288990/843970822254362664) 
-
-Or reach out to our contributing team members
-
-- TeamMember: email address@energyweb.org
-
-
-# EW-DOS
-//This should be the same in every repo. 
-The Energy Web Decentralized Operating System is a blockchain-based, multi-layer digital infrastructure. 
-
-The purpose of EW-DOS is to develop and deploy an open and decentralized digital operating system for the energy sector in support of a low-carbon, customer-centric energy future. 
-
-We develop blockchain technology, full-stack applications and middleware packages that facilitate participation of Distributed Energy Resources on the grid and create open market places for transparent and efficient renewable energy trading.
-
-- To learn about more about the EW-DOS tech stack, see our [documentation](https://app.gitbook.com/@energy-web-foundation/s/energy-web/).  
-
-- For an overview of the energy-sector challenges our use cases address, go [here](https://app.gitbook.com/@energy-web-foundation/s/energy-web/our-mission). 
-
-For a deep-dive into the motivation and methodology behind our technical solutions, we encourage you to read our White Papers:
-
-- [Energy Web White Paper on Vision and Purpose](https://www.energyweb.org/reports/EWDOS-Vision-Purpose/)
-- [Energy Web  White Paper on Technology Detail](https://www.energyweb.org/wp-content/uploads/2020/06/EnergyWeb-EWDOS-PART2-TechnologyDetail-202006-vFinal.pdf)
-
-
-## Connect with Energy Web
-- [Twitter](https://twitter.com/energywebx)
-- [Discord](https://discord.com/channels/706103009205288990/843970822254362664)
-- [Telegram](https://t.me/energyweb)
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 or later - see the [LICENSE](LICENSE) file for details
-

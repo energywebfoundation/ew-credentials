@@ -32,6 +32,18 @@ export class RevocationVerification {
   /**
    * Verifies that status list is issued by revoker specified in role definition
    * Revoker authorization must be verified by verifiable credential
+   * 
+   * ```typescript
+   * const revocationVerification = new RevocationVerification(
+   * revokerResolver,
+   * vcIssuerVerification,
+   * claimIssuerVerification,
+   * verifyCredential );
+   * 
+   * let credential : StatusList2021Credential;
+   * const role = 'role';
+   * await revocationVerification.verifyStatusList(credential, role);
+   * ```
    * @param role role name
    * @param statusList credential which contains revocation status of `role` credential
    */

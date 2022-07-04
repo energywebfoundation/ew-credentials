@@ -28,8 +28,17 @@ export class IpfsCredentialResolver implements CredentialResolver {
 
   /**
    * Fetches credential for the given did and role for a vc issuance hierarchy
-   * @param did
-   * @param namespace
+   * 
+   * ```typescript
+   * const credentialResolver = new IpfsCredentialResolver(
+   *  provider,
+   *  registrySettings,
+   *  didStore );
+   * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole');
+   * ```
+   * 
+   * @param did subject DID for which the credential needs to be fetched
+   * @param namespace role for which the credential needs to be fetched
    * @returns
    */
   async getCredential(did: string, namespace: string) {
@@ -43,8 +52,17 @@ export class IpfsCredentialResolver implements CredentialResolver {
 
   /**
    * Fetches issued token for the given did and role for an OffChainClaim issuance hierarchy
-   * @param did
-   * @param role
+   * 
+   * ```typescript
+   * const credentialResolver = new IpfsCredentialResolver(
+   *  provider,
+   *  registrySettings,
+   *  didStore );
+   * const credential = credentialResolver.getClaimIssuedToken('did:ethr:1234', 'sampleRole');
+   * ```
+   * 
+   * @param did subject DID for which the claim token need to be fetched
+   * @param role role for which the claim need to be fetched
    * @returns
    */
   async getClaimIssuedToken(

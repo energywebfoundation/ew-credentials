@@ -1,26 +1,112 @@
 <p align="center">
-  <a href="https://www.energyweb.org" target="blank"><img src="./images/EW.png" width="120" alt="Energy Web Foundation Logo" /></a>
+  <a href="https://www.energyweb.org" target="blank"><img src="../../images/EW.png" width="120" alt="Energy Web Foundation Logo" /></a>
 </p>
 
 
-# PACKAGE NAME
+# Credential Governance
 
 ## Description
-Overview of package. 
-{Package} is a module-based library built with xxx. 
+This package consists of EVM smart contract related to EnergyWeb Name Service and libraries to resolve / read namespaces & defintions. 
 
-//Purpose of package, sdk, etc. 
+[`@energyweb/credential-governance`](../credential-governance/) is a typescript module. 
 
-{Package} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
+{credential-governance} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
 
-See {PACKAGE} deployed [here](link to Switchboard, Zero if applicable)
+## Usage
+
+### DomainReader
+
+The `DomainReader` class can be used as shown to read a domain definition.
+```typescript
+import {
+  DomainReader,
+  VOLTA_ENS_REGISTRY_ADDRESS,
+} from "@energyweb/credential-governance";
+import { providers, utils } from "ethers";
+
+(async () => {
+  const provider = new providers.JsonRpcProvider(
+    "https://volta-rpc.energyweb.org"
+  );
+  const reader = new DomainReader({
+    ensRegistryAddress: VOLTA_ENS_REGISTRY_ADDRESS,
+    provider,
+  });
+  const roleDefinition = await reader.read({
+    node: utils.namehash("manufacturer.roles.flex.apps.exampleco.iam.ewc"),
+  });
+})();
+```
+
+### DomainTransactionFactoryV2
+
+The `DomainTransactionFactory` class can be used to add and update definitions specific to namespaces.
+```typescript
+import {
+  DomainTransactionFactoryV2,
+  VOLTA_RESOLVER_V2_ADDRESS,
+} from "@energyweb/credential-governance";
+
+(async () => {
+  const domainTransactionFactory = new DomainTransactionFactoryV2({
+    domainResolverAddress: VOLTA_RESOLVER_V2_ADDRESS,
+  });
+
+  const domain = 'sampleDomain';
+  const role: IRoleDefinitionV2 = {
+    requestorFields: [
+      {
+        fieldType: 'fieldType',
+        label: 'label',
+        required: true,
+        minLength: 5,
+        minDate: new Date(),
+        maxDate: new Date(),
+      },
+    ],
+    issuer: {
+      issuerType: 'DID',
+      did: [`did:ethr:volta:0x7aA65E31d404A8857BA083f6195757a730b51CFe`],
+    },
+    revoker: {
+      revokerType: 'DID',
+      did: [`did:ethr:volta:0x7aA65E31d404A8857BA083f6195757a730b51CFe`],
+    },
+    metadata: [],
+    roleName: 'myRole1',
+    roleType: 'sample',
+    version: 1,
+    enrolmentPreconditions: [],
+  };
+
+  const call = domainDefTxFactoryV2.newRole({
+    domain: domain,
+    roleDefinition: role,
+  });
+  await (await owner.sendTransaction(call)).wait();
+})();
+```
+
+## Contract Descriptions
+
+### [`RoleDefinitionResolverV2.sol`](../credential-governance/contracts/RoleDefinitionResolverV2.sol)
+
+This is an implementation of an ENS resolver that represents a role definition.
+It extends the [ENS Public Resolver](https://docs.ens.domains/contract-api-reference/publicresolver) with additional resolver profiles,
+specifically for the use case of issuance, revocation and verify role claims using a smart contract.
+In other words, this custom ENS resolver allows some properties of a role definition to be (usefully) readable by another smart contract.
+
+### [`DomainNotifier.sol`](../credential-governance/contracts/DomainNotifier.sol)
+
+This EVM contracts notifies the updation of ENS namespaces resolved data.
 
 ## Installation
+
 This is a Node.js module available through the npm registry.
 
 ### Requirements
 
-Before installing, download and install Node.js. Node.js xxx or higher is required.
+Before installing, download and install Node.js. Node.js 16.10.0 or higher is required.
 
 Installation is done using the following commands:
 
@@ -37,63 +123,9 @@ $ npm run build
 ``` sh
 $ npm run start
 ```
-## Testing (delete if not needed)
-Testing Strategy
+## Testing 
 
-### Integration Tests (delete if not needed)
+### Unit Tests
 ``` sh
-$ npm run test
+$ npm run test-rpc
 ```
-
-### Unit Tests (delete if not needed)
-``` sh
-$ npm run test
-```
-
-For more details, visit the [installation guide](//LINK TO READ THE DOCS INSTALL PAGE)
-
-## Documentation
-- [ReadTheDocs](https://origins.readthedocs.io/en/latest/)
-
-## Who is Using {Package}?
-//For origin, 24/7, Zero might be good to have a few examples of implementations to give context of how its used
-
-## Contributing Guidelines 
-See [contributing.md](./contributing.md)
-
-
-## Questions and Support
-For questions and support please use Energy Web's [Discord channel](https://discord.com/channels/706103009205288990/843970822254362664) 
-
-Or reach out to our contributing team members
-
-- TeamMember: email address@energyweb.org
-
-
-# EW-DOS
-//This should be the same in every repo. 
-The Energy Web Decentralized Operating System is a blockchain-based, multi-layer digital infrastructure. 
-
-The purpose of EW-DOS is to develop and deploy an open and decentralized digital operating system for the energy sector in support of a low-carbon, customer-centric energy future. 
-
-We develop blockchain technology, full-stack applications and middleware packages that facilitate participation of Distributed Energy Resources on the grid and create open market places for transparent and efficient renewable energy trading.
-
-- To learn about more about the EW-DOS tech stack, see our [documentation](https://app.gitbook.com/@energy-web-foundation/s/energy-web/).  
-
-- For an overview of the energy-sector challenges our use cases address, go [here](https://app.gitbook.com/@energy-web-foundation/s/energy-web/our-mission). 
-
-For a deep-dive into the motivation and methodology behind our technical solutions, we encourage you to read our White Papers:
-
-- [Energy Web White Paper on Vision and Purpose](https://www.energyweb.org/reports/EWDOS-Vision-Purpose/)
-- [Energy Web  White Paper on Technology Detail](https://www.energyweb.org/wp-content/uploads/2020/06/EnergyWeb-EWDOS-PART2-TechnologyDetail-202006-vFinal.pdf)
-
-
-## Connect with Energy Web
-- [Twitter](https://twitter.com/energywebx)
-- [Discord](https://discord.com/channels/706103009205288990/843970822254362664)
-- [Telegram](https://t.me/energyweb)
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 or later - see the [LICENSE](LICENSE) file for details
-
