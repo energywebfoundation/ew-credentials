@@ -28,6 +28,12 @@ export class EthersProviderRevokerResolver implements RevokerResolver {
 
   /**
    * Fetches revokers for the name space
+   * 
+   * ```typescript
+   * const revokerResolver = new EthersProviderRevokerResolver(domainReader);
+   * const role = 'sampleRole';
+   * const revokers = revokerResolver.getRevokerDefinition(role);
+   * ```
    * @param namespace for which revokers need to be fetched
    * @returns IRevokerDefinition for the namespace from blockchain contract
    */
