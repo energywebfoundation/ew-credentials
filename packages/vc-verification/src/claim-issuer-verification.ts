@@ -51,12 +51,12 @@ export class ClaimIssuerVerification {
       if (await this.isRoleIssuerDID(role)) {
         return true;
       } else if (roleIssuers && roleIssuers.roleName) {
-        const nextIssuerDID = await this.verifyIssuance(
+        const currentIssuerClaim = await this.verifyIssuance(
           currentIssuerDID,
           roleIssuers.roleName
         );
-        if (nextIssuerDID) {
-          currentIssuerDID = nextIssuerDID;
+        if (currentIssuerClaim) {
+          currentIssuerDID = currentIssuerClaim.iss;
           role = roleIssuers.roleName;
         } else {
           throw new Error('The credential is invalid');
@@ -69,7 +69,7 @@ export class ClaimIssuerVerification {
    * Verifies that `role` claim was issued to `subject`
    * @param subject DID of the subject
    * @param role name of the role claim
-   * @returns issuer of the role claim
+   * @returns OffChainClaim
    */
   async verifyIssuance(subject: string, role: string) {
     const token = await this._credentialResolver.getClaimIssuedToken(
@@ -85,7 +85,7 @@ export class ClaimIssuerVerification {
     const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
     const verifier = new ProofVerifier(issuerDIDDoc);
     if (await verifier.verifyAssertionProof(token)) {
-      return offChainClaim.iss;
+      return offChainClaim;
     } else {
       throw new Error('Invalid Credential');
     }
@@ -123,12 +123,12 @@ export class ClaimIssuerVerification {
         }
       }
     }
-    let isClaimVerified;
+    let claim;
     if (issuers && issuers.roleName) {
-      isClaimVerified = await this.verifyIssuance(issuerDID, issuers.roleName);
+      claim = await this.verifyIssuance(issuerDID, issuers.roleName);
     } else {
       throw new InvalidIssuerType(namespace, issuers?.issuerType);
     }
-    return typeof isClaimVerified === 'string';
+    return claim instanceof Object;
   }
 }

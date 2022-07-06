@@ -2,10 +2,12 @@ import {
   StatusList2021Credential,
   validateStatusList,
 } from '@ew-did-registry/credentials-interface';
-import { CredentialResolver } from './credential-resolver';
-import { IssuerResolver } from './issuer-resolver';
 import { RevokerResolver } from './revoker-resolver';
-import { VCIssuerVerification } from './vc-issuer-verification';
+import {
+  VCIssuerVerification,
+  ClaimIssuerVerification,
+  CredentialResolver,
+} from '.';
 import { InvalidRevokerType, NoRevokers, RevokerNotAuthorized } from './errors';
 import { issuerDID } from './models';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
@@ -14,19 +16,19 @@ import { addressOf } from '@ew-did-registry/did-ethr-resolver';
  * Provides verification of revocation of EnergyWeb role verifiable credential
  */
 export class RevocationVerification {
-  private issuerVerification: VCIssuerVerification;
+  private credentialResolver: CredentialResolver;
+  private vcIssuerVerification: VCIssuerVerification;
+  private claimIssuerVerification: ClaimIssuerVerification;
 
   constructor(
     private revokerResolver: RevokerResolver,
-    issuerResolver: IssuerResolver,
     credentialResolver: CredentialResolver,
-    verifyProof: (vc: string, proof_options: string) => Promise<any>
+    vcIssuerVerification: VCIssuerVerification,
+    claimIssuerVerification: ClaimIssuerVerification
   ) {
-    this.issuerVerification = new VCIssuerVerification(
-      issuerResolver,
-      credentialResolver,
-      verifyProof
-    );
+    this.credentialResolver = credentialResolver;
+    this.vcIssuerVerification = vcIssuerVerification;
+    this.claimIssuerVerification = claimIssuerVerification;
   }
 
   /**
@@ -54,7 +56,7 @@ export class RevocationVerification {
     }
     const { did, revokerType, roleName: revokerRole } = revokers;
     if (revokerType === 'DID' && did) {
-      // revokers in role definition are addresses, but in credential are DID's
+      // revokers in role definition and credential's have different DID format
       if (
         !did.some(
           (r) => addressOf(r).toUpperCase() === addressOf(revoker).toUpperCase()
@@ -68,14 +70,26 @@ export class RevocationVerification {
       }
     } else if (revokerRole) {
       try {
-        const revokerVC = await this.issuerVerification.verifyIssuance(
+        const revokerCredential = await this.credentialResolver.getCredential(
           revoker,
           revokerRole
         );
-        await this.issuerVerification.verifyIssuer(
-          issuerDID(revokerVC.issuer),
-          revokerRole
-        );
+        if (revokerCredential?.issuer) {
+          await this.vcIssuerVerification.verifyIssuance(revoker, revokerRole);
+          await this.vcIssuerVerification.verifyIssuer(
+            issuerDID(revokerCredential.issuer as string),
+            revokerRole
+          );
+        } else {
+          await this.claimIssuerVerification.verifyIssuance(
+            revoker,
+            revokerRole
+          );
+          await this.claimIssuerVerification.verifyIssuer(
+            revokerCredential?.iss as string,
+            revokerRole
+          );
+        }
       } catch (e) {
         throw new RevokerNotAuthorized(revoker, role, (<Error>e).message);
       }
