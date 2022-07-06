@@ -65,7 +65,10 @@ export class VCIssuerVerification {
     subject: string,
     role: string
   ): Promise<VerifiableCredential<RoleCredentialSubject>> {
-    const roleVC = await this.credentialResolver.getCredential(subject, role);
+    const roleVC = await this.credentialResolver.getVerifiableCredential(
+      subject,
+      role
+    );
     if (!roleVC) {
       throw new NoCredential(role, subject);
     }
