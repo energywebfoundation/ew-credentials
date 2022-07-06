@@ -36,7 +36,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  didStore );
    * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole');
    * ```
-   *
+   * 
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
    * @returns

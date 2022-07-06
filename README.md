@@ -6,10 +6,10 @@
 # EW Credentials
 
 ## Description
-This repository provides code for CRUD operations on roles (Verifiable Credential).
+This repository provides library for CRUD operations specific to EnergyWeb Roles (Verifiable Credential).
 {@energyweb/credentials} is a module-based library built with lerna. 
 
-{iam-roles} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
+{ew-credentials} is a component of the [Energy Web Decentralized Operating System](#ew-dos)
 
 | Package                                                                       | Description                                               |
 |:---                                                                           |:---                                                       | 

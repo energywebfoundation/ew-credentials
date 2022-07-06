@@ -23,6 +23,15 @@ export class VCIssuerVerification {
 
   /**
    * Verifies that `issuer` is authorized to issue `role`
+   * 
+   * ```typescript
+   * const issuerVerification = new VCIssuerVerification(
+   * issuerResolver,
+   * credentialResolver,
+   * verifyCredential
+   * );
+   * await issuerVerification.verifyIssuer('issuerDID', 'role');
+   * ```
    * @param issuer DID of the issuer
    * @param role name of the role verifiable credential
    */

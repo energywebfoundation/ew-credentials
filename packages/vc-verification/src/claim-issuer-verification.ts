@@ -36,6 +36,16 @@ export class ClaimIssuerVerification {
 
   /**
    * Verifies that `issuer` is authorized to issue `role` claim
+   * 
+   * ```typescript
+   * const issuerVerification = new ClaimIssuerVerification(
+   * provider,
+   * RegistrySettings,
+   * issuerResolver,
+   * credentialResolver
+   * );
+   * await issuerVerification.verifyIssuer('issuerDID', 'role');
+   * ```
    * @param issuer DID of the issuer
    * @param role name of the role claim
    */
