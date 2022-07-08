@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
-import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerResolver } from '.';
 import { OffChainClaim } from './models';
@@ -36,7 +36,7 @@ export class ClaimIssuerVerification {
 
   /**
    * Verifies that `issuer` is authorized to issue `role` claim
-   * 
+   *
    * ```typescript
    * const issuerVerification = new ClaimIssuerVerification(
    * provider,
@@ -127,11 +127,11 @@ export class ClaimIssuerVerification {
       namespace
     );
     if (issuers && issuers.did && issuers.issuerType === 'DID') {
-      for (let i = 0; i < issuers.did.length; i++) {
-        if (issuers.did[i] === issuerDID) {
-          return true;
-        }
-      }
+      return issuers?.did?.find(
+        (d) => addressOf(d).toUpperCase() === addressOf(issuerDID).toUpperCase()
+      )
+        ? true
+        : false;
     }
     let claim;
     if (issuers && issuers.roleName) {
