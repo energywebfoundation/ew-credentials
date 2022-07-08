@@ -1,6 +1,7 @@
 import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import { JWT } from '@ew-did-registry/jwt';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
@@ -341,7 +342,8 @@ function testSuite() {
 
   describe('Issuer verification', () => {
     it('verifies issuer, where the role is issued by did', async () => {
-      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const adminJWT = new JWT(adminKeys);
+      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -363,7 +365,8 @@ function testSuite() {
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
-      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const adminJWT = new JWT(adminKeys);
+      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -380,7 +383,7 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
+      let ipfsCIDManager = await didStore.save(await adminJWT.sign(adminVC));
       const serviceIdManager = managerRole;
       const updateDataManager: IUpdateData = {
         type: DIDAttribute.ServicePoint,

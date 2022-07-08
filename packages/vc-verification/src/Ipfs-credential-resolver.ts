@@ -36,7 +36,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  didStore );
    * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole');
    * ```
-   * 
+   *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
    * @returns
@@ -177,8 +177,8 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return (
       await Promise.all(
         services.map(async ({ serviceEndpoint }) => {
-          const credential = await this._ipfsStore.get(serviceEndpoint);
-          const vc = JSON.parse(credential);
+          const credentialToken = await this._ipfsStore.get(serviceEndpoint);
+          const vc = jwt.decode(credentialToken);
           delete vc.iat;
           return vc as VerifiableCredential<RoleCredentialSubject>;
         })

@@ -2,6 +2,7 @@ import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import nock from 'nock';
 import chaiAsPromised from 'chai-as-promised';
+import { JWT } from '@ew-did-registry/jwt';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
@@ -382,7 +383,8 @@ function testSuite() {
 
   describe('Revocation verification', () => {
     it('Revocation without revocation or suspension purpose should not be verified', async () => {
-      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const adminJWT = new JWT(adminKeys);
+      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -412,12 +414,13 @@ function testSuite() {
     });
 
     it('Revocation by DID type revoker should be verified', async () => {
+      const adminJWT = new JWT(adminKeys);
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
           id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
+          serviceEndpoint: await didStore.save(await adminJWT.sign(adminVC)),
         },
       };
       await adminOperator.update(
@@ -438,12 +441,14 @@ function testSuite() {
 
     // `user` role can be revoked by `manager`. `manager` can be issued by `admin`
     it('Revocation by ROLE type revoker should be verified', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const managerJWT = new JWT(managerKeys);
       let updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
           id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
+          serviceEndpoint: await didStore.save(await adminJWT.sign(adminVC)),
         },
       };
       await adminOperator.update(
@@ -458,7 +463,7 @@ function testSuite() {
         value: {
           id: `${userDid}#service-${userRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(JSON.stringify(userVC)),
+          serviceEndpoint: await didStore.save(await managerJWT.sign(userVC)),
         },
       };
       await userOperator.update(
@@ -473,7 +478,7 @@ function testSuite() {
         value: {
           id: `${managerDid}#service-${managerRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(JSON.stringify(managerVC)),
+          serviceEndpoint: await didStore.save(await adminJWT.sign(managerVC)),
         },
       };
       await managerOperator.update(
