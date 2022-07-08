@@ -7,6 +7,7 @@ export * from './upgrade-chainid';
 export * from './claim-issuer-verification';
 export * from './revocation-verification';
 export * from './revoker-resolver';
+export * from './issuer-verification';
 export {
   CredentialResolverIpfsSettings,
   VerificationResult,
