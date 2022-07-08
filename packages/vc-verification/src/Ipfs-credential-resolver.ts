@@ -28,7 +28,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
 
   /**
    * Fetches credential for the given did and role for a vc issuance hierarchy
-   * 
+   *
    * ```typescript
    * const credentialResolver = new IpfsCredentialResolver(
    *  provider,
@@ -41,7 +41,39 @@ export class IpfsCredentialResolver implements CredentialResolver {
    * @param namespace role for which the credential needs to be fetched
    * @returns
    */
-  async getCredential(did: string, namespace: string) {
+  async getCredential(
+    did: string,
+    namespace: string
+  ): Promise<
+    VerifiableCredential<RoleCredentialSubject> | OffChainClaim | undefined
+  > {
+    let credential:
+      | VerifiableCredential<RoleCredentialSubject>
+      | OffChainClaim
+      | undefined;
+    credential = await this.getVerifiableCredential(did, namespace);
+    if (!credential) {
+      credential = jwt.decode(await this.getClaimIssuedToken(did, namespace));
+    }
+    return credential;
+  }
+
+  /**
+   * Fetches Verifiable Credential for the given did and role for a vc issuance hierarchy
+   *
+   * ```typescript
+   * const credentialResolver = new IpfsCredentialResolver(
+   *  provider,
+   *  registrySettings,
+   *  didStore );
+   * const credential = credentialResolver.getVerifiableCredential('did:ethr:1234', 'sampleRole');
+   * ```
+   *
+   * @param did subject DID for which the credential needs to be fetched
+   * @param namespace role for which the credential needs to be fetched
+   * @returns
+   */
+  async getVerifiableCredential(did: string, namespace: string) {
     const credentials = await this.credentialsOf(did);
     return credentials.find(
       (claim) =>
@@ -52,7 +84,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
 
   /**
    * Fetches issued token for the given did and role for an OffChainClaim issuance hierarchy
-   * 
+   *
    * ```typescript
    * const credentialResolver = new IpfsCredentialResolver(
    *  provider,
@@ -60,7 +92,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  didStore );
    * const credential = credentialResolver.getClaimIssuedToken('did:ethr:1234', 'sampleRole');
    * ```
-   * 
+   *
    * @param did subject DID for which the claim token need to be fetched
    * @param role role for which the claim need to be fetched
    * @returns

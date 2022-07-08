@@ -32,6 +32,8 @@ import {
   RevocationVerification,
   RevokerResolver,
   EthersProviderRevokerResolver,
+  VCIssuerVerification,
+  ClaimIssuerVerification,
 } from '../src';
 import {
   DIDAttribute,
@@ -223,13 +225,24 @@ function testSuite() {
     });
 
     revokerResolver = new EthersProviderRevokerResolver(domainReader);
-
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
-    revocationVerification = new RevocationVerification(
-      revokerResolver,
+    const vcIssuerVerification = new VCIssuerVerification(
       issuerResolver,
       credentialResolver,
       verifyCredential
+    );
+    const claimIssuerVerification = new ClaimIssuerVerification(
+      provider,
+      registrySettings,
+      credentialResolver,
+      issuerResolver
+    );
+
+    revocationVerification = new RevocationVerification(
+      revokerResolver,
+      credentialResolver,
+      vcIssuerVerification,
+      claimIssuerVerification
     );
 
     await (
