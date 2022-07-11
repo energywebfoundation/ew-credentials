@@ -376,8 +376,9 @@ function testSuite() {
         validity
       );
 
-      return expect(issuerVerification.verifyIssuer(adminDid, adminRole)).to.be
-        .fulfilled;
+      return expect(
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+      ).to.be.true;
     });
 
     it('verifies issuerwith VC, where the role is issued by role', async () => {
@@ -416,8 +417,9 @@ function testSuite() {
         validity
       );
 
-      return expect(issuerVerification.verifyIssuer(adminDid, managerRole)).to
-        .be.fulfilled;
+      return expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.true;
     });
 
     it('verifies issuer with OffChainClaim, where the role is issued by did', async () => {
@@ -459,7 +461,9 @@ function testSuite() {
         validity
       );
 
-      expect(await issuerVerification.verifyIssuer(adminDid, adminRole)).true;
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+      ).to.be.true;
     });
 
     it('verifies issuer with OffChainClaim, where the role is issued by role', async () => {
@@ -538,7 +542,9 @@ function testSuite() {
         validity
       );
 
-      expect(await issuerVerification.verifyIssuer(adminDid, managerRole)).true;
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.true;
     });
   });
 }

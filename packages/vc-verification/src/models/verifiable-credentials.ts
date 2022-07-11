@@ -7,7 +7,15 @@ const { isHexString } = utils;
 
 export interface VerificationResult {
   status: boolean;
+  error: string;
 }
+
+export const verificationResult = function (
+  status: boolean,
+  error: string
+): VerificationResult {
+  return { status, error };
+};
 
 export interface OffChainClaim {
   claimType: string;

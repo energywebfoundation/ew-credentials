@@ -4,8 +4,12 @@ import { ProofVerifier } from '@ew-did-registry/claims';
 import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerResolver } from '.';
-import { OffChainClaim } from './models';
-import { InvalidIssuerType } from './errors';
+import {
+  OffChainClaim,
+  verificationResult,
+  VerificationResult,
+} from './models';
+import { ERRORS, InvalidIssuerType } from './errors';
 
 /**
  * A class to verify chain of trust for an issued OffChainClaim
@@ -41,25 +45,29 @@ export class ClaimIssuerVerification {
    * const issuerVerification = new ClaimIssuerVerification(
    * provider,
    * RegistrySettings,
-   * issuerResolver,
-   * credentialResolver
+   * credentialResolver,
+   * issuerResolver
    * );
    * await issuerVerification.verifyIssuer('issuerDID', 'role');
    * ```
    * @param issuer DID of the issuer
    * @param role name of the role claim
+   * @returns VerificationResult
    */
-  async verifyIssuer(issuer: string, role: string) {
+  async verifyIssuer(
+    issuer: string,
+    role: string
+  ): Promise<VerificationResult> {
     let currentIssuerDID = issuer;
     while (true) {
       if (!(await this.verifyIssuerAuthority(role, currentIssuerDID))) {
-        throw new Error('Issuer is not allowed to issue credential');
+        return verificationResult(false, ERRORS.IssuerNotAuthorized);
       }
       const roleIssuers = await this._issuerDefResolver.getIssuerDefinition(
         role
       );
-      if (await this.isRoleIssuerDID(role)) {
-        return true;
+      if (roleIssuers && roleIssuers.did) {
+        return verificationResult(true, '');
       } else if (roleIssuers && roleIssuers.roleName) {
         const currentIssuerClaim = await this.verifyIssuance(
           currentIssuerDID,
@@ -69,7 +77,7 @@ export class ClaimIssuerVerification {
           currentIssuerDID = currentIssuerClaim.iss;
           role = roleIssuers.roleName;
         } else {
-          throw new Error('The credential is invalid');
+          return verificationResult(false, ERRORS.InvalidCredentialProof);
         }
       }
     }
@@ -79,9 +87,12 @@ export class ClaimIssuerVerification {
    * Verifies that `role` claim was issued to `subject`
    * @param subject DID of the subject
    * @param role name of the role claim
-   * @returns OffChainClaim
+   * @returns valid OffChainClaim
    */
-  async verifyIssuance(subject: string, role: string) {
+  async verifyIssuance(
+    subject: string,
+    role: string
+  ): Promise<OffChainClaim | undefined> {
     const token = await this._credentialResolver.getClaimIssuedToken(
       subject,
       role
@@ -97,18 +108,8 @@ export class ClaimIssuerVerification {
     if (await verifier.verifyAssertionProof(token)) {
       return offChainClaim;
     } else {
-      throw new Error('Invalid Credential');
+      return undefined;
     }
-  }
-
-  /**
-   * Returns true if the role issuer type is DID
-   * @param role
-   * @returns
-   */
-  private async isRoleIssuerDID(role: string) {
-    const issuers = await this._issuerDefResolver.getIssuerDefinition(role);
-    return issuers && issuers.issuerType === 'DID';
   }
 
   /**

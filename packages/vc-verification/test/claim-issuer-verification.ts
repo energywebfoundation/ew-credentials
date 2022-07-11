@@ -383,7 +383,9 @@ function testSuite() {
         validity
       );
 
-      expect(await issuerVerification.verifyIssuer(adminDid, adminRole)).true;
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+      ).true;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -462,7 +464,9 @@ function testSuite() {
         validity
       );
 
-      expect(await issuerVerification.verifyIssuer(adminDid, managerRole)).true;
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).true;
     });
 
     it('rejects credential for any unauthorised issuer in the chain', async () => {

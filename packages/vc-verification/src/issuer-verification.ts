@@ -4,27 +4,27 @@ import {
   CredentialResolver,
   IssuerResolver,
   OffChainClaim,
+  VerificationResult,
 } from '.';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { NoCredential } from './errors';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
+import { verificationResult } from './models';
+import { ERRORS } from './errors';
 
 /**
  * A class to provide verification of issuer authority for either VC or OffChainClaim
  */
 export class IssuerVerification {
-  private credentialResolver: CredentialResolver;
   private vcIssuerVerification: VCIssuerVerification;
   private claimIssuerverification: ClaimIssuerVerification;
 
   constructor(
     private issuerResolver: IssuerResolver,
-    credentialResolver: CredentialResolver,
+    private credentialResolver: CredentialResolver,
     vcIssuerVerification: VCIssuerVerification,
     claimIssuerverification: ClaimIssuerVerification
   ) {
-    this.credentialResolver = credentialResolver;
     this.vcIssuerVerification = vcIssuerVerification;
     this.claimIssuerverification = claimIssuerverification;
   }
@@ -34,6 +34,7 @@ export class IssuerVerification {
    *
    * ```typescript
    * const issuerVerification = new IssuerVerification(
+   * issuerResolver
    * credentialResolver,
    * vcIssuerVerification,
    * claimIssuerVerification,
@@ -46,14 +47,21 @@ export class IssuerVerification {
    *
    * @param issuer issuer DID to verify authority
    * @param role authoritative role to be issuer
-   * @returns
+   * @returns VerificationResult
    */
-  async verifyIssuer(issuer: string, role: string) {
+  async verifyIssuer(
+    issuer: string,
+    role: string
+  ): Promise<VerificationResult> {
     let issuerCredential:
       | VerifiableCredential<RoleCredentialSubject>
       | OffChainClaim
       | undefined;
+
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
+    if (!issuers) {
+      return verificationResult(false, ERRORS.NoIssuers);
+    }
     if (issuers?.roleName) {
       issuerCredential = await this.credentialResolver.getCredential(
         issuer,
@@ -61,7 +69,7 @@ export class IssuerVerification {
       );
 
       if (!issuerCredential) {
-        throw new NoCredential(role, issuer);
+        return verificationResult(false, ERRORS.NoCredential);
       }
       if (issuerCredential?.issuer) {
         return await this.vcIssuerVerification.verifyIssuer(issuer, role);
@@ -71,8 +79,8 @@ export class IssuerVerification {
       return issuers?.did?.find(
         (d) => addressOf(d).toUpperCase() === addressOf(issuer).toUpperCase()
       )
-        ? true
-        : false;
+        ? verificationResult(true, '')
+        : verificationResult(false, ERRORS.IssuerNotAuthorized);
     }
   }
 }

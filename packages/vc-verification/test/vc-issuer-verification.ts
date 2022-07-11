@@ -42,7 +42,7 @@ import {
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
-import { IssuerNotAuthorized } from '../src/errors';
+import { ERRORS, IssuerNotAuthorized } from '../src/errors';
 import { verifyCredential } from 'didkit-wasm-node';
 
 chai.use(chaiAsPromised);
@@ -360,8 +360,9 @@ function testSuite() {
         validity
       );
 
-      return expect(issuerVerification.verifyIssuer(adminDid, adminRole)).to.be
-        .fulfilled;
+      return expect(
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+      ).to.be.true;
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
@@ -400,8 +401,9 @@ function testSuite() {
         validity
       );
 
-      return expect(issuerVerification.verifyIssuer(adminDid, managerRole)).to
-        .be.fulfilled;
+      return expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.true;
     });
 
     it('rejects credential for any unauthorised issuer in the chain', async () => {
@@ -440,8 +442,8 @@ function testSuite() {
       );
       // only manager is authorized to issue user
       return expect(
-        issuerVerification.verifyIssuer(adminDid, userRole)
-      ).to.be.rejectedWith(IssuerNotAuthorized);
+        (await issuerVerification.verifyIssuer(adminDid, userRole)).error
+      ).equal(ERRORS.IssuerNotAuthorized);
     });
   });
 }

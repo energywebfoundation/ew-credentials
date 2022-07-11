@@ -28,7 +28,7 @@ export class EthersProviderRevokerResolver implements RevokerResolver {
 
   /**
    * Fetches revokers for the name space
-   * 
+   *
    * ```typescript
    * const revokerResolver = new EthersProviderRevokerResolver(domainReader);
    * const role = 'sampleRole';
