@@ -143,10 +143,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
         services.map(async ({ serviceEndpoint }) => {
           const claimToken = await this._ipfsStore.get(serviceEndpoint);
           let offChainClaim;
+          // expect that JWT has 3 dot-separated parts
           if (claimToken.split('.').length === 3) {
             offChainClaim = jwt.decode(claimToken);
           }
-          return jwt.decode(claimToken) as OffChainClaim;
+          return offChainClaim as OffChainClaim;
         })
       )
     )
@@ -183,9 +184,9 @@ export class IpfsCredentialResolver implements CredentialResolver {
         services.map(async ({ serviceEndpoint }) => {
           const credential = await this._ipfsStore.get(serviceEndpoint);
           let vc;
+          // expect that JWT would have 3 dot-separated parts, VC is non-JWT credential
           if (!(credential.split('.').length === 3)) {
             vc = JSON.parse(credential);
-            delete vc.iat;
           }
           return vc as VerifiableCredential<RoleCredentialSubject>;
         })
