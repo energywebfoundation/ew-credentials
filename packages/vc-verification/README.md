@@ -13,7 +13,58 @@ This package provides implementation for verification of Verifiable Credential a
 
 ## Usage
 
-### VC Verification
+### Issuer Verification
+
+The `IssuerVerification` class can be used to verify issuers either with an OffChainClaim or a Verifiable Credential.
+```typescript
+import {
+  CredentialResolver,
+  IssuerResolver,
+  VCIssuerVerification,
+  ClaimIssuerVerification,
+  EthersProviderIssuerResolver,
+  IpfsCredentialResolver,
+} from '@energyweb/vc-verification';
+import { DidStore } from '@ew-did-registry/did-ipfs-store';
+import { Resolver } from '@ew-did-registry/did-ethr-resolver';
+import { DomainReader } from '@energyweb/credential-governance';
+import { providers } from 'ethers';
+import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import { verifyCredential } from 'didkit-wasm-node';
+
+(async () => {
+  let provider: providers.provider;
+  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
+    DomainReader
+  );
+  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
+    DIDStore,
+    Resolver
+  );
+  const vcIssuerVerification = new VCIssuerVerification(
+    issuerResolver,
+    credentialResolver,
+    verifyCredential
+  );
+  const claimIssuerVerification = new ClaimIssuerVerification(
+    provider,
+    RegistrySettings,
+    issuerResolver,
+    credentialResolver
+  );
+  const issuerVerification = new IssuerVerification(
+    issuerResolver,
+    credentialResolver
+    vcIssuerVerification,
+    claimIssuerVerification
+  );
+  let issuer : 'did:ethr:ewc:0x1....';
+  const role = 'role';
+  issuerVerification.verifyIssuer(issuer, role);
+})();
+```
+
+### VC Issuer Verification
 
 The `VCIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of Verifiable Credential.
 ```typescript
@@ -46,7 +97,7 @@ import { verifyCredential } from 'didkit-wasm-node';
 })();
 ```
 
-### Claim Verification
+### Claim Issuer Verification
 
 The `ClaimIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of OffChainClaims.
 ```typescript
@@ -88,12 +139,11 @@ The `RevocationVerification` class can be used to verify statusList2021Credentia
 ```typescript
 import {
   CredentialResolver,
-  IssuerResolver,
+  RevokerResolver,
   VCIssuerVerification,
   ClaimIssuerVerification,
   RevocationVerification,
-  RevokerResolver,
-  EthersProviderIssuerResolver,
+  EthersProviderRevokerResolver,
   IpfsCredentialResolver,
 } from '@energyweb/vc-verification';
 import {
@@ -108,7 +158,7 @@ import { verifyCredential } from 'didkit-wasm-node';
 
 (async () => {
   let provider: providers.provider;
-  let revokerResolver: RevokerResolver = new EthersProviderIssuerResolver(
+  let revokerResolver: RevokerResolver = new EthersProviderRevokerResolver(
     DomainReader
   );
   let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
@@ -128,9 +178,9 @@ import { verifyCredential } from 'didkit-wasm-node';
   );
   const revocationVerification = new RevocationVerification(
     revokerResolver,
+    credentialResolver
     vcIssuerVerification,
-    claimIssuerVerification,
-    verifyCredential
+    claimIssuerVerification
   );
   let credential : StatusList2021Credential;
   const role = 'role';

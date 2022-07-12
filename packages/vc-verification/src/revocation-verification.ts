@@ -38,10 +38,10 @@ export class RevocationVerification {
    * ```typescript
    * const revocationVerification = new RevocationVerification(
    * revokerResolver,
+   * credentialResolver,
    * vcIssuerVerification,
    * claimIssuerVerification,
-   * verifyCredential );
-   *
+   * );
    * let credential : StatusList2021Credential;
    * const role = 'role';
    * await revocationVerification.verifyStatusList(credential, role);
@@ -62,13 +62,13 @@ export class RevocationVerification {
    * ```typescript
    * const revocationVerification = new RevocationVerification(
    * revokerResolver,
+   * credentialResolver,
    * vcIssuerVerification,
    * claimIssuerVerification,
-   * verifyCredential );
-   *
+   * );
    * const revoker = 'did:ethr:ewc:0x...';
    * const role = 'role';
-   * await revocationVerification.verifyRevoker(credential, role);
+   * await revocationVerification.verifyRevoker(revoker, role);
    * ```
    * @param revoker DID of revoker
    * @param role name of the role verifiable credential
