@@ -28,7 +28,7 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
 
   /**
    * Fetches authorised issuers for the provided namespace
-   * 
+   *
    * ```typescript
    * const issuerResolver = new EthersProviderIssuerResolver(domainReader);
    * const role = 'sampleRole';

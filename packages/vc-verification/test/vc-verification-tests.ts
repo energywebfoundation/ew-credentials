@@ -19,6 +19,7 @@ import {
 import { claimIssuerVerificationTests } from './claim-issuer-verification';
 import { vcIssuerVerificationTests } from './vc-issuer-verification';
 import { revocationVerificationTests } from './vc-revocation-test';
+import { issuerVerificationTests } from './issuer-verification-test';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
@@ -63,9 +64,16 @@ describe('[VC Verificaiton]', function () {
     });
   });
 
-  describe('Verification of issued credential', () => {
-    describe('OffChain claims', claimIssuerVerificationTests);
-    describe('Verifiable Credentials', vcIssuerVerificationTests);
+  describe('Verification of issuer and authoritative credentials', () => {
+    describe('Issuer Chain with OffChainClaims', claimIssuerVerificationTests);
+    describe(
+      'Issuer Chain with Verifiable Credentials',
+      vcIssuerVerificationTests
+    );
+    describe(
+      'Issuer with either VC or OffChainClaims',
+      issuerVerificationTests
+    );
   });
 
   describe('Verification of revocation', revocationVerificationTests);

@@ -73,3 +73,16 @@ export class NoIssuers extends Error {
     super(`Issuers for credential ${credential} were not set`);
   }
 }
+
+export const ERRORS = {
+  NoCredential: 'No authorative credential found for issuer',
+  NoCredentialStatus: 'Status was not set for the credential',
+  CredentialNotRevoked: 'Credential has not been revoked',
+  RevokerNotAuthorized: 'Revoker not authorised to revoke credential',
+  InvalidCredentialProof: 'Credential proof was not signed by the issuer',
+  IssuerNotAuthorized: 'Issuer not authorised to issue the credential',
+  InvalidRevokerType: 'Invalid revokerType for the given role',
+  InvalidIssuerType: 'Invalid issuerType for the given role',
+  NoRevokers: 'No revokers found for the given role',
+  NoIssuers: 'No issuers found for the given role',
+};

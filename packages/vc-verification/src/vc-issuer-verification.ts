@@ -1,14 +1,8 @@
 import { CredentialResolver, IssuerResolver } from '.';
-import { issuerDID } from './models';
+import { issuerDID, VerificationResult, verificationResult } from './models';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import {
-  InvalidCredentialProof,
-  InvalidIssuerType,
-  IssuerNotAuthorized,
-  NoCredential,
-  NoIssuers,
-} from './errors';
+import { ERRORS, InvalidCredentialProof, NoCredential } from './errors';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 /**
  * A class to verify chain of trust for a Verifiable Credential
@@ -23,7 +17,7 @@ export class VCIssuerVerification {
 
   /**
    * Verifies that `issuer` is authorized to issue `role`
-   * 
+   *
    * ```typescript
    * const issuerVerification = new VCIssuerVerification(
    * issuerResolver,
@@ -34,34 +28,33 @@ export class VCIssuerVerification {
    * ```
    * @param issuer DID of the issuer
    * @param role name of the role verifiable credential
+   * @returns VerificationResult
    */
-  async verifyIssuer(issuer: string, role: string) {
+  async verifyIssuer(
+    issuer: string,
+    role: string
+  ): Promise<VerificationResult> {
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
     if (!issuers) {
-      throw new NoIssuers(role);
+      return verificationResult(false, ERRORS.NoIssuers);
     }
     if (issuers.issuerType === 'DID' && issuers.did) {
       // issuers in role definition are addresses, but in credential are DID's
-      if (
-        !issuers.did?.some(
-          (i) => addressOf(i).toUpperCase() === addressOf(issuer).toUpperCase()
-        )
-      ) {
-        throw new IssuerNotAuthorized(
-          issuer,
-          role,
-          'issuer is not in DID list'
-        );
-      }
+      return issuers?.did?.find(
+        (d) => addressOf(d).toUpperCase() === addressOf(issuer).toUpperCase()
+      )
+        ? verificationResult(true, '')
+        : verificationResult(false, ERRORS.IssuerNotAuthorized);
     } else if (issuers.issuerType === 'ROLE' && issuers.roleName) {
       try {
         await this.verifyIssuerCredential(issuer, issuers.roleName);
       } catch (e) {
-        throw new IssuerNotAuthorized(issuer, role, (<Error>e).message);
+        return verificationResult(false, ERRORS.IssuerNotAuthorized);
       }
     } else {
-      throw new InvalidIssuerType(role, issuers.issuerType);
+      return verificationResult(false, ERRORS.InvalidIssuerType);
     }
+    return verificationResult(true, '');
   }
 
   /**
