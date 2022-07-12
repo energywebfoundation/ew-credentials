@@ -383,8 +383,7 @@ function testSuite() {
 
   describe('Revocation verification', () => {
     it('Revocation without revocation or suspension purpose should not be verified', async () => {
-      const adminJWT = new JWT(adminKeys);
-      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -420,7 +419,7 @@ function testSuite() {
         value: {
           id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(await adminJWT.sign(adminVC)),
+          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
         },
       };
       await adminOperator.update(
@@ -448,7 +447,7 @@ function testSuite() {
         value: {
           id: `${adminDid}#service-${adminRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(await adminJWT.sign(adminVC)),
+          serviceEndpoint: await didStore.save(JSON.stringify(adminVC)),
         },
       };
       await adminOperator.update(
@@ -463,7 +462,7 @@ function testSuite() {
         value: {
           id: `${userDid}#service-${userRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(await managerJWT.sign(userVC)),
+          serviceEndpoint: await didStore.save(JSON.stringify(userVC)),
         },
       };
       await userOperator.update(
@@ -478,7 +477,7 @@ function testSuite() {
         value: {
           id: `${managerDid}#service-${managerRole}`,
           type: 'ClaimStore',
-          serviceEndpoint: await didStore.save(await adminJWT.sign(managerVC)),
+          serviceEndpoint: await didStore.save(JSON.stringify(managerVC)),
         },
       };
       await managerOperator.update(

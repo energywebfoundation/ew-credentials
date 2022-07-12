@@ -342,8 +342,7 @@ function testSuite() {
 
   describe('Issuer verification', () => {
     it('verifies issuer, where the role is issued by did', async () => {
-      const adminJWT = new JWT(adminKeys);
-      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -366,8 +365,7 @@ function testSuite() {
     });
 
     it('verifies issuer, where the role is issued by role', async () => {
-      const adminJWT = new JWT(adminKeys);
-      let ipfsCID = await didStore.save(await adminJWT.sign(adminVC));
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -384,7 +382,7 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(await adminJWT.sign(adminVC));
+      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
       const serviceIdManager = managerRole;
       const updateDataManager: IUpdateData = {
         type: DIDAttribute.ServicePoint,
