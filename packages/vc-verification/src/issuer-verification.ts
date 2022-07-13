@@ -3,17 +3,19 @@ import {
   ClaimIssuerVerification,
   CredentialResolver,
   IssuerResolver,
-  OffChainClaim,
   VerificationResult,
 } from '.';
-import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import {
+  isVerifiableCredential,
+  VerifiableCredential,
+} from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
-import { verificationResult } from './models';
+import { verificationResult, RoleEIP191JWT } from './models';
 import { ERRORS } from './errors';
 
 /**
- * A class to provide verification of issuer authority for either VC or OffChainClaim
+ * A class to provide verification of issuer authority for either VC or RoleEIP191JWT
  */
 export class IssuerVerification {
   private vcIssuerVerification: VCIssuerVerification;
@@ -30,7 +32,7 @@ export class IssuerVerification {
   }
 
   /**
-   * Verifies issuer authority with either Verifiable Credential or OffChainClaim
+   * Verifies issuer authority with either Verifiable Credential or RoleEIP191JWT
    *
    * ```typescript
    * const issuerVerification = new IssuerVerification(
@@ -55,7 +57,7 @@ export class IssuerVerification {
   ): Promise<VerificationResult> {
     let issuerCredential:
       | VerifiableCredential<RoleCredentialSubject>
-      | OffChainClaim
+      | RoleEIP191JWT
       | undefined;
 
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
@@ -71,7 +73,7 @@ export class IssuerVerification {
       if (!issuerCredential) {
         return verificationResult(false, ERRORS.NoCredential);
       }
-      if (issuerCredential?.issuer) {
+      if (isVerifiableCredential(issuerCredential)) {
         return await this.vcIssuerVerification.verifyIssuer(issuer, role);
       }
       return await this.claimIssuerverification.verifyIssuer(issuer, role);

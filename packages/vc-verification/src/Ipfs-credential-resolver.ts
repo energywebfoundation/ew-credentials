@@ -7,7 +7,7 @@ import {
   IServiceEndpoint,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
-import { OffChainClaim } from './models';
+import { RoleEIP191JWT, RolePayload } from './models';
 import { upgradeChainId } from './upgrade-chainid';
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
@@ -45,15 +45,15 @@ export class IpfsCredentialResolver implements CredentialResolver {
     did: string,
     namespace: string
   ): Promise<
-    VerifiableCredential<RoleCredentialSubject> | OffChainClaim | undefined
+    VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   > {
     let credential:
       | VerifiableCredential<RoleCredentialSubject>
-      | OffChainClaim
+      | RoleEIP191JWT
       | undefined;
     credential = await this.getVerifiableCredential(did, namespace);
     if (!credential) {
-      credential = jwt.decode(await this.getClaimIssuedToken(did, namespace));
+      credential = await this.getEIP191JWT(did, namespace);
     }
     return credential;
   }
@@ -83,56 +83,51 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fetches issued token for the given did and role for an OffChainClaim issuance hierarchy
+   * Fetches RoleEIP191JWT for the given did and role for an OffChainClaim issuance hierarchy
    *
    * ```typescript
    * const credentialResolver = new IpfsCredentialResolver(
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getClaimIssuedToken('did:ethr:1234', 'sampleRole');
+   * const credential = credentialResolver.getEIP191JWT('did:ethr:1234', 'sampleRole');
    * ```
    *
-   * @param did subject DID for which the claim token need to be fetched
-   * @param role role for which the claim need to be fetched
-   * @returns
+   * @param did subject DID for which the credential to be fetched
+   * @param role role for which the credential need to be fetched
+   * @returns RoleEIP191JWT
    */
-  async getClaimIssuedToken(
+  async getEIP191JWT(
     did: string,
     namespace: string
-  ): Promise<string | undefined> {
-    const offChainClaims = await this.offchainClaimsOf(did);
-    return offChainClaims.find(
-      (claim) =>
-        claim.claimType === namespace ||
-        utils.namehash(claim.claimType) === namespace
-    )?.issuedToken;
+  ): Promise<RoleEIP191JWT | undefined> {
+    const eip191Jwts = await this.eip191JwtOf(did);
+    return eip191Jwts.find(
+      (jwt) =>
+        jwt?.payload?.claimData.claimType === namespace ||
+        utils.namehash(jwt?.payload?.claimData.claimType) === namespace
+    );
   }
 
-  async isOffchainClaim(claim: unknown): Promise<boolean> {
+  async isEIP191Jwt(claim: unknown): Promise<boolean> {
     if (!claim) return false;
     if (typeof claim !== 'object') return false;
-    const offChainClaimProps = [
-      'claimType',
-      'claimTypeVersion',
-      'issuedToken',
-      'iss',
-    ];
+    const eip191JwtProps = ['claimData', 'signer', 'iss'];
     const claimProps = Object.keys(claim);
-    return offChainClaimProps.every((p) => claimProps.includes(p));
+    return eip191JwtProps.every((p) => claimProps.includes(p));
   }
 
-  private async offchainClaimsOf(did: string): Promise<OffChainClaim[]> {
+  private async eip191JwtOf(did: string): Promise<RoleEIP191JWT[]> {
     const transformClaim = (
-      claim: OffChainClaim
-    ): OffChainClaim | undefined => {
-      const transformedClaim: OffChainClaim = { ...claim };
+      roleJwt: RoleEIP191JWT
+    ): RoleEIP191JWT | undefined => {
+      const transformedClaim: RoleEIP191JWT = { ...roleJwt };
       return upgradeChainId(transformedClaim);
     };
 
     const filterOutMaliciousClaims = (
-      item: OffChainClaim | undefined
-    ): item is OffChainClaim => {
+      item: RoleEIP191JWT | undefined
+    ): item is RoleEIP191JWT => {
       return !!item;
     };
 
@@ -142,16 +137,19 @@ export class IpfsCredentialResolver implements CredentialResolver {
       await Promise.all(
         services.map(async ({ serviceEndpoint }) => {
           const claimToken = await this._ipfsStore.get(serviceEndpoint);
-          let offChainClaim;
+          let rolePayload: RolePayload | undefined;
           // expect that JWT has 3 dot-separated parts
           if (claimToken.split('.').length === 3) {
-            offChainClaim = jwt.decode(claimToken);
+            rolePayload = jwt.decode(claimToken) as RolePayload;
           }
-          return offChainClaim as OffChainClaim;
+          return {
+            payload: rolePayload,
+            eip191Jwt: claimToken,
+          } as RoleEIP191JWT;
         })
       )
     )
-      .filter(this.isOffchainClaim)
+      .filter(this.isEIP191Jwt)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
   }

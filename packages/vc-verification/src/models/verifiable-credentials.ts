@@ -2,6 +2,7 @@ import { chainIdToChainName } from '@energyweb/credential-governance';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import type { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import { utils } from 'ethers';
+import * as jwt from 'jsonwebtoken/index';
 
 const { isHexString } = utils;
 
@@ -17,12 +18,22 @@ export const verificationResult = function (
   return { status, error };
 };
 
-export interface OffChainClaim {
+export interface ClaimData {
+  fields: {
+    [key: string]: string | number;
+  };
   claimType: string;
   claimTypeVersion: number;
-  issuedToken: string;
-  iss: string;
-  [x: string]: string | number;
+}
+
+export interface RolePayload extends jwt.JwtPayload {
+  claimData: ClaimData;
+  signer: string;
+}
+
+export interface RoleEIP191JWT {
+  payload: RolePayload;
+  eip191Jwt: string;
 }
 
 /**

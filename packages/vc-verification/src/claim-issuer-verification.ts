@@ -4,11 +4,7 @@ import { ProofVerifier } from '@ew-did-registry/claims';
 import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerResolver } from '.';
-import {
-  OffChainClaim,
-  verificationResult,
-  VerificationResult,
-} from './models';
+import { RolePayload, verificationResult, VerificationResult } from './models';
 import { ERRORS, InvalidIssuerType } from './errors';
 
 /**
@@ -74,7 +70,7 @@ export class ClaimIssuerVerification {
           roleIssuers.roleName
         );
         if (currentIssuerClaim) {
-          currentIssuerDID = currentIssuerClaim.iss;
+          currentIssuerDID = currentIssuerClaim.iss as string;
           role = roleIssuers.roleName;
         } else {
           return verificationResult(false, ERRORS.InvalidCredentialProof);
@@ -87,26 +83,24 @@ export class ClaimIssuerVerification {
    * Verifies that `role` claim was issued to `subject`
    * @param subject DID of the subject
    * @param role name of the role claim
-   * @returns valid OffChainClaim
+   * @returns valid RolePayload
    */
   async verifyIssuance(
     subject: string,
     role: string
-  ): Promise<OffChainClaim | undefined> {
-    const token = await this._credentialResolver.getClaimIssuedToken(
-      subject,
-      role
-    );
-    if (!token) {
+  ): Promise<RolePayload | undefined> {
+    const roleJWT = await this._credentialResolver.getEIP191JWT(subject, role);
+    if (!roleJWT) {
       throw new Error(
         'Unable to resolve the issuer credential to verify their authority'
       );
     }
-    const offChainClaim = jwt.decode(token) as OffChainClaim;
-    const issuerDIDDoc = await this._resolver.read(offChainClaim.iss);
+    const issuerDIDDoc = await this._resolver.read(
+      roleJWT.payload.iss as string
+    );
     const verifier = new ProofVerifier(issuerDIDDoc);
-    if (await verifier.verifyAssertionProof(token)) {
-      return offChainClaim;
+    if (await verifier.verifyAssertionProof(roleJWT.eip191Jwt)) {
+      return roleJWT.payload;
     } else {
       return undefined;
     }

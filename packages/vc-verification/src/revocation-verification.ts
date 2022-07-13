@@ -1,6 +1,7 @@
 import {
   StatusList2021Credential,
   validateStatusList,
+  isVerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
 import { RevokerResolver } from './revoker-resolver';
 import {
@@ -98,19 +99,19 @@ export class RevocationVerification {
           revoker,
           revokerRole
         );
-        if (revokerCredential?.issuer) {
+        if (isVerifiableCredential(revokerCredential)) {
           await this.vcIssuerVerification.verifyIssuance(revoker, revokerRole);
           await this.vcIssuerVerification.verifyIssuer(
             issuerDID(revokerCredential.issuer as string),
             revokerRole
           );
         } else {
-          await this.claimIssuerVerification.verifyIssuance(
+          const rolePayload = await this.claimIssuerVerification.verifyIssuance(
             revoker,
             revokerRole
           );
           await this.claimIssuerVerification.verifyIssuer(
-            revokerCredential?.iss as string,
+            rolePayload?.iss as string,
             revokerRole
           );
         }
