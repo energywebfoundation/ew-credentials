@@ -422,23 +422,14 @@ function testSuite() {
 
     it('verifies issuer with OffChainClaim, where the role is issued by did', async () => {
       const adminJWT = new JWT(adminKeys);
-      const roleClaim = {
-        iss: adminDid,
-        subject: adminDid,
-        role: adminRole,
-      };
-      const roleToken = await adminJWT.sign(roleClaim);
       const claim = {
-        claimTypeVersion: 1,
-        issuedToken: roleToken,
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: adminRole },
         iss: adminDid,
-        claimType: adminRole,
       };
       let token: string = '';
       let ipfsCID: string = 'ipfsUrl';
       if (admin.privateKey) {
         token = await adminJWT.sign(claim);
-
         if (token) {
           ipfsCID = await didStore.save(token);
         }
@@ -466,25 +457,17 @@ function testSuite() {
 
     it('verifies issuer with OffChainClaim, where the role is issued by role', async () => {
       const adminJWT = new JWT(adminKeys);
-      const roleClaimAdmin = {
-        iss: adminDid,
-        subject: adminDid,
-        role: adminRole,
-      };
-      const roleTokenAdmin = await adminJWT.sign(roleClaimAdmin);
       const claimAdmin = {
-        claimTypeVersion: 1,
-        issuedToken: roleTokenAdmin,
+        claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
         iss: adminDid,
-        claimType: adminRole,
+        signer: adminDid,
       };
-      let tokenAdmin: string = '';
+      let token: string = '';
       let ipfsCIDAdmin: string = 'ipfsUrl';
       if (admin.privateKey) {
-        tokenAdmin = await adminJWT.sign(claimAdmin);
-
-        if (tokenAdmin) {
-          ipfsCIDAdmin = await didStore.save(tokenAdmin);
+        token = await adminJWT.sign(claimAdmin);
+        if (token) {
+          ipfsCIDAdmin = await didStore.save(token);
         }
       }
       const serviceIdAdmin = adminRole;
@@ -503,23 +486,15 @@ function testSuite() {
         validity
       );
 
-      const roleClaimManager = {
-        iss: adminDid,
-        subject: managerDid,
-        role: managerRole,
-      };
-      const roleTokenManager = await adminJWT.sign(roleClaimManager);
       const claimManager = {
-        claimTypeVersion: 1,
-        issuedToken: roleTokenManager,
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
         iss: adminDid,
-        claimType: managerRole,
+        signer: adminDid,
       };
       let tokenManager: string = '';
-      let ipfsCIDManager: string = 'ipfsUrlManager';
+      let ipfsCIDManager: string = 'ipfsUrl';
       if (admin.privateKey) {
         tokenManager = await adminJWT.sign(claimManager);
-
         if (tokenManager) {
           ipfsCIDManager = await didStore.save(tokenManager);
         }

@@ -1,6 +1,6 @@
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { OffChainClaim } from './models';
+import { RoleEIP191JWT } from './models';
 
 /**
  * An interface for a credential resolver
@@ -18,18 +18,18 @@ export interface CredentialResolver {
   ): Promise<VerifiableCredential<RoleCredentialSubject> | undefined>;
 
   /**
-   * Fetches OffChainClaims belonging to a DID for the provided namespace
+   * Fetches RoleEIP191JWT belonging to a DID for the provided namespace
    * @param did
    * @param namespace
-   * @returns Offchain claim of the holder for the namespace
+   * @returns RoleEIP191JWT corresponding to credential of the holder for the namespace
    */
-  getClaimIssuedToken(
+  getEIP191JWT(
     did: string,
     namespace: string
-  ): Promise<string | undefined>;
+  ): Promise<RoleEIP191JWT | undefined>;
 
   /**
-   * Fetches either claim issuedToken or VC belonging to a DID for the provided namespace
+   * Fetches either RoleEIP191JWT or VC belonging to a DID for the provided namespace
    * @param did
    * @param namespace
    * @returns Offchain claim of the holder for the namespace
@@ -38,6 +38,6 @@ export interface CredentialResolver {
     did: string,
     namespace: string
   ): Promise<
-    VerifiableCredential<RoleCredentialSubject> | OffChainClaim | undefined
+    VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   >;
 }

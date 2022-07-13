@@ -1,27 +1,27 @@
 import { isValidErc1056, getDIDChain } from '@ew-did-registry/did';
-import { OffChainClaim } from './models';
+import { RoleEIP191JWT, RolePayload } from './models';
 
 const didFormatFields = ['iss', 'sub', 'subject', 'did', 'signer'];
 
 /**
- * Upgrades the DID fields of an offchain claim with the chain identifier
+ * Upgrades the DID fields of a RolePayload with the chain identifier
  * @param offChainClaim claim to upgrade
- * @returns offChainClaim with did fields upgraded with chain id. undefined if upgrade not possible
+ * @returns RoleEIP191JWT with did fields upgraded with chain id. undefined if upgrade not possible
  */
-export function upgradeChainId(offChainClaim: OffChainClaim) {
+export function upgradeChainId(roleJwt: RoleEIP191JWT) {
   let invalidDIDProperty = false;
-  let key: keyof OffChainClaim;
-  for (key in offChainClaim) {
+  let key: keyof RolePayload;
+  for (key in roleJwt.payload) {
     if (didFormatFields.includes(key)) {
-      const expectedEthrDID = offChainClaim[key] as string;
+      const expectedEthrDID = roleJwt.payload[key] as string;
       if (isValidErc1056(expectedEthrDID)) {
-        offChainClaim[key] = upgradeDidWithChainId(expectedEthrDID);
+        roleJwt.payload[key] = upgradeDidWithChainId(expectedEthrDID);
       } else {
         invalidDIDProperty = true;
       }
     }
   }
-  return invalidDIDProperty ? undefined : offChainClaim;
+  return invalidDIDProperty ? undefined : roleJwt;
 }
 
 /**

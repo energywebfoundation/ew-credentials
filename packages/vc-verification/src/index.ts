@@ -11,6 +11,7 @@ export * from './issuer-verification';
 export {
   CredentialResolverIpfsSettings,
   VerificationResult,
-  OffChainClaim,
+  RoleEIP191JWT,
+  RolePayload,
 } from './models';
 export { VerifiableCredential };
