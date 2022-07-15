@@ -45,8 +45,8 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@energyweb/credential-governance": "1.0.0",
-    "@ew-did-registry/did": "0.6.3-alpha.682.0",
-    "@ew-did-registry/did-ethr-resolver": "0.6.3-alpha.682.0",
+    "@ew-did-registry/did": "0.6.3-alpha.695.0",
+    "@ew-did-registry/did-ethr-resolver": "0.6.3-alpha.695.0",
     "@poanet/solidity-flattener": "^3.0.7",
     "ethers": "^5.6.1"
   },
