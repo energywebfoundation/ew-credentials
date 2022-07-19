@@ -75,21 +75,15 @@ export class DomainHierarchy {
     domain: string;
     mode: 'ALL' | 'FIRSTLEVEL';
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name');
+    if (!domain) throw new Error('You need to pass a domain name'); // ?
 
-    // Filter out apps and roles
-    const isRelevantDomainEndings = (name: string) => {
-      const notRelevantDomainEndings = ['roles', 'apps'];
-      const leafLabel = name.split('.')[0];
-      return notRelevantDomainEndings.includes(leafLabel);
-    };
 
     if (mode === 'ALL') {
       const getParser = (nameReader: (node: string) => Promise<string>) => {
         return async ({ node }: Result) => {
           try {
             const name = await nameReader(node);
-            if (isRelevantDomainEndings(name)) {
+            if (this.isMetadomain(name)) {
               return '';
             }
 
@@ -142,7 +136,7 @@ export class DomainHierarchy {
             this._ensRegistry.owner(namehash),
           ]);
           if (ownerAddress === emptyAddress) return '';
-          if (isRelevantDomainEndings(name)) {
+          if (this.isMetadomain(name)) {
             return '';
           }
           return name;
@@ -166,8 +160,7 @@ export class DomainHierarchy {
   }: {
     domain: string;
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name');
-    const notRelevantDomainEndings = ['roles', 'apps'];
+    if (!domain) throw new Error('You need to pass a domain name'); // ?
     const parser = async ({ node, label, owner }: Result) => {
       try {
         if (owner === emptyAddress) return '';
@@ -183,14 +176,13 @@ export class DomainHierarchy {
         return '';
       }
     };
-    const queue: string[][] = [];
+    const parents: string[][] = [];
     const subDomains: Set<string> = new Set();
-    queue.push([domain]);
-    subDomains.add(domain);
+    parents.push([domain]);
 
     // Breadth-first search down subdomain tree
-    while (queue.length > 0) {
-      const currentNodes = queue[0];
+    while (parents.length > 0) {
+      const currentNodes = parents[0];
       const currentNameHashes = currentNodes.map((node) =>
         utils.namehash(node)
       );
@@ -206,14 +198,13 @@ export class DomainHierarchy {
         contractInterface: new utils.Interface(ensRegistryContract),
       });
       if (uniqueDomains.size > 0) {
-        queue.push([...uniqueDomains]);
+        parents.push([...uniqueDomains]);
       }
       for (const domain of uniqueDomains) {
-        const leafLabel = domain.split('.')[0];
-        if (notRelevantDomainEndings.includes(leafLabel)) continue;
+        if (this.isMetadomain(domain)) continue;
         subDomains.add(domain);
       }
-      queue.shift();
+      parents.shift();
     }
     return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
   };
@@ -249,4 +240,10 @@ export class DomainHierarchy {
     const nonEmptyDomains = domains.filter((domain) => domain != '');
     return new Set(nonEmptyDomains);
   };
+
+  private isMetadomain(name: string): boolean {
+    return ['roles', 'apps', 'orgs'].some((meta) =>
+      name.startsWith(`${meta}.`)
+    );
+  }
 }
