@@ -51,13 +51,13 @@ xdescribe('[DomainHierarchy VOLTA]', async function () {
 
   it('domains from registry should include domains from resolver', async () => {
     expect(
+      await domainHierarchy.getSubdomainsUsingRegistry({
+        domain: domain,
+      })
+    ).to.include.members(
       await domainHierarchy.getSubdomainsUsingResolver({
         domain: domain,
         mode: 'ALL',
-      })
-    ).to.include.members(
-      await domainHierarchy.getSubdomainsUsingRegistry({
-        domain: domain,
       })
     );
   });

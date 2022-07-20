@@ -66,9 +66,9 @@ export class DomainHierarchy {
 
   /**
    * Retrieves list of subdomains from on-chain for a given parent domain
-   * based on the events from the ENS resolver contracts.
-   * By default, listens events from the DomainNotifier contract.
-   * If publicResolver available, also listens from PublicResolver contract.
+   * based on the logs from the ENS resolver contracts.
+   * By default, queries from the DomainNotifier contract.
+   * If publicResolver available, also queries from PublicResolver contract.
    */
   public getSubdomainsUsingResolver = async ({
     domain,
@@ -77,8 +77,6 @@ export class DomainHierarchy {
     domain: string;
     mode: 'ALL' | 'FIRSTLEVEL';
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name'); // ?
-
     if (mode === 'ALL') {
       const getParser = (nameReader: (node: string) => Promise<string>) => {
         return async ({ node }: Result) => {
@@ -108,7 +106,7 @@ export class DomainHierarchy {
       });
       if (this._publicResolver) {
         const publicResolverDomains = await this.getDomainsFromLogs({
-          parser: getParser(this._publicResolver.name), // domain can be migrated from public resolver
+          parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
           event: this._publicResolver.filters.TextChanged(
             null,
@@ -148,7 +146,7 @@ export class DomainHierarchy {
 
   /**
    * Retrieves list of subdomains from on-chain for a given parent domain
-   * based on the ENS Registry contract event.
+   * based on the ENS Registry contract logs.
    * For multi-level queries with many domains, querying the registry is slower than
    * using the resolver contract because each RPC call returns only direct subdomains
    */
@@ -157,7 +155,6 @@ export class DomainHierarchy {
   }: {
     domain: string;
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name'); // ?
     const parser = async ({ node, label, owner }: Result) => {
       try {
         if (owner === emptyAddress) return '';
