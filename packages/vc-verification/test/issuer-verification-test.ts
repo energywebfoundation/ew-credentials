@@ -25,14 +25,14 @@ import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   IssuerVerification,
-  VCIssuerVerification,
-  ClaimIssuerVerification,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
   IssuerResolver,
   RevocationVerification,
   EthersProviderRevokerResolver,
 } from '../src';
+import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
+import { VCIssuerVerification } from '../src/vc-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -211,31 +211,21 @@ function testSuite() {
 
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
     const revokerResolver = new EthersProviderRevokerResolver(domainReader);
-    vcIssuerVerification = new VCIssuerVerification(
-      issuerResolver,
-      credentialResolver,
-      verifyCredential
-    );
-    claimIssuerVerification = new ClaimIssuerVerification(
-      provider,
-      registrySettings,
-      credentialResolver,
-      issuerResolver
-    );
     const revocationVerification = new RevocationVerification(
       revokerResolver,
       issuerResolver,
       credentialResolver,
-      vcIssuerVerification,
-      claimIssuerVerification,
+      provider,
+      registrySettings,
       verifyCredential
     );
     issuerVerification = new IssuerVerification(
       issuerResolver,
       credentialResolver,
-      vcIssuerVerification,
-      claimIssuerVerification,
-      revocationVerification
+      provider,
+      registrySettings,
+      revocationVerification,
+      verifyCredential
     );
 
     await (

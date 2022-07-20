@@ -6,17 +6,19 @@ import {
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
 import {
-  VCIssuerVerification,
-  ClaimIssuerVerification,
   CredentialResolver,
   IssuerResolver,
   RevokerResolver,
 } from '.';
+import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
+import { VCIssuerVerification } from '../src/vc-issuer-verification';
 import { InvalidRevokerType, NoRevokers, RevokerNotAuthorized } from './errors';
 import { issuerDID, RoleEIP191JWT } from './models';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { StatusListEntryVerification } from '@ew-did-registry/revocation';
 import { RoleCredentialSubject } from '@energyweb/credential-governance';
+import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import { providers } from 'ethers';
 
 /**
  * Provides verification of revocation of EnergyWeb role verifiable credential
@@ -31,13 +33,22 @@ export class RevocationVerification {
     private revokerResolver: RevokerResolver,
     private issuerResolver: IssuerResolver,
     credentialResolver: CredentialResolver,
-    vcIssuerVerification: VCIssuerVerification,
-    claimIssuerVerification: ClaimIssuerVerification,
+    provider: providers.Provider,
+    registrySetting: RegistrySettings,
     private verifyProof: (vc: string, proof_options: string) => Promise<any>
   ) {
     this.credentialResolver = credentialResolver;
-    this.vcIssuerVerification = vcIssuerVerification;
-    this.claimIssuerVerification = claimIssuerVerification;
+    this.vcIssuerVerification = new VCIssuerVerification(
+      issuerResolver,
+      credentialResolver,
+      verifyProof
+    );
+    this.claimIssuerVerification = new ClaimIssuerVerification(
+      provider,
+      registrySetting,
+      credentialResolver,
+      issuerResolver
+    );
     this._statusListEntryVerificaiton = new StatusListEntryVerification(
       verifyProof
     );
@@ -50,9 +61,11 @@ export class RevocationVerification {
    * ```typescript
    * const revocationVerification = new RevocationVerification(
    * revokerResolver,
+   * issuerResolver,
    * credentialResolver,
-   * vcIssuerVerification,
-   * claimIssuerVerification,
+   * provider,
+   * registrySetting,
+   * verifyProof
    * );
    * let credential : StatusList2021Credential;
    * const role = 'role';

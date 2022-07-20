@@ -23,11 +23,11 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
-  VCIssuerVerification,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
   IssuerResolver,
 } from '../src';
+import { VCIssuerVerification } from '../src/vc-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,
