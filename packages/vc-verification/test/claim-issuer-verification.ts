@@ -18,12 +18,11 @@ import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods, Chain } from '@ew-did-registry/did';
 import {
   CredentialResolver,
-  ClaimIssuerVerification,
   IssuerResolver,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
-  RolePayload,
 } from '../src';
+import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,

@@ -1,16 +1,19 @@
 import {
-  VCIssuerVerification,
-  ClaimIssuerVerification,
   CredentialResolver,
   IssuerResolver,
   VerificationResult,
+  RevocationVerification,
 } from '.';
+import { ClaimIssuerVerification } from './claim-issuer-verification';
+import { VCIssuerVerification } from './vc-issuer-verification';
+import { providers } from 'ethers';
 import {
   isVerifiableCredential,
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
+import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { verificationResult, RoleEIP191JWT } from './models';
 import { ERRORS } from './errors';
 
@@ -19,16 +22,29 @@ import { ERRORS } from './errors';
  */
 export class IssuerVerification {
   private vcIssuerVerification: VCIssuerVerification;
-  private claimIssuerverification: ClaimIssuerVerification;
+  private claimIssuerVerification: ClaimIssuerVerification;
+  private revocationVerification: RevocationVerification;
 
   constructor(
     private issuerResolver: IssuerResolver,
     private credentialResolver: CredentialResolver,
-    vcIssuerVerification: VCIssuerVerification,
-    claimIssuerverification: ClaimIssuerVerification
+    provider: providers.Provider,
+    registrySetting: RegistrySettings,
+    revocationVerification: RevocationVerification,
+    private verifyProof: (vc: string, proof_options: string) => Promise<any>
   ) {
-    this.vcIssuerVerification = vcIssuerVerification;
-    this.claimIssuerverification = claimIssuerverification;
+    this.vcIssuerVerification = new VCIssuerVerification(
+      issuerResolver,
+      credentialResolver,
+      verifyProof
+    );
+    this.claimIssuerVerification = new ClaimIssuerVerification(
+      provider,
+      registrySetting,
+      credentialResolver,
+      issuerResolver
+    );
+    this.revocationVerification = revocationVerification;
   }
 
   /**
@@ -38,8 +54,10 @@ export class IssuerVerification {
    * const issuerVerification = new IssuerVerification(
    * issuerResolver
    * credentialResolver,
-   * vcIssuerVerification,
-   * claimIssuerVerification,
+   * provider,
+   * registrySetting,
+   * revocationVerification,
+   * verifyProof
    * );
    *
    * let issuer : 'did:ethr:volta:0x...';
@@ -69,14 +87,18 @@ export class IssuerVerification {
         issuer,
         issuers?.roleName
       );
-
       if (!issuerCredential) {
         return verificationResult(false, ERRORS.NoCredential);
+      }
+      if (
+        !(await this.revocationVerification.checkRevocationStatus(issuer, role))
+      ) {
+        return verificationResult(false, ERRORS.IssuerCredentialRevoked);
       }
       if (isVerifiableCredential(issuerCredential)) {
         return await this.vcIssuerVerification.verifyIssuer(issuer, role);
       }
-      return await this.claimIssuerverification.verifyIssuer(issuer, role);
+      return await this.claimIssuerVerification.verifyIssuer(issuer, role);
     } else {
       return issuers?.did?.find(
         (d) => addressOf(d).toUpperCase() === addressOf(issuer).toUpperCase()

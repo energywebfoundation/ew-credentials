@@ -15,15 +15,18 @@ This package provides implementation for verification of Verifiable Credential a
 
 ### Issuer Verification
 
-The `IssuerVerification` class can be used to verify issuers either with an OffChainClaim or a Verifiable Credential.
+The `IssuerVerification` class can be used to verify issuers either with an RoleEIP191Jwt or a Verifiable Credential. The `IssuerVerification` verifies issuers authority, respective credential and revocation status.
 ```typescript
 import {
   CredentialResolver,
   IssuerResolver,
+  RevokerResolver,
   VCIssuerVerification,
   ClaimIssuerVerification,
   EthersProviderIssuerResolver,
+  EthersProviderRevokerResolver,
   IpfsCredentialResolver,
+  RevocationVerification,
 } from '@energyweb/vc-verification';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
@@ -37,26 +40,28 @@ import { verifyCredential } from 'didkit-wasm-node';
   let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
     DomainReader
   );
+  let revokerResolver: RevokerResolver = new EthersProviderRevokerResolver(
+    DomainReader
+  );
   let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
     DIDStore,
     Resolver
   );
-  const vcIssuerVerification = new VCIssuerVerification(
+  const revocationVerification = new RevocationVerification(
+    revokerResolver,
     issuerResolver,
     credentialResolver,
-    verifyCredential
-  );
-  const claimIssuerVerification = new ClaimIssuerVerification(
     provider,
-    RegistrySettings,
-    issuerResolver,
-    credentialResolver
+    registrySettings,
+    verifyCredential
   );
   const issuerVerification = new IssuerVerification(
     issuerResolver,
-    credentialResolver
-    vcIssuerVerification,
-    claimIssuerVerification
+    credentialResolver,
+    provider,
+    registrySettings,
+    revocationVerification,
+    verifyCredential
   );
   let issuer : 'did:ethr:ewc:0x1....';
   const role = 'role';
@@ -64,86 +69,17 @@ import { verifyCredential } from 'didkit-wasm-node';
 })();
 ```
 
-### VC Issuer Verification
-
-The `VCIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of Verifiable Credential.
-```typescript
-import {
-  CredentialResolver,
-  IssuerResolver,
-  VCIssuerVerification,
-  EthersProviderIssuerResolver,
-  IpfsCredentialResolver,
-} from '@energyweb/vc-verification';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
-import { Resolver } from '@ew-did-registry/did-ethr-resolver';
-import { DomainReader } from '@energyweb/credential-governance';
-import { verifyCredential } from 'didkit-wasm-node';
-
-(async () => {
-  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
-    DomainReader
-  );
-  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
-    DIDStore,
-    Resolver
-  );
-  const issuerVerification = new VCIssuerVerification(
-    issuerResolver,
-    credentialResolver,
-    verifyCredential
-  );
-  await issuerVerification.verifyIssuer('issuerDID', 'role');
-})();
-```
-
-### Claim Issuer Verification
-
-The `ClaimIssuerVerification` class can be used to verify Issuer's authority and respective credential's proof followed by entire hierarchy of the issuers, for issuance chain consisting only of OffChainClaims.
-```typescript
-import {
-  CredentialResolver,
-  IssuerResolver,
-  ClaimIssuerVerification,
-  EthersProviderIssuerResolver,
-  IpfsCredentialResolver,
-} from '@energyweb/vc-verification';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
-import { Resolver } from '@ew-did-registry/did-ethr-resolver';
-import { DomainReader } from '@energyweb/credential-governance';
-import { providers } from 'ethers';
-import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-
-(async () => {
-  let provider: providers.provider;
-  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
-    DomainReader
-  );
-  let credentialresolver: CredentialResolver = new IpfsCredentialResolver(
-    DIDStore,
-    Resolver
-  );
-  const issuerVerification = new ClaimIssuerVerification(
-    provider,
-    RegistrySettings,
-    issuerResolver,
-    credentialResolver
-  );
-  await issuerVerification.verifyIssuer('issuerDID', 'role');
-})();
-```
-
 ### Revocation Verification
 
-The `RevocationVerification` class can be used to verify statusList2021Credential and revoker's authority.
+The `RevocationVerification` class can be used to verify statusList2021Credential and revoker's authority. 
 ```typescript
 import {
   CredentialResolver,
   RevokerResolver,
-  VCIssuerVerification,
-  ClaimIssuerVerification,
+  IssuerResolver,
   RevocationVerification,
   EthersProviderRevokerResolver,
+  EthersProviderIssuerResolver,
   IpfsCredentialResolver,
 } from '@energyweb/vc-verification';
 import {
@@ -158,6 +94,9 @@ import { verifyCredential } from 'didkit-wasm-node';
 
 (async () => {
   let provider: providers.provider;
+  let issuerResolver: IssuerResolver = new EthersProviderIssuerResolver(
+    DomainReader
+  );
   let revokerResolver: RevokerResolver = new EthersProviderRevokerResolver(
     DomainReader
   );
@@ -165,22 +104,13 @@ import { verifyCredential } from 'didkit-wasm-node';
     DIDStore,
     Resolver
   );
-  const vcIssuerVerification = new VCIssuerVerification(
-    issuerResolver,
-    credentialResolver,
-    verifyCredential
-  );
-  const claimIssuerVerification = new ClaimIssuerVerification(
-    provider,
-    RegistrySettings,
-    issuerResolver,
-    credentialResolver
-  );
   const revocationVerification = new RevocationVerification(
     revokerResolver,
-    credentialResolver
-    vcIssuerVerification,
-    claimIssuerVerification
+    issuerResolver,
+    credentialResolver,
+    provider,
+    registrySettings,
+    verifyCredential
   );
   let credential : StatusList2021Credential;
   const role = 'role';

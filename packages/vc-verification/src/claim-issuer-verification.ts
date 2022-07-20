@@ -1,4 +1,3 @@
-import * as jwt from 'jsonwebtoken';
 import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';

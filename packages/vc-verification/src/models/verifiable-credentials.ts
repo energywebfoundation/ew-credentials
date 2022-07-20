@@ -1,6 +1,9 @@
 import { chainIdToChainName } from '@energyweb/credential-governance';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import type { VerifiableCredential } from '@ew-did-registry/credentials-interface';
+import type {
+  VerifiableCredential,
+  StatusList2021Entry,
+} from '@ew-did-registry/credentials-interface';
 import { utils } from 'ethers';
 import * as jwt from 'jsonwebtoken/index';
 
@@ -27,6 +30,7 @@ export interface ClaimData {
 }
 
 export interface RolePayload extends jwt.JwtPayload {
+  credentialStatus?: StatusList2021Entry;
   claimData: ClaimData;
   signer: string;
 }

@@ -65,15 +65,12 @@ describe('[VC Verificaiton]', function () {
   });
 
   describe('Verification of issuer and authoritative credentials', () => {
-    describe('Issuer Chain with OffChainClaims', claimIssuerVerificationTests);
+    describe('Issuer Chain with RoleEIP191Jwt', claimIssuerVerificationTests);
     describe(
       'Issuer Chain with Verifiable Credentials',
       vcIssuerVerificationTests
     );
-    describe(
-      'Issuer with either VC or OffChainClaims',
-      issuerVerificationTests
-    );
+    describe('Issuer with either VC or RoleEIP191Jwt', issuerVerificationTests);
   });
 
   describe('Verification of revocation', revocationVerificationTests);
