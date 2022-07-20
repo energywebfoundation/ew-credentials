@@ -13,6 +13,8 @@ import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__fac
 import { PublicResolver } from '../ethers/PublicResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 
+const { namehash } = utils;
+
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
   protected readonly _ensRegistry: ENSRegistry;
@@ -64,9 +66,9 @@ export class DomainHierarchy {
 
   /**
    * Retrieves list of subdomains from on-chain for a given parent domain
-   * based on the logs from the ENS resolver contracts.
-   * By default, queries from the DomainNotifier contract.
-   * If publicResolver available, also queries from PublicResolver contract.
+   * based on the events from the ENS resolver contracts.
+   * By default, listens events from the DomainNotifier contract.
+   * If publicResolver available, also listens from PublicResolver contract.
    */
   public getSubdomainsUsingResolver = async ({
     domain,
@@ -76,7 +78,6 @@ export class DomainHierarchy {
     mode: 'ALL' | 'FIRSTLEVEL';
   }): Promise<string[]> => {
     if (!domain) throw new Error('You need to pass a domain name'); // ?
-
 
     if (mode === 'ALL') {
       const getParser = (nameReader: (node: string) => Promise<string>) => {
@@ -102,12 +103,12 @@ export class DomainHierarchy {
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
-        event: this._domainNotifier.filters.DomainUpdated(null),
+        event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
       if (this._publicResolver) {
         const publicResolverDomains = await this.getDomainsFromLogs({
-          parser: getParser(this._publicResolver.name),
+          parser: getParser(this._publicResolver.name), // domain can be migrated from public resolver
           provider: this._publicResolver.provider,
           event: this._publicResolver.filters.TextChanged(
             null,
@@ -122,11 +123,7 @@ export class DomainHierarchy {
     }
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
-      event: this._ensRegistry.filters.NewOwner(
-        utils.namehash(domain),
-        null,
-        null
-      ),
+      event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
       parser: async ({ node, label, owner }) => {
         if (owner === emptyAddress) return '';
         const namehash = utils.keccak256(node + label.slice(2));
@@ -151,9 +148,9 @@ export class DomainHierarchy {
 
   /**
    * Retrieves list of subdomains from on-chain for a given parent domain
-   * based on the ENS Registry contract logs.
+   * based on the ENS Registry contract event.
    * For multi-level queries with many domains, querying the registry is slower than
-   * using the resolver contract because of the repeated RPC call.
+   * using the resolver contract because each RPC call returns only direct subdomains
    */
   public getSubdomainsUsingRegistry = async ({
     domain,
@@ -176,37 +173,30 @@ export class DomainHierarchy {
         return '';
       }
     };
-    const parents: string[][] = [];
     const subDomains: Set<string> = new Set();
-    parents.push([domain]);
+    let parents = [domain];
 
     // Breadth-first search down subdomain tree
     while (parents.length > 0) {
-      const currentNodes = parents[0];
-      const currentNameHashes = currentNodes.map((node) =>
-        utils.namehash(node)
-      );
       const event = this._ensRegistry.filters.NewOwner(null, null, null);
       // topics should be able to accept an array: https://docs.ethers.io/v5/concepts/events/
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      event.topics[1] = currentNameHashes;
-      const uniqueDomains = await this.getDomainsFromLogs({
-        provider: this._ensRegistry.provider,
-        parser,
-        event,
-        contractInterface: new utils.Interface(ensRegistryContract),
-      });
-      if (uniqueDomains.size > 0) {
-        parents.push([...uniqueDomains]);
+      event.topics[1] = parents.map(namehash);
+      parents = [
+        ...(await this.getDomainsFromLogs({
+          provider: this._ensRegistry.provider,
+          parser,
+          event,
+          contractInterface: new utils.Interface(ensRegistryContract),
+        })),
+      ];
+
+      for (const p of parents) {
+        if (!this.isMetadomain(p)) subDomains.add(p);
       }
-      for (const domain of uniqueDomains) {
-        if (this.isMetadomain(domain)) continue;
-        subDomains.add(domain);
-      }
-      parents.shift();
     }
-    return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
+    return [...subDomains].filter(Boolean);
   };
 
   private getDomainsFromLogs = async ({

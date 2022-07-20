@@ -1,11 +1,18 @@
 import { providers } from 'ethers';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {
+  VOLTA_CHAIN_ID,
   VOLTA_DOMAIN_NOTIFER_ADDRESS,
   VOLTA_ENS_REGISTRY_ADDRESS,
   VOLTA_PUBLIC_RESOLVER_ADDRESS,
-} from '../src/chain-constants';
-import { DomainHierarchy } from '../src/domain-hierarchy';
-import { DomainReader } from '../src';
+  VOLTA_RESOLVER_V2_ADDRESS,
+  DomainHierarchy,
+  DomainReader,
+  ResolverContractType,
+} from '../src';
+
+chai.use(chaiAsPromised);
 
 const { JsonRpcProvider } = providers;
 
@@ -21,6 +28,17 @@ xdescribe('[DomainHierarchy VOLTA]', async function () {
     ensRegistryAddress: VOLTA_ENS_REGISTRY_ADDRESS,
     provider,
   });
+  domainReader.addKnownResolver({
+    chainId: VOLTA_CHAIN_ID,
+    address: VOLTA_PUBLIC_RESOLVER_ADDRESS,
+    type: ResolverContractType.PublicResolver,
+  });
+  domainReader.addKnownResolver({
+    chainId: VOLTA_CHAIN_ID,
+    address: VOLTA_RESOLVER_V2_ADDRESS,
+    type: ResolverContractType.RoleDefinitionResolver_v2,
+  });
+
   const domainHierarchy = new DomainHierarchy({
     domainReader,
     ensRegistryAddress: VOLTA_ENS_REGISTRY_ADDRESS,
@@ -30,29 +48,17 @@ xdescribe('[DomainHierarchy VOLTA]', async function () {
   });
 
   const domain = 'iam.ewc';
-  let subDomains;
-  let subDomains_usingRegistry;
 
-  it('getSubdomains', async () => {
-    subDomains = await domainHierarchy.getSubdomainsUsingResolver({
-      domain: domain,
-      mode: 'ALL',
-    });
-    console.log(subDomains.length);
-
-    const subDomains2 = await domainHierarchy.getSubdomainsUsingResolver({
-      domain: domain,
-      mode: 'FIRSTLEVEL',
-    });
-    console.log(subDomains2.length);
-  });
-
-  it('getSubdomains using ENS Registry', async () => {
-    subDomains_usingRegistry = await domainHierarchy.getSubdomainsUsingRegistry(
-      {
+  it('domains from registry should include domains from resolver', async () => {
+    expect(
+      await domainHierarchy.getSubdomainsUsingResolver({
         domain: domain,
-      }
+        mode: 'ALL',
+      })
+    ).to.include.members(
+      await domainHierarchy.getSubdomainsUsingRegistry({
+        domain: domain,
+      })
     );
-    console.log(subDomains_usingRegistry.length);
   });
 });
