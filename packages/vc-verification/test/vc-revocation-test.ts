@@ -241,9 +241,11 @@ function testSuite() {
 
     revocationVerification = new RevocationVerification(
       revokerResolver,
+      issuerResolver,
       credentialResolver,
       vcIssuerVerification,
-      claimIssuerVerification
+      claimIssuerVerification,
+      verifyCredential
     );
 
     await (

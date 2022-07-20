@@ -1,7 +1,6 @@
 import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { JWT } from '@ew-did-registry/jwt';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,

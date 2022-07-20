@@ -18,6 +18,12 @@ export class CredentialNotRevoked extends Error {
   }
 }
 
+export class CredentialRevoked extends Error {
+  constructor(credential: string, subject: string) {
+    super(`Credential ${credential} of ${subject} has been revoked`);
+  }
+}
+
 export class RevokerNotAuthorized extends Error {
   constructor(revoker: string, credential: string, reason?: string) {
     let message = `Revoker ${revoker} is not authorized to revoke ${credential}`;
@@ -85,4 +91,5 @@ export const ERRORS = {
   InvalidIssuerType: 'Invalid issuerType for the given role',
   NoRevokers: 'No revokers found for the given role',
   NoIssuers: 'No issuers found for the given role',
+  IssuerCredentialRevoked: 'Issuer credential has been revoked',
 };

@@ -4,6 +4,7 @@ import {
   CredentialResolver,
   IssuerResolver,
   VerificationResult,
+  RevocationVerification,
 } from '.';
 import {
   isVerifiableCredential,
@@ -20,15 +21,18 @@ import { ERRORS } from './errors';
 export class IssuerVerification {
   private vcIssuerVerification: VCIssuerVerification;
   private claimIssuerverification: ClaimIssuerVerification;
+  private revocationVerification: RevocationVerification;
 
   constructor(
     private issuerResolver: IssuerResolver,
     private credentialResolver: CredentialResolver,
     vcIssuerVerification: VCIssuerVerification,
-    claimIssuerverification: ClaimIssuerVerification
+    claimIssuerverification: ClaimIssuerVerification,
+    revocationVerification: RevocationVerification
   ) {
     this.vcIssuerVerification = vcIssuerVerification;
     this.claimIssuerverification = claimIssuerverification;
+    this.revocationVerification = revocationVerification;
   }
 
   /**
@@ -69,9 +73,13 @@ export class IssuerVerification {
         issuer,
         issuers?.roleName
       );
-
       if (!issuerCredential) {
         return verificationResult(false, ERRORS.NoCredential);
+      }
+      if (
+        !(await this.revocationVerification.checkRevocationStatus(issuer, role))
+      ) {
+        return verificationResult(false, ERRORS.IssuerCredentialRevoked);
       }
       if (isVerifiableCredential(issuerCredential)) {
         return await this.vcIssuerVerification.verifyIssuer(issuer, role);

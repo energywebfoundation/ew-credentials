@@ -30,6 +30,8 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
   IssuerResolver,
+  RevocationVerification,
+  EthersProviderRevokerResolver,
 } from '../src';
 import {
   DIDAttribute,
@@ -43,9 +45,14 @@ import {
   spawnIpfsDaemon,
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
-import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
-import { IssuerNotAuthorized } from '../src/errors';
+import { adminVC, managerVC } from './Fixtures/sample-vc';
+import {
+  adminStatusList,
+  managerStatusList,
+} from './Fixtures/sample-statuslist-credential';
+import nock from 'nock';
 import { verifyCredential } from 'didkit-wasm-node';
+import { RevokerNotAuthorized } from '../src/errors';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -203,6 +210,7 @@ function testSuite() {
     });
 
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
+    const revokerResolver = new EthersProviderRevokerResolver(domainReader);
     vcIssuerVerification = new VCIssuerVerification(
       issuerResolver,
       credentialResolver,
@@ -214,11 +222,20 @@ function testSuite() {
       credentialResolver,
       issuerResolver
     );
+    const revocationVerification = new RevocationVerification(
+      revokerResolver,
+      issuerResolver,
+      credentialResolver,
+      vcIssuerVerification,
+      claimIssuerVerification,
+      verifyCredential
+    );
     issuerVerification = new IssuerVerification(
       issuerResolver,
       credentialResolver,
       vcIssuerVerification,
-      claimIssuerVerification
+      claimIssuerVerification,
+      revocationVerification
     );
 
     await (
@@ -414,13 +431,16 @@ function testSuite() {
         updateDataManager,
         validity
       );
+      nock(adminVC.credentialStatus?.statusListCredential as string)
+        .get('')
+        .reply(204, undefined);
 
       return expect(
         (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
       ).to.be.true;
     });
 
-    it('verifies issuer with OffChainClaim, where the role is issued by did', async () => {
+    it('verifies issuer with RoleEIP191Jwt, where the role is issued by did', async () => {
       const adminJWT = new JWT(adminKeys);
       const claim = {
         claimData: { fields: {}, claimTypeVersion: 1, claimType: adminRole },
@@ -455,11 +475,19 @@ function testSuite() {
       ).to.be.true;
     });
 
-    it('verifies issuer with OffChainClaim, where the role is issued by role', async () => {
+    it('verifies issuer with RoleEIP191Jwt, where the role is issued by role', async () => {
       const adminJWT = new JWT(adminKeys);
       const claimAdmin = {
         claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
         iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
         signer: adminDid,
       };
       let token: string = '';
@@ -489,6 +517,14 @@ function testSuite() {
       const claimManager = {
         claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
         iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
         signer: adminDid,
       };
       let tokenManager: string = '';
@@ -514,10 +550,191 @@ function testSuite() {
         updateDataManager,
         validity
       );
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(204, undefined);
 
       expect(
         (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
       ).to.be.true;
+    });
+
+    it('RoleEIP191Jwt verification should fail, if the credential is revoked', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const claimAdmin = {
+        claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      let token: string = '';
+      let ipfsCIDAdmin: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        token = await adminJWT.sign(claimAdmin);
+        if (token) {
+          ipfsCIDAdmin = await didStore.save(token);
+        }
+      }
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
+
+      const claimManager = {
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      let tokenManager: string = '';
+      let ipfsCIDManager: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        tokenManager = await adminJWT.sign(claimManager);
+        if (tokenManager) {
+          ipfsCIDManager = await didStore.save(tokenManager);
+        }
+      }
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(200, adminStatusList);
+
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(200, adminStatusList);
+
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.false;
+    });
+
+    it('RoleEIP191Jwt verification should thorw, if the credential is revoked by unauthorised revoker', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const claimAdmin = {
+        claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      let token: string = '';
+      let ipfsCIDAdmin: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        token = await adminJWT.sign(claimAdmin);
+        if (token) {
+          ipfsCIDAdmin = await didStore.save(token);
+        }
+      }
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
+
+      const claimManager = {
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      let tokenManager: string = '';
+      let ipfsCIDManager: string = 'ipfsUrl';
+      if (admin.privateKey) {
+        tokenManager = await adminJWT.sign(claimManager);
+        if (tokenManager) {
+          ipfsCIDManager = await didStore.save(tokenManager);
+        }
+      }
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(200, adminStatusList);
+
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(200, managerStatusList);
+
+      await expect(issuerVerification.verifyIssuer(adminDid, managerRole))
+        .to.eventually.rejectedWith(
+          'Revoker did:ethr:0x539:0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5 is not authorized to revoke admin: revoker is not in DID list'
+        )
+        .and.be.an.instanceOf(Error);
     });
   });
 }
