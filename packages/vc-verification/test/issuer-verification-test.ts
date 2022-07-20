@@ -637,7 +637,7 @@ function testSuite() {
       ).to.be.false;
     });
 
-    it('RoleEIP191Jwt verification should thorw, if the credential is revoked by unauthorised revoker', async () => {
+    it('RoleEIP191Jwt verification should throw, if the credential is revoked by unauthorised revoker', async () => {
       const adminJWT = new JWT(adminKeys);
       const claimAdmin = {
         claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
