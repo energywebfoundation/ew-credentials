@@ -162,8 +162,8 @@ export function domainHierarchyTestSuite(): void {
     describe('getSubdomainsUsingResolver', () => {
       it('returns subdomains using RoleDefResolver', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain(domain, 'test', 'ROLEDEF'),
+          addSubdomain(domain, 'iam', 'ROLEDEF'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingResolver({
           domain: domain,
@@ -272,13 +272,13 @@ export function domainHierarchyTestSuite(): void {
     describe('getSubdomainsUsingRegistry', () => {
       it('returns subdomains', async () => {
         await Promise.all([
-          addSubdomain('ewc', 'test', 'ROLEDEF'),
-          addSubdomain('ewc', 'iam', 'ROLEDEF'),
+          addSubdomain(domain, 'test', 'ROLEDEF'),
+          addSubdomain(domain, 'iam', 'ROLEDEF'),
         ]);
         const subDomains = await domainHierarchy.getSubdomainsUsingRegistry({
           domain: domain,
         });
-        expect(subDomains.length).to.equal(3);
+        expect(subDomains.length).to.equal(2);
       });
 
       it("continues even if domain isn't registered", async () => {
@@ -294,7 +294,7 @@ export function domainHierarchyTestSuite(): void {
         const subDomains = await domainHierarchy.getSubdomainsUsingRegistry({
           domain: domain,
         });
-        expect(subDomains.length).to.equal(2);
+        expect(subDomains.length).to.equal(1);
       });
     });
 

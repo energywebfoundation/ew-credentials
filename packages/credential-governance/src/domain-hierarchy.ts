@@ -13,6 +13,8 @@ import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__fac
 import { PublicResolver } from '../ethers/PublicResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 
+const { namehash } = utils;
+
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
   protected readonly _ensRegistry: ENSRegistry;
@@ -75,21 +77,12 @@ export class DomainHierarchy {
     domain: string;
     mode: 'ALL' | 'FIRSTLEVEL';
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name');
-
-    // Filter out apps and roles
-    const isRelevantDomainEndings = (name: string) => {
-      const notRelevantDomainEndings = ['roles', 'apps'];
-      const leafLabel = name.split('.')[0];
-      return notRelevantDomainEndings.includes(leafLabel);
-    };
-
     if (mode === 'ALL') {
       const getParser = (nameReader: (node: string) => Promise<string>) => {
         return async ({ node }: Result) => {
           try {
             const name = await nameReader(node);
-            if (isRelevantDomainEndings(name)) {
+            if (this.isMetadomain(name)) {
               return '';
             }
 
@@ -108,12 +101,12 @@ export class DomainHierarchy {
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
-        event: this._domainNotifier.filters.DomainUpdated(null),
+        event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
       if (this._publicResolver) {
         const publicResolverDomains = await this.getDomainsFromLogs({
-          parser: getParser(this._publicResolver.name),
+          parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
           event: this._publicResolver.filters.TextChanged(
             null,
@@ -128,11 +121,7 @@ export class DomainHierarchy {
     }
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
-      event: this._ensRegistry.filters.NewOwner(
-        utils.namehash(domain),
-        null,
-        null
-      ),
+      event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
       parser: async ({ node, label, owner }) => {
         if (owner === emptyAddress) return '';
         const namehash = utils.keccak256(node + label.slice(2));
@@ -142,7 +131,7 @@ export class DomainHierarchy {
             this._ensRegistry.owner(namehash),
           ]);
           if (ownerAddress === emptyAddress) return '';
-          if (isRelevantDomainEndings(name)) {
+          if (this.isMetadomain(name)) {
             return '';
           }
           return name;
@@ -159,15 +148,13 @@ export class DomainHierarchy {
    * Retrieves list of subdomains from on-chain for a given parent domain
    * based on the ENS Registry contract logs.
    * For multi-level queries with many domains, querying the registry is slower than
-   * using the resolver contract because of the repeated RPC call.
+   * using the resolver contract because each RPC call returns only direct subdomains
    */
   public getSubdomainsUsingRegistry = async ({
     domain,
   }: {
     domain: string;
   }): Promise<string[]> => {
-    if (!domain) throw new Error('You need to pass a domain name');
-    const notRelevantDomainEndings = ['roles', 'apps'];
     const parser = async ({ node, label, owner }: Result) => {
       try {
         if (owner === emptyAddress) return '';
@@ -183,39 +170,30 @@ export class DomainHierarchy {
         return '';
       }
     };
-    const queue: string[][] = [];
     const subDomains: Set<string> = new Set();
-    queue.push([domain]);
-    subDomains.add(domain);
+    let parents = [domain];
 
     // Breadth-first search down subdomain tree
-    while (queue.length > 0) {
-      const currentNodes = queue[0];
-      const currentNameHashes = currentNodes.map((node) =>
-        utils.namehash(node)
-      );
+    while (parents.length > 0) {
       const event = this._ensRegistry.filters.NewOwner(null, null, null);
       // topics should be able to accept an array: https://docs.ethers.io/v5/concepts/events/
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      event.topics[1] = currentNameHashes;
-      const uniqueDomains = await this.getDomainsFromLogs({
-        provider: this._ensRegistry.provider,
-        parser,
-        event,
-        contractInterface: new utils.Interface(ensRegistryContract),
-      });
-      if (uniqueDomains.size > 0) {
-        queue.push([...uniqueDomains]);
+      event.topics[1] = parents.map(namehash);
+      parents = [
+        ...(await this.getDomainsFromLogs({
+          provider: this._ensRegistry.provider,
+          parser,
+          event,
+          contractInterface: new utils.Interface(ensRegistryContract),
+        })),
+      ];
+
+      for (const p of parents) {
+        if (!this.isMetadomain(p)) subDomains.add(p);
       }
-      for (const domain of uniqueDomains) {
-        const leafLabel = domain.split('.')[0];
-        if (notRelevantDomainEndings.includes(leafLabel)) continue;
-        subDomains.add(domain);
-      }
-      queue.shift();
     }
-    return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
+    return [...subDomains].filter(Boolean);
   };
 
   private getDomainsFromLogs = async ({
@@ -249,4 +227,10 @@ export class DomainHierarchy {
     const nonEmptyDomains = domains.filter((domain) => domain != '');
     return new Set(nonEmptyDomains);
   };
+
+  private isMetadomain(name: string): boolean {
+    return ['roles', 'apps', 'orgs'].some((meta) =>
+      name.startsWith(`${meta}.`)
+    );
+  }
 }
