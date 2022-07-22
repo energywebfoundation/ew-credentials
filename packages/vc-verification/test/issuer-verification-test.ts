@@ -30,9 +30,8 @@ import {
   IssuerResolver,
   RevocationVerification,
   EthersProviderRevokerResolver,
+  RevokerResolver,
 } from '../src';
-import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
-import { VCIssuerVerification } from '../src/vc-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -52,7 +51,6 @@ import {
 } from './Fixtures/sample-statuslist-credential';
 import nock from 'nock';
 import { verifyCredential } from 'didkit-wasm-node';
-import { RevokerNotAuthorized } from '../src/errors';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -71,11 +69,11 @@ let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
 let provider: JsonRpcProvider;
 let issuerVerification: IssuerVerification;
-let vcIssuerVerification: VCIssuerVerification;
-let claimIssuerVerification: ClaimIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
 let issuerResolver: IssuerResolver;
+let revokerResolver: RevokerResolver;
+let revocationVerification: RevocationVerification;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -210,8 +208,8 @@ function testSuite() {
     });
 
     issuerResolver = new EthersProviderIssuerResolver(domainReader);
-    const revokerResolver = new EthersProviderRevokerResolver(domainReader);
-    const revocationVerification = new RevocationVerification(
+    revokerResolver = new EthersProviderRevokerResolver(domainReader);
+    revocationVerification = new RevocationVerification(
       revokerResolver,
       issuerResolver,
       credentialResolver,
@@ -430,20 +428,112 @@ function testSuite() {
       ).to.be.true;
     });
 
+    it('Revocation status check for VC with valid expiration date should pass', async () => {
+      adminVC.expirationDate = '2023-06-24T11:28:28.103Z';
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const serviceId = adminRole;
+      const updateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
+
+      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(adminVC.credentialStatus?.statusListCredential as string)
+        .get('')
+        .reply(204, undefined);
+
+      return expect(
+        (
+          await revocationVerification.checkRevocationStatus(
+            adminDid,
+            managerRole
+          )
+        ).status
+      ).to.be.true;
+    });
+
+    it('Revocation status check for VC with lapsed expiration date should fail', async () => {
+      adminVC.expirationDate = '2022-06-24T11:28:28.103Z';
+      let ipfsCID = await didStore.save(JSON.stringify(adminVC));
+      const serviceId = adminRole;
+      const updateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateData,
+        validity
+      );
+
+      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(adminVC.credentialStatus?.statusListCredential as string)
+        .get('')
+        .reply(204, undefined);
+
+      return expect(
+        (
+          await revocationVerification.checkRevocationStatus(
+            adminDid,
+            managerRole
+          )
+        ).status
+      ).to.be.false;
+    });
+
     it('verifies issuer with RoleEIP191Jwt, where the role is issued by did', async () => {
       const adminJWT = new JWT(adminKeys);
       const claim = {
         claimData: { fields: {}, claimTypeVersion: 1, claimType: adminRole },
         iss: adminDid,
       };
-      let token: string = '';
-      let ipfsCID: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        token = await adminJWT.sign(claim);
-        if (token) {
-          ipfsCID = await didStore.save(token);
-        }
-      }
+      const token = await adminJWT.sign(claim);
+      const ipfsCID = await didStore.save(token);
       const serviceId = adminRole;
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -480,14 +570,8 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let token: string = '';
-      let ipfsCIDAdmin: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        token = await adminJWT.sign(claimAdmin);
-        if (token) {
-          ipfsCIDAdmin = await didStore.save(token);
-        }
-      }
+      const token = await adminJWT.sign(claimAdmin);
+      const ipfsCIDAdmin = await didStore.save(token);
       const serviceIdAdmin = adminRole;
       const updateDataAdmin: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -517,14 +601,8 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let tokenManager: string = '';
-      let ipfsCIDManager: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        tokenManager = await adminJWT.sign(claimManager);
-        if (tokenManager) {
-          ipfsCIDManager = await didStore.save(tokenManager);
-        }
-      }
+      const tokenManager = await adminJWT.sign(claimManager);
+      const ipfsCIDManager = await didStore.save(tokenManager);
       const serviceIdManager = managerRole;
       const updateDataManager: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -564,14 +642,8 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let token: string = '';
-      let ipfsCIDAdmin: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        token = await adminJWT.sign(claimAdmin);
-        if (token) {
-          ipfsCIDAdmin = await didStore.save(token);
-        }
-      }
+      const token = await adminJWT.sign(claimAdmin);
+      const ipfsCIDAdmin = await didStore.save(token);
       const serviceIdAdmin = adminRole;
       const updateDataAdmin: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -601,14 +673,8 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let tokenManager: string = '';
-      let ipfsCIDManager: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        tokenManager = await adminJWT.sign(claimManager);
-        if (tokenManager) {
-          ipfsCIDManager = await didStore.save(tokenManager);
-        }
-      }
+      const tokenManager = await adminJWT.sign(claimManager);
+      const ipfsCIDManager = await didStore.save(tokenManager);
       const serviceIdManager = managerRole;
       const updateDataManager: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -652,14 +718,9 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let token: string = '';
-      let ipfsCIDAdmin: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        token = await adminJWT.sign(claimAdmin);
-        if (token) {
-          ipfsCIDAdmin = await didStore.save(token);
-        }
-      }
+      const token = await adminJWT.sign(claimAdmin);
+      const ipfsCIDAdmin = await didStore.save(token);
+
       const serviceIdAdmin = adminRole;
       const updateDataAdmin: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -689,14 +750,8 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      let tokenManager: string = '';
-      let ipfsCIDManager: string = 'ipfsUrl';
-      if (admin.privateKey) {
-        tokenManager = await adminJWT.sign(claimManager);
-        if (tokenManager) {
-          ipfsCIDManager = await didStore.save(tokenManager);
-        }
-      }
+      const tokenManager = await adminJWT.sign(claimManager);
+      const ipfsCIDManager = await didStore.save(tokenManager);
       const serviceIdManager = managerRole;
       const updateDataManager: IUpdateData = {
         type: DIDAttribute.ServicePoint,
@@ -725,6 +780,152 @@ function testSuite() {
           'Revoker did:ethr:0x539:0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5 is not authorized to revoke admin: revoker is not in DID list'
         )
         .and.be.an.instanceOf(Error);
+    });
+
+    it('verifies issuer with RoleEIP191Jwt, where expiration timestamp is valid', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const claimAdmin = {
+        claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
+        iss: adminDid,
+        exp: Date.now() + 10000,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const token = await adminJWT.sign(claimAdmin);
+      const ipfsCIDAdmin = await didStore.save(token);
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
+
+      const claimManager = {
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const tokenManager = await adminJWT.sign(claimManager);
+      const ipfsCIDManager = await didStore.save(tokenManager);
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(204, undefined);
+
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.true;
+    });
+
+    it('RoleEIP191Jwt credential verificaiton should fail, where credential has expired', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const claimAdmin = {
+        claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
+        iss: adminDid,
+        exp: Date.now(),
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const token = await adminJWT.sign(claimAdmin);
+      const ipfsCIDAdmin = await didStore.save(token);
+      const serviceIdAdmin = adminRole;
+      const updateDataAdmin: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${serviceIdAdmin}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDAdmin,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        updateDataAdmin,
+        validity
+      );
+
+      const claimManager = {
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const tokenManager = await adminJWT.sign(claimManager);
+      const ipfsCIDManager = await didStore.save(tokenManager);
+      const serviceIdManager = managerRole;
+      const updateDataManager: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${serviceIdManager}`,
+          type: 'ClaimStore',
+          serviceEndpoint: ipfsCIDManager,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        updateDataManager,
+        validity
+      );
+      nock(claimAdmin.credentialStatus.statusListCredential)
+        .get('')
+        .reply(204, undefined);
+
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+      ).to.be.false;
     });
   });
 }

@@ -5,15 +5,21 @@ import {
   StatusList2021Entry,
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
-import {
-  CredentialResolver,
-  IssuerResolver,
-  RevokerResolver,
-} from '.';
+import { CredentialResolver, IssuerResolver, RevokerResolver } from '.';
 import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
 import { VCIssuerVerification } from '../src/vc-issuer-verification';
-import { InvalidRevokerType, NoRevokers, RevokerNotAuthorized } from './errors';
-import { issuerDID, RoleEIP191JWT } from './models';
+import {
+  ERRORS,
+  InvalidRevokerType,
+  NoRevokers,
+  RevokerNotAuthorized,
+} from './errors';
+import {
+  issuerDID,
+  RoleEIP191JWT,
+  verificationResult,
+  VerificationResult,
+} from './models';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { StatusListEntryVerification } from '@ew-did-registry/revocation';
 import { RoleCredentialSubject } from '@energyweb/credential-governance';
@@ -153,7 +159,10 @@ export class RevocationVerification {
    * @param role namespace
    * @returns
    */
-  async checkRevocationStatus(issuer: string, role: string) {
+  async checkRevocationStatus(
+    issuer: string,
+    role: string
+  ): Promise<VerificationResult> {
     let issuerCredential:
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
@@ -162,7 +171,7 @@ export class RevocationVerification {
     while (true) {
       const issuers = await this.issuerResolver.getIssuerDefinition(role);
       if (issuers?.did) {
-        return true;
+        return verificationResult(true, '');
       } else if (issuers?.roleName) {
         issuerCredential = await this.credentialResolver.getCredential(
           issuer,
@@ -176,6 +185,14 @@ export class RevocationVerification {
             issuer = issuerCredential.issuer as string;
             role = issuers.roleName;
             credentialStatus = issuerCredential.credentialStatus;
+
+            const expirationDate = new Date(
+              issuerCredential?.expirationDate as string
+            ).getTime();
+
+            if (expirationDate && expirationDate < Date.now()) {
+              return verificationResult(false, ERRORS.IssuerCredentialExpired);
+            }
             await this._statusListEntryVerificaiton.verifyCredentialStatus(
               issuerCredential.credentialStatus
             );
@@ -188,6 +205,9 @@ export class RevocationVerification {
             issuer = rolePayload?.iss as string;
             role = issuers.roleName;
             credentialStatus = rolePayload?.credentialStatus;
+            if (rolePayload?.exp && rolePayload?.exp < Date.now()) {
+              return verificationResult(false, ERRORS.IssuerCredentialExpired);
+            }
             await this._statusListEntryVerificaiton.verifyCredentialStatus(
               rolePayload?.credentialStatus as StatusList2021Entry
             );
@@ -198,7 +218,7 @@ export class RevocationVerification {
               credentialStatus?.statusListCredential as string
             );
           await this.verifyRevoker(credential?.issuer as string, role);
-          return false;
+          return verificationResult(false, ERRORS.IssuerCredentialRevoked);
         }
       }
     }
