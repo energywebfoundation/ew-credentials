@@ -92,4 +92,5 @@ export const ERRORS = {
   NoRevokers: 'No revokers found for the given role',
   NoIssuers: 'No issuers found for the given role',
   IssuerCredentialRevoked: 'Issuer credential has been revoked',
+  IssuerCredentialExpired: 'Issuer credential has expired',
 };

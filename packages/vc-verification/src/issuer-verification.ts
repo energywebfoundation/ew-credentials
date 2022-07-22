@@ -90,10 +90,10 @@ export class IssuerVerification {
       if (!issuerCredential) {
         return verificationResult(false, ERRORS.NoCredential);
       }
-      if (
-        !(await this.revocationVerification.checkRevocationStatus(issuer, role))
-      ) {
-        return verificationResult(false, ERRORS.IssuerCredentialRevoked);
+      const revocationStatusResult =
+        await this.revocationVerification.checkRevocationStatus(issuer, role);
+      if (!revocationStatusResult.status) {
+        return revocationStatusResult;
       }
       if (isVerifiableCredential(issuerCredential)) {
         return await this.vcIssuerVerification.verifyIssuer(issuer, role);
