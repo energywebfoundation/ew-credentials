@@ -92,7 +92,7 @@ export class IssuerVerification {
       }
       const revocationStatusResult =
         await this.revocationVerification.checkRevocationStatus(issuer, role);
-      if (!revocationStatusResult.status) {
+      if (!revocationStatusResult.verified) {
         return revocationStatusResult;
       }
       if (isVerifiableCredential(issuerCredential)) {

@@ -375,7 +375,7 @@ function testSuite() {
       );
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).verified
       ).true;
     });
 
@@ -440,7 +440,7 @@ function testSuite() {
       );
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).true;
     });
 

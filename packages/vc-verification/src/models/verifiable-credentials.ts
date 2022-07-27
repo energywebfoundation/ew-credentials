@@ -10,15 +10,15 @@ import * as jwt from 'jsonwebtoken/index';
 const { isHexString } = utils;
 
 export interface VerificationResult {
-  status: boolean;
+  verified: boolean;
   error: string;
 }
 
 export const verificationResult = function (
-  status: boolean,
+  verified: boolean,
   error: string
 ): VerificationResult {
-  return { status, error };
+  return { verified, error };
 };
 
 export interface ClaimData {
