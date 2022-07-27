@@ -381,7 +381,7 @@ function testSuite() {
       );
 
       return expect(
-        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).verified
       ).to.be.true;
     });
 
@@ -424,7 +424,7 @@ function testSuite() {
         .reply(204, undefined);
 
       return expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.true;
     });
 
@@ -473,7 +473,7 @@ function testSuite() {
             adminDid,
             managerRole
           )
-        ).status
+        ).verified
       ).to.be.true;
     });
 
@@ -522,7 +522,7 @@ function testSuite() {
             adminDid,
             managerRole
           )
-        ).status
+        ).verified
       ).to.be.false;
     });
 
@@ -551,7 +551,7 @@ function testSuite() {
       );
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, adminRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, adminRole)).verified
       ).to.be.true;
     });
 
@@ -623,7 +623,7 @@ function testSuite() {
         .reply(204, undefined);
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.true;
     });
 
@@ -699,7 +699,7 @@ function testSuite() {
         .reply(200, adminStatusList);
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.false;
     });
 
@@ -851,7 +851,7 @@ function testSuite() {
         .reply(204, undefined);
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.true;
     });
 
@@ -924,7 +924,7 @@ function testSuite() {
         .reply(204, undefined);
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).status
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.false;
     });
   });
