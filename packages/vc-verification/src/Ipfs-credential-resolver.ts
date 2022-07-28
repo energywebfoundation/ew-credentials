@@ -117,7 +117,12 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return eip191JwtProps.every((p) => claimProps.includes(p));
   }
 
-  private async eip191JwtOf(did: string): Promise<RoleEIP191JWT[]> {
+  /**
+   * Fetches all the Role eip191Jwts based on the subject DID
+   * @param did subject DID
+   * @returns RoleEIP191JWT list
+   */
+  async eip191JwtOf(did: string): Promise<RoleEIP191JWT[]> {
     const transformClaim = (
       roleJwt: RoleEIP191JWT
     ): RoleEIP191JWT | undefined => {
@@ -172,7 +177,12 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return credentialProps.every((p) => credProps.includes(p));
   }
 
-  private async credentialsOf(
+  /**
+   * Fetches all the Verifiable Credential based on the subject DID
+   * @param did subject DID
+   * @returns VerifiableCredential<RoleCredentialSubject> list
+   */
+  async credentialsOf(
     did: string
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
     const didDocument = await this._resolver.read(did);
