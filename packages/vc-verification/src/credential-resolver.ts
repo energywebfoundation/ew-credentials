@@ -40,4 +40,20 @@ export interface CredentialResolver {
   ): Promise<
     VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   >;
+
+  /**
+   * Fetches all RoleEIP191JWT belonging to a subject DID
+   * @param did
+   * @returns RoleEIP191JWT list
+   */
+  eip191JwtsOf(did: string): Promise<RoleEIP191JWT[]>;
+
+  /**
+   * Fetches all Verifiable Credential belonging to a subject DID
+   * @param did
+   * @returns VerifiableCredential<RoleCredentialSubject> list
+   */
+  credentialsOf(
+    did: string
+  ): Promise<VerifiableCredential<RoleCredentialSubject>[]>;
 }
