@@ -101,7 +101,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     did: string,
     namespace: string
   ): Promise<RoleEIP191JWT | undefined> {
-    const eip191Jwts = await this.eip191JwtOf(did);
+    const eip191Jwts = await this.eip191JwtsOf(did);
     return eip191Jwts.find(
       (jwt) =>
         jwt?.payload?.claimData.claimType === namespace ||
@@ -118,11 +118,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fetches all the Role eip191Jwts based on the subject DID
+   * Fetches all the Role eip191Jwts belonging to the subject DID
    * @param did subject DID
    * @returns RoleEIP191JWT list
    */
-  async eip191JwtOf(did: string): Promise<RoleEIP191JWT[]> {
+  async eip191JwtsOf(did: string): Promise<RoleEIP191JWT[]> {
     const transformClaim = (
       roleJwt: RoleEIP191JWT
     ): RoleEIP191JWT | undefined => {
@@ -178,7 +178,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fetches all the Verifiable Credential based on the subject DID
+   * Fetches all the Verifiable Credential belonging to the subject DID
    * @param did subject DID
    * @returns VerifiableCredential<RoleCredentialSubject> list
    */
