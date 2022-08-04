@@ -25,7 +25,7 @@ export interface IRoleDefinitionV2 extends IRoleDefinitionText {
   issuer: IIssuerDefinition;
   revoker: IRevokerDefinition;
   enrolmentPreconditions: { type: PreconditionType; conditions: string[] }[];
-  // Default seconds value after which the role is considered expired, if empty then no expiry
+  // Default time period in milliseconds, after which the role is considered expired. If null or undefined, there is no default expiry
   defaultValidityPeriod?: number;
 }
 
