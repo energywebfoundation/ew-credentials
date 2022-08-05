@@ -88,7 +88,9 @@ export const filterOutMaliciousClaims = (
  * @param claim claim to validated
  * @returns
  */
-export function isEIP191Jwt(claim: RoleEIP191JWT | unknown): claim is RoleEIP191JWT {
+export function isEIP191Jwt(
+  claim: RoleEIP191JWT | unknown
+): claim is RoleEIP191JWT {
   if (!claim) return false;
   if (typeof claim !== 'object') return false;
   const eip191JwtProps = ['payload', 'eip191Jwt'];
