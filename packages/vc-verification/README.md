@@ -6,7 +6,7 @@
 # VC Verification
 
 ## Description
-This package provides implementation for verification of Verifiable Credential and OffChainClaim. The verification can be done for issuer or revoker authority, credential proof and revocation verificaiton.
+This package provides implementation for verification of Verifiable Credential and RoleEIP191JWT. The verification can be done for issuer or revoker authority, credential proof and revocation verificaiton.
 [`@energyweb/vc-verification`](../vc-verification/) is a typescript module. 
 
 {vc-verification} is a component of the [Energy Web Decentralized Operating System](#ew-dos)

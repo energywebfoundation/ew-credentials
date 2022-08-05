@@ -7,8 +7,8 @@ import { RolePayload, verificationResult, VerificationResult } from './models';
 import { ERRORS, InvalidIssuerType } from './errors';
 
 /**
- * A class to verify chain of trust for an issued OffChainClaim
- * The hierachy must only consist of OffchainClaim issuance
+ * A class to verify chain of trust for an issued RoleEIP191Jwt
+ * The hierachy must only consist of RoleEIP191Jwt issuance
  */
 export class ClaimIssuerVerification {
   private _resolver: Resolver;

@@ -5,7 +5,7 @@ const didFormatFields = ['iss', 'sub', 'subject', 'did', 'signer'];
 
 /**
  * Upgrades the DID fields of a RolePayload with the chain identifier
- * @param offChainClaim claim to upgrade
+ * @param RoleEIP191JWT claim to upgrade
  * @returns RoleEIP191JWT with did fields upgraded with chain id. undefined if upgrade not possible
  */
 export function upgradeChainId(roleJwt: RoleEIP191JWT) {
