@@ -10,7 +10,7 @@ export interface CredentialResolver {
    * Fetches verifiable credential belonging to a DID for the provided namespace
    * @param did
    * @param namespace
-   * @returns Offchain claim of the holder for the namespace
+   * @returns Verifiable Credential of the holder for the namespace
    */
   getVerifiableCredential(
     did: string,
@@ -32,7 +32,7 @@ export interface CredentialResolver {
    * Fetches either RoleEIP191JWT or VC belonging to a DID for the provided namespace
    * @param did
    * @param namespace
-   * @returns Offchain claim of the holder for the namespace
+   * @returns RoleEIP191JWT or VC
    */
   getCredential(
     did: string,
