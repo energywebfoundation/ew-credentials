@@ -6,10 +6,5 @@ export * from './upgrade-chainid';
 export * from './revocation-verification';
 export * from './revoker-resolver';
 export * from './issuer-verification';
-export {
-  CredentialResolverIpfsSettings,
-  VerificationResult,
-  RoleEIP191JWT,
-  RolePayload,
-} from './models';
+export * from './models';
 export { VerifiableCredential };
