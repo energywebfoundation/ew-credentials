@@ -7,8 +7,14 @@ import {
   IServiceEndpoint,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
-import { RoleEIP191JWT, RolePayload } from './models';
-import { upgradeChainId } from './upgrade-chainid';
+import {
+  RoleEIP191JWT,
+  RolePayload,
+  isEIP191Jwt,
+  filterOutMaliciousClaims,
+  transformClaim,
+  isVerifiableCredential,
+} from './models';
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
@@ -83,7 +89,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Fetches RoleEIP191JWT for the given did and role for an OffChainClaim issuance hierarchy
+   * Fetches RoleEIP191JWT for the given did and role for an RoleEIP191JWT issuance hierarchy
    *
    * ```typescript
    * const credentialResolver = new IpfsCredentialResolver(
@@ -94,7 +100,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    * ```
    *
    * @param did subject DID for which the credential to be fetched
-   * @param role role for which the credential need to be fetched
+   * @param namespace role for which the credential need to be fetched
    * @returns RoleEIP191JWT
    */
   async getEIP191JWT(
@@ -109,33 +115,12 @@ export class IpfsCredentialResolver implements CredentialResolver {
     );
   }
 
-  async isEIP191Jwt(claim: unknown): Promise<boolean> {
-    if (!claim) return false;
-    if (typeof claim !== 'object') return false;
-    const eip191JwtProps = ['claimData', 'signer', 'iss'];
-    const claimProps = Object.keys(claim);
-    return eip191JwtProps.every((p) => claimProps.includes(p));
-  }
-
   /**
    * Fetches all the Role eip191Jwts belonging to the subject DID
    * @param did subject DID
    * @returns RoleEIP191JWT list
    */
   async eip191JwtsOf(did: string): Promise<RoleEIP191JWT[]> {
-    const transformClaim = (
-      roleJwt: RoleEIP191JWT
-    ): RoleEIP191JWT | undefined => {
-      const transformedClaim: RoleEIP191JWT = { ...roleJwt };
-      return upgradeChainId(transformedClaim);
-    };
-
-    const filterOutMaliciousClaims = (
-      item: RoleEIP191JWT | undefined
-    ): item is RoleEIP191JWT => {
-      return !!item;
-    };
-
     const didDocument = await this._resolver.read(did);
     const services: IServiceEndpoint[] = didDocument.service || [];
     return (
@@ -154,27 +139,9 @@ export class IpfsCredentialResolver implements CredentialResolver {
         })
       )
     )
-      .filter(this.isEIP191Jwt)
+      .filter(isEIP191Jwt)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
-  }
-
-  isVerifiableCredential(
-    vc: VerifiableCredential<RoleCredentialSubject> | unknown
-  ): vc is VerifiableCredential<RoleCredentialSubject> {
-    if (!vc) return false;
-    if (typeof vc !== 'object') return false;
-    const credentialProps = [
-      '@context',
-      'id',
-      'type',
-      'issuer',
-      'issuanceDate',
-      'credentialSubject',
-      'proof',
-    ];
-    const credProps = Object.keys(vc);
-    return credentialProps.every((p) => credProps.includes(p));
   }
 
   /**
@@ -199,6 +166,6 @@ export class IpfsCredentialResolver implements CredentialResolver {
           return vc as VerifiableCredential<RoleCredentialSubject>;
         })
       )
-    ).filter(this.isVerifiableCredential);
+    ).filter(isVerifiableCredential);
   }
 }
