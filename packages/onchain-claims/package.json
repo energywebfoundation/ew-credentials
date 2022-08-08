@@ -1,6 +1,6 @@
 {
   "name": "@energyweb/onchain-claims",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -44,7 +44,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@energyweb/credential-governance": "1.0.0",
+    "@energyweb/credential-governance": "2.0.0",
     "@ew-did-registry/did": "0.6.3-alpha.710.0",
     "@ew-did-registry/did-ethr-resolver": "0.6.3-alpha.710.0",
     "@poanet/solidity-flattener": "^3.0.7",
