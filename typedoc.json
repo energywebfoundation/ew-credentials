@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["packages/credential-governance/src/index.ts", "packages/onchain-claims/src/index.ts", "packages/vc-verification/src/index.js"],
+  "out": "docs",
+  "exclude": "**/*+(.spec|.e2e|.test).ts",
+  "readme": "none"
+}
