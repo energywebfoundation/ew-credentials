@@ -1,6 +1,6 @@
 {
   "name": "@energyweb/vc-verification",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -36,8 +36,8 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@energyweb/credential-governance": "1.0.0",
-    "@energyweb/onchain-claims": "1.0.0",
+    "@energyweb/credential-governance": "2.0.0",
+    "@energyweb/onchain-claims": "2.0.0",
     "@ew-did-registry/credentials-interface": "^0.7.0",
     "@ew-did-registry/did-store-interface": "^0.7.0",
     "@ew-did-registry/claims": "^0.7.0",
