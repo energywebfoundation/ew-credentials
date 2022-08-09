@@ -7,6 +7,7 @@ import type {
 import { utils } from 'ethers';
 import * as jwt from 'jsonwebtoken/index';
 import { upgradeChainId } from '../upgrade-chainid';
+import { CID } from 'multiformats/cid';
 
 const { isHexString } = utils;
 
@@ -119,4 +120,30 @@ export function isVerifiableCredential(
   ];
   const credProps = Object.keys(vc);
   return credentialProps.every((p) => credProps.includes(p));
+}
+
+/**
+ * Check if given value is a valid IPFS CID.
+ *
+ * ```typescript
+ * isCID('Qm...');
+ * ```
+ *
+ * @param {Any} hash value to check
+ *
+ */
+export function isCID(hash: unknown): boolean {
+  try {
+    if (typeof hash === 'string') {
+      return Boolean(CID.parse(hash));
+    }
+
+    if (hash instanceof Uint8Array) {
+      return Boolean(CID.decode(hash));
+    }
+
+    return Boolean(CID.asCID(hash));
+  } catch (e) {
+    return false;
+  }
 }
