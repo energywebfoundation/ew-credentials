@@ -1,9 +1,10 @@
-import { CredentialResolver, IssuerResolver } from '.';
-import { issuerDID, VerificationResult, verificationResult } from './models';
+import { CredentialResolver, IssuerResolver } from '..';
+import { VerificationResult, verificationResult } from '../models';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { ERRORS, InvalidCredentialProof, NoCredential } from './errors';
+import { ERRORS, InvalidCredentialProof, NoCredential } from '../utils/errors';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
+import { issuerDID } from '..';
 
 /**
  * A class to verify chain of trust for a Verifiable Credential

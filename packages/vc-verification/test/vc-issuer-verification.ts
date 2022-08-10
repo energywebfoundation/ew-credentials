@@ -27,7 +27,7 @@ import {
   EthersProviderIssuerResolver,
   IssuerResolver,
 } from '../src';
-import { VCIssuerVerification } from '../src/vc-issuer-verification';
+import { VCIssuerVerification } from '../src/verifier/vc-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,
@@ -41,7 +41,7 @@ import {
   shutDownIpfsDaemon,
 } from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
-import { ERRORS, IssuerNotAuthorized } from '../src/errors';
+import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
 
 chai.use(chaiAsPromised);

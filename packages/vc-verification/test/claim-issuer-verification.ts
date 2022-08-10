@@ -22,7 +22,7 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
 } from '../src';
-import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
+import { ClaimIssuerVerification } from '../src/verifier/claim-issuer-verification';
 import {
   DIDAttribute,
   ProviderTypes,

@@ -3,7 +3,7 @@ import {
   IssuerResolver,
   VerificationResult,
   RevocationVerification,
-} from '.';
+} from '..';
 import { ClaimIssuerVerification } from './claim-issuer-verification';
 import { VCIssuerVerification } from './vc-issuer-verification';
 import { providers } from 'ethers';
@@ -14,8 +14,8 @@ import {
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { verificationResult, RoleEIP191JWT } from './models';
-import { ERRORS } from './errors';
+import { verificationResult, RoleEIP191JWT } from '../models';
+import { ERRORS } from '../utils';
 
 /**
  * A class to provide verification of issuer authority for either VC or RoleEIP191JWT
