@@ -6,7 +6,7 @@ import { ClaimsRevocationRegistry as RevocationRegistry } from '../../ethers/Cla
 const { solidityKeccak256, defaultAbiCoder, arrayify } = utils;
 
 export const defaultVersion = 1;
-const expiry = Math.floor(new Date().getTime() / 1000) + 60 * 60;
+const expiry = new Date().getTime() + 60 * 60;
 // set it manually because ganache returns chainId same as network utils.id
 const chainId = 73799;
 const provider = new JsonRpcProvider('http://localhost:8544');
