@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/energywebfoundation/ew-credentials/compare/v2.0.0...v2.1.0) (2022-08-10)
+
+
+### Bug Fixes
+
+* update claim manager test ([087a8ff](https://github.com/energywebfoundation/ew-credentials/commit/087a8ffca4b3496ecbce566ead16b3eb1ce5cabb))
+
+
+### Features
+
+* add validation method for ipfs cid ([e930230](https://github.com/energywebfoundation/ew-credentials/commit/e9302302f73c91cfe7564bf284018a593e197faf))
+
+
+
+
+
 # 2.0.0 (2022-08-08)
 
 

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/energywebfoundation/ew-credentials/compare/v2.0.0...v2.1.0) (2022-08-10)
+
+
+### Bug Fixes
+
+* change expiration date to miliseconds ([8905bef](https://github.com/energywebfoundation/ew-credentials/commit/8905beff44dca9914f9e3162bd5b3333abbc6ff1))
+* update claim manager test ([087a8ff](https://github.com/energywebfoundation/ew-credentials/commit/087a8ffca4b3496ecbce566ead16b3eb1ce5cabb))
+
+
+
+
+
 # 2.0.0 (2022-08-08)
 
 
