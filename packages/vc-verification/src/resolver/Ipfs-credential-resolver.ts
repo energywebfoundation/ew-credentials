@@ -7,15 +7,14 @@ import {
   IServiceEndpoint,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
+import { RoleEIP191JWT, RolePayload } from '../models';
 import {
-  RoleEIP191JWT,
-  RolePayload,
   isEIP191Jwt,
   filterOutMaliciousClaims,
   transformClaim,
   isVerifiableCredential,
   isCID,
-} from './models';
+} from '../utils';
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
