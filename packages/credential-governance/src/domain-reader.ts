@@ -27,7 +27,7 @@ import { ResolverContractType } from './types/resolver-contract-type';
 import { ERROR_MESSAGES } from './types/error-messages';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 
-const { HashZero } = constants;
+const { HashZero, AddressZero } = constants;
 
 export class DomainReader {
   public static isOrgDefinition = (
@@ -129,32 +129,9 @@ export class DomainReader {
       return name;
     };
 
-    const { resolverAddress, resolverType } = await this.getResolverInfo(node);
-    if (resolverType === ResolverContractType.PublicResolver) {
-      const ensResolver = PublicResolver__factory.connect(
-        resolverAddress,
-        this._provider
-      );
-      const name = await ensResolver.name(node);
-      return checkName(name);
-    }
-    if (resolverType === ResolverContractType.RoleDefinitionResolver_v1) {
-      const ensResolver = RoleDefinitionResolver__factory.connect(
-        resolverAddress,
-        this._provider
-      );
-      const name = await ensResolver.name(node);
-      return checkName(name);
-    }
-    if (resolverType === ResolverContractType.RoleDefinitionResolver_v2) {
-      const ensResolver = RoleDefinitionResolverV2__factory.connect(
-        resolverAddress,
-        this._provider
-      );
-      const name = await ensResolver.name(node);
-      return checkName(name);
-    }
-    throw Error(`${ERROR_MESSAGES.RESOLVER_NOT_SUPPORTED}, node: ${node}`);
+    const { resolver } = await this.getResolver(node);
+    const name = await resolver.name(node);
+    return checkName(name);
   }
 
   /**
@@ -172,7 +149,7 @@ export class DomainReader {
     | IAppDefinition
     | IOrganizationDefinition
   > {
-    const { resolverAddress, resolverType } = await this.getResolverInfo(node);
+    const { resolverAddress, resolverType } = await this.getResolver(node);
 
     if (resolverType === ResolverContractType.PublicResolver) {
       const ensResolver: PublicResolver = PublicResolver__factory.connect(
@@ -264,14 +241,15 @@ export class DomainReader {
     throw Error(ERROR_MESSAGES.RESOLVER_NOT_SUPPORTED);
   }
 
-  protected async getResolverInfo(
+  protected async getResolver(
     node: string
-  ): Promise<{ resolverAddress: string; resolverType: ResolverContractType }> {
+  ): Promise<
+    PublicResolver | RoleDefinitionResolver | RoleDefinitionResolverV2
+  > {
     const network = await this._provider.getNetwork();
     const chainId = network.chainId;
-    // Get resolver from registry
     const resolverAddress = await this._ensRegistry.resolver(node);
-    if (resolverAddress === '0x0000000000000000000000000000000000000000') {
+    if (resolverAddress === AddressZero) {
       throw Error(ERROR_MESSAGES.DOMAIN_NOT_REGISTERED);
     }
 
@@ -284,7 +262,23 @@ export class DomainReader {
       throw Error(ERROR_MESSAGES.RESOLVER_NOT_KNOWN);
     }
 
-    return { resolverAddress, resolverType };
+    switch (resolverType) {
+      case ResolverContractType.PublicResolver:
+        return PublicResolver__factory.connect(resolverAddress, this._provider);
+
+      case ResolverContractType.RoleDefinitionResolver_v1:
+        return RoleDefinitionResolver__factory.connect(
+          resolverAddress,
+          this._provider
+        );
+      case ResolverContractType.RoleDefinitionResolver_v2:
+        return RoleDefinitionResolverV2__factory.connect(
+          resolverAddress,
+          this._provider
+        );
+      default:
+        throw new ResolverNotSupported(node, resolverAddress);
+    }
   }
 
   /**

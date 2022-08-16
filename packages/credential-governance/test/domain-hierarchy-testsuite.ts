@@ -1,4 +1,4 @@
-import { ContractFactory, utils, providers } from 'ethers';
+import { ContractFactory, utils, providers, constants } from 'ethers';
 import { DomainHierarchy } from '../src/domain-hierarchy';
 import {
   DomainReader,
@@ -15,6 +15,8 @@ import { hashLabel } from './credential-governance-test';
 import { expect } from 'chai';
 import { LegacyDomainDefTransactionFactory } from './legacy-domain-def-transaction-factory';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
+
+const { HashZero } = constants;
 
 let ensFactory: ContractFactory;
 let domainNotifierFactory: ContractFactory;
@@ -140,8 +142,7 @@ export function domainHierarchyTestSuite(): void {
       });
 
       // Register and set resolver for parent node
-      const rootNameHash =
-        '0x0000000000000000000000000000000000000000000000000000000000000000';
+      const rootNameHash = HashZero;
       await ensRegistry.setSubnodeOwner(
         rootNameHash,
         hashLabel(domain),
