@@ -45,7 +45,8 @@
     "@ew-did-registry/did-ipfs-store": "^0.7.0",
     "@ew-did-registry/revocation": "^0.7.0",
     "ethers": "^5.6.1",
-    "ipfs-http-client": "^43.0.0"
+    "ipfs-http-client": "^43.0.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^9.0.0",

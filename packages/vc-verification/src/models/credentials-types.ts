@@ -1,5 +1,5 @@
 import type { StatusList2021Entry } from '@ew-did-registry/credentials-interface';
-import * as jwt from 'jsonwebtoken/index';
+import { JwtPayload } from 'jsonwebtoken';
 
 export interface VerificationResult {
   verified: boolean;
@@ -21,7 +21,7 @@ export interface ClaimData {
   claimTypeVersion: number;
 }
 
-export interface RolePayload extends jwt.JwtPayload {
+export interface RolePayload extends JwtPayload {
   credentialStatus?: StatusList2021Entry;
   claimData: ClaimData;
   signer: string;

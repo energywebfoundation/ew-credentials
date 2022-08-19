@@ -6,6 +6,7 @@ import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import type { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import { Chain } from '@ew-did-registry/did';
 import { utils } from 'ethers';
+import { hasIn } from 'lodash';
 
 const didFormatFields = ['iss', 'sub', 'subject', 'did', 'signer'];
 const { isHexString } = utils;
@@ -93,14 +94,10 @@ export const filterOutMaliciousClaims = (
  * @param claim claim to validated
  * @returns
  */
-export function isEIP191Jwt(
-  claim: RoleEIP191JWT | unknown
-): claim is RoleEIP191JWT {
-  if (!claim) return false;
-  if (typeof claim !== 'object') return false;
-  const eip191JwtProps = ['payload', 'eip191Jwt'];
-  const claimProps = Object.keys(claim);
-  return eip191JwtProps.every((p) => claimProps.includes(p));
+export function isEIP191Jwt(claim: unknown): claim is RoleEIP191JWT {
+  return (
+    hasIn(claim, 'eip191Jwt') && hasIn(claim, 'payload.claimData.claimType')
+  );
 }
 
 /**
