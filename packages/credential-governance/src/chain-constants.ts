@@ -20,6 +20,8 @@ export const VOLTA_RESOLVER_V2_ADDRESS =
   '0xcf72f16Ab886776232bea2fcf3689761a0b74EfE';
 export const VOLTA_ERC_1056_ADDRESS =
   '0xc15d5a57a8eb0e1dcbe5d88b8f9a82017e5cc4af';
+export const VOLTA_CLAIMS_REVOCATION_REG_ADDR =
+  '0x9876d992D124f8E05e3eB35132226a819aaC840A';
 
 // EWC chain
 export const EWC_CHAIN_ID = 246;
@@ -36,6 +38,8 @@ export const EWC_DOMAIN_NOTIFER_ADDRESS =
 export const EWC_IDENTITY_MANAGER_ADDRESS =
   '0x2d1569f3a2006d21c0dc60eb13c8557b63ce5a8d';
 export const EWC_ADDRESS_1056 = '0xE29672f34e92b56C9169f9D485fFc8b9A136BCE4';
+export const EWC_CLAIMS_REVOCATION_REG_ADDR =
+  '0xd72B4c8D5B1a1A4C7085259548bDF1A175CFc48D';
 
 export const chainIdToChainName = (chainId: number) => {
   switch (chainId) {
