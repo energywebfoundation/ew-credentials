@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/energywebfoundation/iam-roles/compare/v2.0.0...v2.1.0) (2022-08-10)
+
+
+### Bug Fixes
+
+* **exp:** update documentation to reflect expiry in milliseconds ([43654d1](https://github.com/energywebfoundation/iam-roles/commit/43654d13cfb5076f9cbb5372d286b3beb0c749ae))
+
+
+
+
+
 # 2.0.0 (2022-08-08)
 
 
