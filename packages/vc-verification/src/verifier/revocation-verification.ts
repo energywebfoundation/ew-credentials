@@ -5,21 +5,21 @@ import {
   StatusList2021Entry,
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
-import { CredentialResolver, IssuerResolver, RevokerResolver } from '.';
-import { ClaimIssuerVerification } from '../src/claim-issuer-verification';
-import { VCIssuerVerification } from '../src/vc-issuer-verification';
+import { CredentialResolver, IssuerResolver, RevokerResolver } from '..';
+import { ClaimIssuerVerification } from './claim-issuer-verification';
+import { VCIssuerVerification } from './vc-issuer-verification';
 import {
   ERRORS,
   InvalidRevokerType,
   NoRevokers,
   RevokerNotAuthorized,
-} from './errors';
-import {
   issuerDID,
+} from '../utils';
+import {
   RoleEIP191JWT,
   verificationResult,
   VerificationResult,
-} from './models';
+} from '../models';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { StatusListEntryVerification } from '@ew-did-registry/revocation';
 import { RoleCredentialSubject } from '@energyweb/credential-governance';
@@ -154,7 +154,7 @@ export class RevocationVerification {
   }
 
   /**
-   * Checks the revocation status for the given issuer and role
+   * Verifies revocation status of `issuer` credential required to issue `role`
    * @param issuer issuer DID
    * @param role namespace
    * @returns

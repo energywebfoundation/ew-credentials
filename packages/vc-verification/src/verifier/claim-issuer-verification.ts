@@ -2,9 +2,9 @@ import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
 import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { CredentialResolver, IssuerResolver } from '.';
-import { RolePayload, verificationResult, VerificationResult } from './models';
-import { ERRORS, InvalidIssuerType } from './errors';
+import { CredentialResolver, IssuerResolver } from '..';
+import { RolePayload, verificationResult, VerificationResult } from '../models';
+import { ERRORS, InvalidIssuerType } from '../utils';
 
 /**
  * A class to verify chain of trust for an issued RoleEIP191Jwt

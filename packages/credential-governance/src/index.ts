@@ -44,3 +44,4 @@ export { DomainHierarchy };
 export { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
 export { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
 export { RoleCredentialSubject, IssuerFields };
+export * from './errors';

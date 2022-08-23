@@ -10,7 +10,6 @@ import {
   ResolverContractType,
 } from '../src/index';
 import { PreconditionType } from '../src/types/domain-definitions';
-import { ERROR_MESSAGES } from '../src/types/error-messages';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
@@ -19,6 +18,7 @@ import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefin
 import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__factory';
 import { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
 import { ENSRegistry__factory } from '../ethers/factories/ENSRegistry__factory';
+import { DomainResolverNotSet, ResolverNotSupported } from '../src/errors';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -256,13 +256,13 @@ export function domainCrudTestSuiteWithRevocation(): void {
     });
 
     it('domain with unknown resolver type throws error', async () => {
-      await ensRegistry.setResolver(
-        node2,
-        '0x0000000000000000000000000000000000000123'
-      );
+      const resolverAddress = '0x0000000000000000000000000000000000000123';
+      await ensRegistry.setResolver(node2, resolverAddress);
       await expect(
         domainReader.read({ node: node2 })
-      ).to.eventually.rejectedWith(ERROR_MESSAGES.RESOLVER_NOT_KNOWN);
+      ).to.eventually.rejectedWith(
+        new ResolverNotSupported(node2, resolverAddress).message
+      );
     });
 
     it('domain with not supported resolver throws error', async () => {
@@ -274,14 +274,16 @@ export function domainCrudTestSuiteWithRevocation(): void {
       await ensRegistry.setResolver(node2, resolverAddress);
       await expect(
         domainReader.read({ node: node2 })
-      ).to.eventually.rejectedWith(ERROR_MESSAGES.RESOLVER_NOT_KNOWN);
+      ).to.eventually.rejectedWith(
+        new ResolverNotSupported(node2, resolverAddress).message
+      );
     });
 
     it('domain which has not been registered throws error', async () => {
       const unregisteredRole = utils.namehash('notregistered.iam');
       await expect(
         domainReader.read({ node: unregisteredRole })
-      ).to.eventually.rejectedWith(ERROR_MESSAGES.DOMAIN_NOT_REGISTERED);
+      ).to.eventually.rejectedWith(new DomainResolverNotSet(unregisteredRole).message);
     });
   });
 }

@@ -54,7 +54,6 @@ jobs:
       - name: Deploy on develop branch
         if: github.ref == 'refs/heads/develop'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}
         run: |
@@ -63,7 +62,6 @@ jobs:
       - name: Deploy on master branch
         if: github.ref == 'refs/heads/master'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           git config user.name "GITHUB_ACTION"
@@ -86,6 +84,8 @@ jobs:
 
       - name: Commit to develop branch and merge to master branch
         run: |
+          git config --global user.email ${{ secrets.GH_EMAIL }}
+          git config --global user.name ${{ secrets.GH_USER }}
           git merge origin/master
           git push origin develop
 

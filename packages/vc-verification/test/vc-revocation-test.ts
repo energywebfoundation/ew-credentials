@@ -181,10 +181,6 @@ function testSuite() {
     const offerableIdentity = await (
       await new OfferableIdentityFactory(deployer).deploy()
     ).deployed();
-    proxyIdentityManager = await (
-      await new IdentityManagerFactory(deployer).deploy()
-    ).deployed();
-    await proxyIdentityManager.initialize(offerableIdentity.address);
     roleFactory = new DomainTransactionFactoryV2({
       domainResolverAddress: roleResolver.address,
     });

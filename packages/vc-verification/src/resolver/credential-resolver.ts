@@ -1,6 +1,6 @@
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { RoleEIP191JWT } from './models';
+import { RoleEIP191JWT } from '../models';
 
 /**
  * An interface for a credential resolver
