@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.2.0](https://github.com/energywebfoundation/ew-credentials/compare/v2.1.0...v2.2.0) (2022-08-23)
+
+
+### Bug Fixes
+
+* **@energyweb/vc-verification:** validate eip191Jwt ([fa98998](https://github.com/energywebfoundation/ew-credentials/commit/fa98998636e138edcb2a927d2c169bcd7248b07d))
+* restructure vc-verification package ([b84a39e](https://github.com/energywebfoundation/ew-credentials/commit/b84a39ee934bff6ed7d8ab263b68a3d904ebabfd))
+
+
+
+
+
 # [2.1.0](https://github.com/energywebfoundation/ew-credentials/compare/v2.0.0...v2.1.0) (2022-08-10)
 
 
