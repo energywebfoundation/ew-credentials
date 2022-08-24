@@ -3,23 +3,11 @@ name: Deploy
 on:
   push:
     branches: [ 'develop', 'master' ]
-  pull_request:
-    branches: [ 'develop', 'master' ]
 
 jobs:
-  cancel-previous:
-    name: 'Cancel Previous Runs'
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - uses: styfle/cancel-workflow-action@0.8.0
-        with:
-          access_token: ${{ github.token }}
-
   deploy:
     if: "!contains(github.event.head_commit.author.name, 'GITHUB_ACTION')"
     runs-on: ubuntu-latest
-    needs: cancel-previous
     permissions:
       contents: write
       deployments: write
@@ -44,9 +32,6 @@ jobs:
 
       - name: Build package
         run: npm run build
-
-      - name: Npm run test
-        run: npm run test
 
       - name: Output Run number
         run: echo ${{ github.run_number }}
