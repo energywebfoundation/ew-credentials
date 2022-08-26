@@ -24,8 +24,14 @@ import { RoleDefinitionResolver__factory } from '../ethers/factories/RoleDefinit
 import { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
 import { ResolverContractType } from './types/resolver-contract-type';
-import { ERROR_MESSAGES } from './types/error-messages';
 import { ENSRegistry } from '../ethers/ENSRegistry';
+import {
+  ChainIsNotSupported,
+  DomainResolverNotSet,
+  InvalidDomain,
+  NodeNameMismatch,
+  ResolverNotSupported,
+} from './errors';
 
 const { HashZero, AddressZero } = constants;
 
@@ -124,12 +130,12 @@ export class DomainReader {
   public async readName(node: string): Promise<string> {
     const checkName = (name: string) => {
       if (node !== utils.namehash(name)) {
-        throw Error(`${ERROR_MESSAGES.NAME_NODE_MISMATCH}, node: ${node}`);
+        throw new NodeNameMismatch(node, name);
       }
       return name;
     };
 
-    const { resolver } = await this.getResolver(node);
+    const resolver = await this.getResolver(node);
     const name = await resolver.name(node);
     return checkName(name);
   }
@@ -187,11 +193,7 @@ export class DomainReader {
           | IAppDefinition
           | IOrganizationDefinition;
       } catch (err) {
-        throw Error(
-          `unable to parse resolved textData for node: ${node}. textData: ${textData}. error: ${JSON.stringify(
-            err
-          )}`
-        );
+        throw new InvalidDomain(node, textData);
       }
 
       if (
@@ -203,7 +205,7 @@ export class DomainReader {
       if (DomainReader.isRoleDefinition(textProps)) {
         return await this.readRoleDefResolver_v1(node, textProps, ensResolver);
       }
-      throw Error(ERROR_MESSAGES.DOMAIN_TYPE_UNKNOWN);
+      throw new InvalidDomain(node, textProps);
     } else if (
       resolverType === ResolverContractType.RoleDefinitionResolver_v2
     ) {
@@ -220,11 +222,7 @@ export class DomainReader {
           | IAppDefinition
           | IOrganizationDefinition;
       } catch (err) {
-        throw Error(
-          `unable to parse resolved textData for node: ${node}. textData: ${textData}. error: ${JSON.stringify(
-            err
-          )}`
-        );
+        throw new InvalidDomain(node, textData);
       }
 
       if (
@@ -236,9 +234,9 @@ export class DomainReader {
       if (DomainReader.isRoleDefinition(textProps)) {
         return await this.readRoleDefResolver_v2(node, textProps, ensResolver);
       }
-      throw Error(ERROR_MESSAGES.DOMAIN_TYPE_UNKNOWN);
+      throw new InvalidDomain(node, textProps);
     }
-    throw Error(ERROR_MESSAGES.RESOLVER_NOT_SUPPORTED);
+    throw new ResolverNotSupported(node, resolverAddress);
   }
 
   protected async getResolver(
@@ -250,16 +248,16 @@ export class DomainReader {
     const chainId = network.chainId;
     const resolverAddress = await this._ensRegistry.resolver(node);
     if (resolverAddress === AddressZero) {
-      throw Error(ERROR_MESSAGES.DOMAIN_NOT_REGISTERED);
+      throw new DomainResolverNotSet(node);
     }
 
     const resolversForChain = this._knownEnsResolvers[chainId];
     if (resolversForChain === undefined) {
-      throw Error(ERROR_MESSAGES.RESOLVER_NOT_KNOWN);
+      throw new ChainIsNotSupported(chainId);
     }
     const resolverType = resolversForChain[resolverAddress];
     if (resolverType === undefined) {
-      throw Error(ERROR_MESSAGES.RESOLVER_NOT_KNOWN);
+      throw new ResolverNotSupported(node, resolverAddress);
     }
 
     switch (resolverType) {

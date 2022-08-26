@@ -85,7 +85,6 @@ let admin: EwSigner;
 let adminAddress: string;
 
 let userKeys: Keys;
-let userDid: string;
 let adminKeys: Keys;
 let adminDid: string;
 let managerKeys: Keys;
@@ -114,7 +113,6 @@ export function issuerVerificationTests(): void {
         '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1',
     });
     userAddress = userKeys.getAddress();
-    userDid = `did:${Methods.Erc1056}:${userAddress}`;
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
     adminKeys = new Keys({
@@ -403,20 +401,20 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      let managerTokenCID = await didStore.save(JSON.stringify(managerVC));
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(adminVC.credentialStatus?.statusListCredential as string)
@@ -447,20 +445,20 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      let managerTokenCID = await didStore.save(JSON.stringify(managerVC));
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(adminVC.credentialStatus?.statusListCredential as string)
@@ -496,20 +494,20 @@ function testSuite() {
         validity
       );
 
-      let ipfsCIDManager = await didStore.save(JSON.stringify(managerVC));
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      let managerTokenCID = await didStore.save(JSON.stringify(managerVC));
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(adminVC.credentialStatus?.statusListCredential as string)
@@ -571,20 +569,20 @@ function testSuite() {
         signer: adminDid,
       };
       const token = await adminJWT.sign(claimAdmin);
-      const ipfsCIDAdmin = await didStore.save(token);
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
+      const adminTokenCID = await didStore.save(token);
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
+          id: `${adminDid}#service-${adminServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
+          serviceEndpoint: adminTokenCID,
         },
       };
       await adminOperator.update(
         adminDid,
         DIDAttribute.ServicePoint,
-        updateDataAdmin,
+        adminUpdateData,
         validity
       );
 
@@ -601,21 +599,21 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      const tokenManager = await adminJWT.sign(claimManager);
-      const ipfsCIDManager = await didStore.save(tokenManager);
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      const managerToken = await adminJWT.sign(claimManager);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(claimAdmin.credentialStatus.statusListCredential)
@@ -625,6 +623,75 @@ function testSuite() {
       expect(
         (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
       ).to.be.true;
+    });
+
+    it('RoleEIP191Jwt without claimType should not break verification,', async () => {
+      const adminJWT = new JWT(adminKeys);
+      const claimAdmin = {
+        claimData: { fields: {}, claimTypeVersion: 1 },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const token = await adminJWT.sign(claimAdmin);
+      const adminTokenCID = await didStore.save(token);
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${adminDid}#service-${adminServiceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: adminTokenCID,
+        },
+      };
+      await adminOperator.update(
+        adminDid,
+        DIDAttribute.ServicePoint,
+        adminUpdateData,
+        validity
+      );
+
+      const managerRoleClaim = {
+        claimData: { fields: {}, claimTypeVersion: 1, claimType: managerRole },
+        iss: adminDid,
+        credentialStatus: {
+          id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+          type: 'StatusList2021Entry',
+          statusPurpose: 'revocation',
+          statusListIndex: '0',
+          statusListCredential:
+            'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
+        },
+        signer: adminDid,
+      };
+      const managerToken = await adminJWT.sign(managerRoleClaim);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
+        type: DIDAttribute.ServicePoint,
+        value: {
+          id: `${managerDid}#service-${managerServiceId}`,
+          type: 'ClaimStore',
+          serviceEndpoint: managerTokenCID,
+        },
+      };
+      await managerOperator.update(
+        managerDid,
+        DIDAttribute.ServicePoint,
+        managerUpdateData,
+        validity
+      );
+
+      expect(
+        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
+      ).to.be.false;
     });
 
     it('RoleEIP191Jwt verification should fail, if the credential is revoked', async () => {
@@ -643,20 +710,20 @@ function testSuite() {
         signer: adminDid,
       };
       const token = await adminJWT.sign(claimAdmin);
-      const ipfsCIDAdmin = await didStore.save(token);
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
+      const adminTokenCID = await didStore.save(token);
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
+          id: `${adminDid}#service-${adminServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
+          serviceEndpoint: adminTokenCID,
         },
       };
       await adminOperator.update(
         adminDid,
         DIDAttribute.ServicePoint,
-        updateDataAdmin,
+        adminUpdateData,
         validity
       );
 
@@ -673,21 +740,21 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      const tokenManager = await adminJWT.sign(claimManager);
-      const ipfsCIDManager = await didStore.save(tokenManager);
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      const managerToken = await adminJWT.sign(claimManager);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(claimAdmin.credentialStatus.statusListCredential)
@@ -719,21 +786,21 @@ function testSuite() {
         signer: adminDid,
       };
       const token = await adminJWT.sign(claimAdmin);
-      const ipfsCIDAdmin = await didStore.save(token);
+      const adminTokenCID = await didStore.save(token);
 
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
+          id: `${adminDid}#service-${adminServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
+          serviceEndpoint: adminTokenCID,
         },
       };
       await adminOperator.update(
         adminDid,
         DIDAttribute.ServicePoint,
-        updateDataAdmin,
+        adminUpdateData,
         validity
       );
 
@@ -750,21 +817,21 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      const tokenManager = await adminJWT.sign(claimManager);
-      const ipfsCIDManager = await didStore.save(tokenManager);
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      const managerToken = await adminJWT.sign(claimManager);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(claimAdmin.credentialStatus.statusListCredential)
@@ -799,20 +866,20 @@ function testSuite() {
         signer: adminDid,
       };
       const token = await adminJWT.sign(claimAdmin);
-      const ipfsCIDAdmin = await didStore.save(token);
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
+      const adminTokenCID = await didStore.save(token);
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
+          id: `${adminDid}#service-${adminServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
+          serviceEndpoint: adminTokenCID,
         },
       };
       await adminOperator.update(
         adminDid,
         DIDAttribute.ServicePoint,
-        updateDataAdmin,
+        adminUpdateData,
         validity
       );
 
@@ -829,21 +896,21 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      const tokenManager = await adminJWT.sign(claimManager);
-      const ipfsCIDManager = await didStore.save(tokenManager);
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      const managerToken = await adminJWT.sign(claimManager);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(claimAdmin.credentialStatus.statusListCredential)
@@ -872,20 +939,20 @@ function testSuite() {
         signer: adminDid,
       };
       const token = await adminJWT.sign(claimAdmin);
-      const ipfsCIDAdmin = await didStore.save(token);
-      const serviceIdAdmin = adminRole;
-      const updateDataAdmin: IUpdateData = {
+      const adminTokenCID = await didStore.save(token);
+      const adminServiceId = adminRole;
+      const adminUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${adminDid}#service-${serviceIdAdmin}`,
+          id: `${adminDid}#service-${adminServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDAdmin,
+          serviceEndpoint: adminTokenCID,
         },
       };
       await adminOperator.update(
         adminDid,
         DIDAttribute.ServicePoint,
-        updateDataAdmin,
+        adminUpdateData,
         validity
       );
 
@@ -902,21 +969,21 @@ function testSuite() {
         },
         signer: adminDid,
       };
-      const tokenManager = await adminJWT.sign(claimManager);
-      const ipfsCIDManager = await didStore.save(tokenManager);
-      const serviceIdManager = managerRole;
-      const updateDataManager: IUpdateData = {
+      const managerToken = await adminJWT.sign(claimManager);
+      const managerTokenCID = await didStore.save(managerToken);
+      const managerServiceId = managerRole;
+      const managerUpdateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
-          id: `${managerDid}#service-${serviceIdManager}`,
+          id: `${managerDid}#service-${managerServiceId}`,
           type: 'ClaimStore',
-          serviceEndpoint: ipfsCIDManager,
+          serviceEndpoint: managerTokenCID,
         },
       };
       await managerOperator.update(
         managerDid,
         DIDAttribute.ServicePoint,
-        updateDataManager,
+        managerUpdateData,
         validity
       );
       nock(claimAdmin.credentialStatus.statusListCredential)

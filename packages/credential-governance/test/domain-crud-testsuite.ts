@@ -10,13 +10,13 @@ import {
   ResolverContractType,
 } from '../src/index';
 import { PreconditionType } from '../src/types/domain-definitions';
-import { ERROR_MESSAGES } from '../src/types/error-messages';
 import { LegacyDomainDefTransactionFactory } from './legacy-domain-def-transaction-factory';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { RoleDefinitionResolver } from '../ethers/RoleDefinitionResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
 import { hashLabel } from './credential-governance-test';
+import { DomainResolverNotSet, ResolverNotSupported } from '../src/errors';
 
 const { HashZero } = constants;
 
@@ -260,12 +260,10 @@ export function domainCrudTestSuite(): void {
     });
 
     it('domain with unknown resolver type throws error', async () => {
-      await ensRegistry.setResolver(
-        node,
-        '0x0000000000000000000000000000000000000123'
-      );
+      const resolverAddress = '0x0000000000000000000000000000000000000123';
+      await ensRegistry.setResolver(node, resolverAddress);
       await expect(domainReader.read({ node })).to.eventually.rejectedWith(
-        ERROR_MESSAGES.RESOLVER_NOT_KNOWN
+        new ResolverNotSupported(node, resolverAddress).message
       );
     });
 
@@ -277,7 +275,7 @@ export function domainCrudTestSuite(): void {
       domainReader.addKnownResolver(chainId, resolverAddress, '999');
       await ensRegistry.setResolver(node, resolverAddress);
       await expect(domainReader.read({ node })).to.eventually.rejectedWith(
-        ERROR_MESSAGES.RESOLVER_NOT_KNOWN
+        new ResolverNotSupported(node, resolverAddress).message
       );
     });
 
@@ -285,7 +283,9 @@ export function domainCrudTestSuite(): void {
       const unregisteredRole = utils.namehash('notregistered.iam');
       await expect(
         domainReader.read({ node: unregisteredRole })
-      ).to.eventually.rejectedWith(ERROR_MESSAGES.DOMAIN_NOT_REGISTERED);
+      ).to.eventually.rejectedWith(
+        new DomainResolverNotSet(unregisteredRole).message
+      );
     });
   });
 }

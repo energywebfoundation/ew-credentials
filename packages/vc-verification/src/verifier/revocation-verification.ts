@@ -154,7 +154,7 @@ export class RevocationVerification {
   }
 
   /**
-   * Checks the revocation status for the given issuer and role
+   * Verifies revocation status of `issuer` credential required to issue `role`
    * @param issuer issuer DID
    * @param role namespace
    * @returns
