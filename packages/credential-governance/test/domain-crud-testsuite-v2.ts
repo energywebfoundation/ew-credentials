@@ -284,7 +284,9 @@ export function domainCrudTestSuiteWithRevocation(): void {
       const unregisteredRole = utils.namehash('notregistered.iam');
       await expect(
         domainReader.read({ node: unregisteredRole })
-      ).to.eventually.rejectedWith(new DomainResolverNotSet(unregisteredRole).message);
+      ).to.eventually.rejectedWith(
+        new DomainResolverNotSet(unregisteredRole).message
+      );
     });
   });
 }

@@ -27,6 +27,7 @@ import { ResolverContractType } from './types/resolver-contract-type';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import {
   ChainIsNotSupported,
+  DefinitionDoesNotMatchResolver,
   DomainResolverNotSet,
   InvalidDomain,
   NodeNameMismatch,
@@ -135,7 +136,7 @@ export class DomainReader {
       return name;
     };
 
-    const resolver = await this.getResolver(node);
+    const { resolver } = await this.getResolver(node);
     const name = await resolver.name(node);
     return checkName(name);
   }
@@ -155,94 +156,40 @@ export class DomainReader {
     | IAppDefinition
     | IOrganizationDefinition
   > {
-    const { resolverAddress, resolverType } = await this.getResolver(node);
-
-    if (resolverType === ResolverContractType.PublicResolver) {
-      const ensResolver: PublicResolver = PublicResolver__factory.connect(
-        resolverAddress,
-        this._provider
-      );
-      const textData = await ensResolver.text(node, 'metadata');
-      let definition;
-      try {
-        definition = JSON.parse(textData, this.reviveDates) as
-          | IRoleDefinition
-          | IAppDefinition
-          | IOrganizationDefinition;
-      } catch (err) {
-        throw Error(
-          `unable to parse resolved textData for node: ${node}. textData: ${textData}. error: ${JSON.stringify(
-            err
-          )}`
-        );
-      }
-      return definition;
-    } else if (
-      resolverType === ResolverContractType.RoleDefinitionResolver_v1
-    ) {
-      const ensResolver: RoleDefinitionResolver =
-        RoleDefinitionResolver__factory.connect(
-          resolverAddress,
-          this._provider
-        );
-      const textData = await ensResolver.text(node, 'metadata');
-      let textProps;
-      try {
-        textProps = JSON.parse(textData, this.reviveDates) as
-          | IRoleDefinitionText
-          | IAppDefinition
-          | IOrganizationDefinition;
-      } catch (err) {
-        throw new InvalidDomain(node, textData);
-      }
-
-      if (
-        DomainReader.isOrgDefinition(textProps) ||
-        DomainReader.isAppDefinition(textProps)
-      ) {
-        return textProps;
-      }
-      if (DomainReader.isRoleDefinition(textProps)) {
-        return await this.readRoleDefResolver_v1(node, textProps, ensResolver);
-      }
-      throw new InvalidDomain(node, textProps);
-    } else if (
-      resolverType === ResolverContractType.RoleDefinitionResolver_v2
-    ) {
-      const ensResolver: RoleDefinitionResolverV2 =
-        RoleDefinitionResolverV2__factory.connect(
-          resolverAddress,
-          this._provider
-        );
-      const textData = await ensResolver.text(node, 'metadata');
-      let textProps;
-      try {
-        textProps = JSON.parse(textData, this.reviveDates) as
-          | IRoleDefinitionText
-          | IAppDefinition
-          | IOrganizationDefinition;
-      } catch (err) {
-        throw new InvalidDomain(node, textData);
-      }
-
-      if (
-        DomainReader.isOrgDefinition(textProps) ||
-        DomainReader.isAppDefinition(textProps)
-      ) {
-        return textProps;
-      }
-      if (DomainReader.isRoleDefinition(textProps)) {
-        return await this.readRoleDefResolver_v2(node, textProps, ensResolver);
-      }
-      throw new InvalidDomain(node, textProps);
+    const { resolver, type } = await this.getResolver(node);
+    const metadata = await resolver.text(node, 'metadata');
+    let definition;
+    try {
+      definition = JSON.parse(metadata, this.reviveDates);
+    } catch (err) {
+      throw new InvalidDomain(node, metadata);
     }
-    throw new ResolverNotSupported(node, resolverAddress);
+
+    if (
+      DomainReader.isOrgDefinition(definition) ||
+      DomainReader.isAppDefinition(definition) ||
+      type === ResolverContractType.PublicResolver
+    ) {
+      return definition;
+    } else if (type === ResolverContractType.RoleDefinitionResolver_v1) {
+      return await this.readRoleDefResolver_v1(node, definition, resolver);
+    } else if (type === ResolverContractType.RoleDefinitionResolver_v2) {
+      return this.readRoleDefResolver_v2(node, definition, resolver);
+    } else {
+      throw new DefinitionDoesNotMatchResolver(node, metadata, type);
+    }
   }
 
-  protected async getResolver(
-    node: string
-  ): Promise<
-    PublicResolver | RoleDefinitionResolver | RoleDefinitionResolverV2
+  protected async getResolver(node: string): Promise<
+    | { resolver: PublicResolver; type: ResolverContractType.PublicResolver }
+    | {
+        resolver: RoleDefinitionResolver;
+        type: ResolverContractType.RoleDefinitionResolver_v1;
+      }
+    | {
+        resolver: RoleDefinitionResolverV2;
+        type: ResolverContractType.RoleDefinitionResolver_v2;
+      }
   > {
     const network = await this._provider.getNetwork();
     const chainId = network.chainId;
@@ -255,25 +202,37 @@ export class DomainReader {
     if (resolversForChain === undefined) {
       throw new ChainIsNotSupported(chainId);
     }
-    const resolverType = resolversForChain[resolverAddress];
-    if (resolverType === undefined) {
+    const type = resolversForChain[resolverAddress];
+    if (type === undefined) {
       throw new ResolverNotSupported(node, resolverAddress);
     }
 
-    switch (resolverType) {
+    switch (type) {
       case ResolverContractType.PublicResolver:
-        return PublicResolver__factory.connect(resolverAddress, this._provider);
+        return {
+          resolver: PublicResolver__factory.connect(
+            resolverAddress,
+            this._provider
+          ),
+          type,
+        };
 
       case ResolverContractType.RoleDefinitionResolver_v1:
-        return RoleDefinitionResolver__factory.connect(
-          resolverAddress,
-          this._provider
-        );
+        return {
+          resolver: RoleDefinitionResolver__factory.connect(
+            resolverAddress,
+            this._provider
+          ),
+          type,
+        };
       case ResolverContractType.RoleDefinitionResolver_v2:
-        return RoleDefinitionResolverV2__factory.connect(
-          resolverAddress,
-          this._provider
-        );
+        return {
+          resolver: RoleDefinitionResolverV2__factory.connect(
+            resolverAddress,
+            this._provider
+          ),
+          type,
+        };
       default:
         throw new ResolverNotSupported(node, resolverAddress);
     }

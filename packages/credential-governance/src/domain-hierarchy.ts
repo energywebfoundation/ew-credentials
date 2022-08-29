@@ -14,6 +14,7 @@ import { DomainNotifier } from '../ethers/DomainNotifier';
 
 const { namehash } = utils;
 const { AddressZero } = constants;
+
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
   protected readonly _ensRegistry: ENSRegistry;
