@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { ContractFactory, utils, providers } from 'ethers';
+import { ContractFactory, utils, providers, constants } from 'ethers';
 import {
   DomainReader,
   DomainTransactionFactoryV2,
@@ -22,6 +22,8 @@ import { DomainResolverNotSet, ResolverNotSupported } from '../src/errors';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
+
+const { HashZero } = constants;
 
 export const rpcUrl = `http://localhost:8544`;
 
@@ -121,8 +123,7 @@ export function domainCrudTestSuiteWithRevocation(): void {
         type: ResolverContractType.PublicResolver,
       });
 
-      const rootNameHash =
-        '0x0000000000000000000000000000000000000000000000000000000000000000';
+      const rootNameHash = HashZero;
       await ensRegistry.setSubnodeOwner(
         rootNameHash,
         hashLabel(domain2),
@@ -267,7 +268,7 @@ export function domainCrudTestSuiteWithRevocation(): void {
 
     it('domain with not supported resolver throws error', async () => {
       const resolverAddress = '0x0000000000000000000000000000000000000123';
-      const chainId = await (await provider.getNetwork()).chainId;
+      const chainId = (await provider.getNetwork()).chainId;
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       domainReader.addKnownResolver(chainId, resolverAddress, '999');
@@ -283,7 +284,9 @@ export function domainCrudTestSuiteWithRevocation(): void {
       const unregisteredRole = utils.namehash('notregistered.iam');
       await expect(
         domainReader.read({ node: unregisteredRole })
-      ).to.eventually.rejectedWith(new DomainResolverNotSet(unregisteredRole).message);
+      ).to.eventually.rejectedWith(
+        new DomainResolverNotSet(unregisteredRole).message
+      );
     });
   });
 }

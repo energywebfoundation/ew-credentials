@@ -6,11 +6,14 @@ import {
   providers,
   utils,
   BigNumber,
+  constants,
 } from 'ethers';
 import { ENSRegistry } from '../ethers/ENSRegistry';
 import { RoleDefinitionResolverV2 } from '../ethers/RoleDefinitionResolverV2';
 import { RoleDefinitionResolverV2__factory } from '../ethers/factories/RoleDefinitionResolverV2__factory';
 import { DomainNotifier } from '../ethers/DomainNotifier';
+
+const { HashZero } = constants;
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -92,8 +95,7 @@ export function roleDefinitionResolverTestSuite(): void {
     // Set owner of "role" node hierarchy
     // https://docs.ens.domains/contract-api-reference/name-processing#terminology
     // https://eips.ethereum.org/EIPS/eip-137#utils.namehash-algorithm
-    const rootNameHash =
-      '0x0000000000000000000000000000000000000000000000000000000000000000';
+    const rootNameHash = HashZero;
     await ens.setSubnodeOwner(rootNameHash, ewcLabelHash, ownerAddr);
     const ewcOwner = await ens.owner(ewcNode);
     expect(ewcOwner).to.equal(ownerAddr);

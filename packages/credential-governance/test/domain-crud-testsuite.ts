@@ -1,6 +1,6 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { ContractFactory, utils, providers } from 'ethers';
+import { ContractFactory, utils, providers, constants } from 'ethers';
 import {
   DomainReader,
   DomainTransactionFactory,
@@ -17,6 +17,8 @@ import { DomainNotifier } from '../ethers/DomainNotifier';
 import { PublicResolver } from '../ethers/PublicResolver';
 import { hashLabel } from './credential-governance-test';
 import { DomainResolverNotSet, ResolverNotSupported } from '../src/errors';
+
+const { HashZero } = constants;
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -137,8 +139,7 @@ export function domainCrudTestSuite(): void {
         type: ResolverContractType.PublicResolver,
       });
 
-      const rootNameHash =
-        '0x0000000000000000000000000000000000000000000000000000000000000000';
+      const rootNameHash = HashZero;
       await ensRegistry.setSubnodeOwner(
         rootNameHash,
         hashLabel(domain),
@@ -268,7 +269,7 @@ export function domainCrudTestSuite(): void {
 
     it('domain with not supported resolver throws error', async () => {
       const resolverAddress = '0x0000000000000000000000000000000000000123';
-      const chainId = await (await provider.getNetwork()).chainId;
+      const chainId = (await provider.getNetwork()).chainId;
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       domainReader.addKnownResolver(chainId, resolverAddress, '999');

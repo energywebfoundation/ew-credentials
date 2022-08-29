@@ -1,4 +1,4 @@
-import { utils, providers } from 'ethers';
+import { utils, providers, constants } from 'ethers';
 import type { Result } from '@ethersproject/abi';
 import type { EventFilter } from 'ethers';
 import { ENSRegistry } from '../ethers/ENSRegistry';
@@ -6,7 +6,6 @@ import { ENSRegistry__factory } from '../ethers/factories/ENSRegistry__factory';
 import { abi as ensRegistryContract } from '../build/contracts/ENS.json';
 import { abi as ensResolverContract } from '../build/contracts/PublicResolver.json';
 import { abi as domainNotifierContract } from '../build/contracts/DomainNotifier.json';
-import { emptyAddress } from './constants';
 import { DomainReader } from './domain-reader';
 import { PublicResolver__factory } from '../ethers/factories/PublicResolver__factory';
 import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__factory';
@@ -14,6 +13,7 @@ import { PublicResolver } from '../ethers/PublicResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
 
 const { namehash } = utils;
+const { AddressZero } = constants;
 
 export class DomainHierarchy {
   protected readonly _domainReader: DomainReader;
@@ -88,7 +88,7 @@ export class DomainHierarchy {
 
             if (name.endsWith(domain) && name !== domain) {
               const owner = await this._ensRegistry.owner(node);
-              if (owner === emptyAddress) return '';
+              if (owner === AddressZero) return '';
               return name;
             }
           } catch {
@@ -123,14 +123,14 @@ export class DomainHierarchy {
       contractInterface: new utils.Interface(ensRegistryContract),
       event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
       parser: async ({ node, label, owner }) => {
-        if (owner === emptyAddress) return '';
+        if (owner === AddressZero) return '';
         const namehash = utils.keccak256(node + label.slice(2));
         try {
           const [name, ownerAddress] = await Promise.all([
             this._domainReader.readName(namehash),
             this._ensRegistry.owner(namehash),
           ]);
-          if (ownerAddress === emptyAddress) return '';
+          if (ownerAddress === AddressZero) return '';
           if (this.isMetadomain(name)) {
             return '';
           }
@@ -157,13 +157,13 @@ export class DomainHierarchy {
   }): Promise<string[]> => {
     const parser = async ({ node, label, owner }: Result) => {
       try {
-        if (owner === emptyAddress) return '';
+        if (owner === AddressZero) return '';
         const namehash = utils.keccak256(node + label.slice(2));
         const [name, ownerAddress] = await Promise.all([
           this._domainReader.readName(namehash),
           this._ensRegistry.owner(namehash),
         ]);
-        if (ownerAddress === emptyAddress) return '';
+        if (ownerAddress === AddressZero) return '';
         return name;
       } catch {
         // A possible source of exceptions is if domain has been deleted (https://energyweb.atlassian.net/browse/SWTCH-997)
