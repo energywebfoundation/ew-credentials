@@ -854,7 +854,7 @@ function testSuite() {
       const claimAdmin = {
         claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
         iss: adminDid,
-        exp: Date.now() + 10000,
+        exp: Math.floor((Date.now() + 10000) / 1000),
         credentialStatus: {
           id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
           type: 'StatusList2021Entry',
@@ -927,7 +927,7 @@ function testSuite() {
       const claimAdmin = {
         claimData: { fields: {}, claimType: adminRole, claimTypeVersion: 1 },
         iss: adminDid,
-        exp: Date.now(),
+        exp: Math.floor(Date.now() / 1000),
         credentialStatus: {
           id: 'https://identitycache-dev.energyweb.org/v1/status-list/urn:uuid:4fb4e120-a566-499c-85fb-47bb5abd3d6b',
           type: 'StatusList2021Entry',
