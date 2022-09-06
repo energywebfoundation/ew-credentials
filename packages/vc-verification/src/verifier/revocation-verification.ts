@@ -205,7 +205,7 @@ export class RevocationVerification {
             issuer = rolePayload?.iss as string;
             role = issuers.roleName;
             credentialStatus = rolePayload?.credentialStatus;
-            if (rolePayload?.exp && rolePayload?.exp < Date.now()) {
+            if (rolePayload?.exp && rolePayload?.exp * 1000 < Date.now()) {
               return verificationResult(false, ERRORS.IssuerCredentialExpired);
             }
             await this._statusListEntryVerificaiton.verifyCredentialStatus(
