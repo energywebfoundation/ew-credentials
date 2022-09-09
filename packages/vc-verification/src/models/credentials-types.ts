@@ -14,7 +14,7 @@ export const verificationResult = function (
 };
 
 export interface ClaimData {
-  fields: {
+  requestorFields: {
     [key: string]: string | number;
   };
   claimType: string;
