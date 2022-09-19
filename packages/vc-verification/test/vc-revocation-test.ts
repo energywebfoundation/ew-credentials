@@ -53,6 +53,7 @@ import {
   statusListCredentialWithInvalidPurpose,
 } from './Fixtures/sample-statuslist-credential';
 import { verifyCredential } from 'didkit-wasm-node';
+import { EVMDataAggregator } from '../src/resolver/evm-data-aggregator';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -195,11 +196,13 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
+    const evmDataAggregator = new EVMDataAggregator();
     didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,
-      didStore
+      didStore,
+      evmDataAggregator
     );
     userOperator = new Operator(user, { address: registry.address });
     adminOperator = new Operator(admin, { address: registry.address });
@@ -218,8 +221,14 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    revokerResolver = new EthersProviderRevokerResolver(domainReader);
-    issuerResolver = new EthersProviderIssuerResolver(domainReader);
+    revokerResolver = new EthersProviderRevokerResolver(
+      domainReader,
+      evmDataAggregator
+    );
+    issuerResolver = new EthersProviderIssuerResolver(
+      domainReader,
+      evmDataAggregator
+    );
 
     revocationVerification = new RevocationVerification(
       revokerResolver,

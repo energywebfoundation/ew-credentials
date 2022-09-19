@@ -41,6 +41,7 @@ import {
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
+import { EVMDataAggregator } from '../src/resolver/evm-data-aggregator';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -176,11 +177,13 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
+    const evmDataAggregator = new EVMDataAggregator();
     didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,
-      didStore
+      didStore,
+      evmDataAggregator
     );
     userOperator = new Operator(user, { address: registry.address });
     adminOperator = new Operator(admin, { address: registry.address });
@@ -199,7 +202,10 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
+    issuerDefinitionResolver = new EthersProviderIssuerResolver(
+      domainReader,
+      evmDataAggregator
+    );
 
     issuerVerification = new ClaimIssuerVerification(
       provider,

@@ -1,6 +1,7 @@
 import { DomainReader } from '@energyweb/credential-governance';
 import type { IIssuerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
+import { EVMDataAggregator } from './evm-data-aggregator';
 
 /**
  * An interface for Resolution of Issuers for a namespace
@@ -21,9 +22,11 @@ export interface IssuerResolver {
  */
 export class EthersProviderIssuerResolver implements IssuerResolver {
   private _domainReader: DomainReader;
+  private _dataAgregator: EVMDataAggregator;
 
-  constructor(domainReader: DomainReader) {
+  constructor(domainReader: DomainReader, dataAggregator: EVMDataAggregator) {
     this._domainReader = domainReader;
+    this._dataAgregator = dataAggregator;
   }
 
   /**
@@ -40,6 +43,11 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
   async getIssuerDefinition(
     namespace: string
   ): Promise<IIssuerDefinition | undefined> {
+    const cachedRoleDefinition =
+      this._dataAgregator.getRoleDefinition(namespace);
+    if (cachedRoleDefinition) {
+      return cachedRoleDefinition.data.issuer;
+    }
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
@@ -47,6 +55,7 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
       node: resolvedNamespace,
     });
     if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
+      this._dataAgregator.setRoleDefinition(namespace, roleDefinition);
       return roleDefinition.issuer;
     }
     return undefined;
