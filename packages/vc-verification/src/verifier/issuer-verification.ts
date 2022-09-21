@@ -88,7 +88,10 @@ export class IssuerVerification {
         issuers?.roleName
       );
       if (!issuerCredential) {
-        return verificationResult(false, `${ERRORS.NoCredential} for role ${issuers?.roleName}`);
+        return verificationResult(
+          false,
+          `${ERRORS.NoCredential} for role ${issuers?.roleName}`
+        );
       }
       const revocationStatusResult =
         await this.revocationVerification.checkRevocationStatus(issuer, role);
