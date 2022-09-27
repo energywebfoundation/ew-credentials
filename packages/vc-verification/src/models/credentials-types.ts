@@ -1,7 +1,7 @@
 import { IRoleDefinitionV2 } from '@energyweb/credential-governance';
 import type { StatusList2021Entry } from '@ew-did-registry/credentials-interface';
 import { JwtPayload } from 'jsonwebtoken';
-import { IServiceEndpoint } from '@ew-did-registry/did-resolver-interface';
+import { IDIDDocument } from '@ew-did-registry/did-resolver-interface';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 
@@ -35,17 +35,13 @@ export interface RoleEIP191JWT {
 }
 
 export interface CachedRoleCredential {
-  did: string;
-  role: string;
-  data: RoleEIP191JWT | VerifiableCredential<RoleCredentialSubject>;
+  [key: string]: RoleEIP191JWT | VerifiableCredential<RoleCredentialSubject>;
 }
 
 export interface CachedRoleDefinition {
-  role: string;
-  data: IRoleDefinitionV2;
+  [key: string]: IRoleDefinitionV2;
 }
 
 export interface CachedDIDDocument {
-  did: string;
-  data: IServiceEndpoint[];
+  [key: string]: IDIDDocument;
 }

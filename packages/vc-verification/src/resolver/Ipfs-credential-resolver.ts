@@ -18,22 +18,20 @@ import {
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { EVMDataAggregator } from './evm-data-aggregator';
+import { IRoleCredentialCache } from '../models/cache-interfaces';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _resolver: Resolver;
-  private _dataAggregator: EVMDataAggregator;
+  private _roleCredentialCache: IRoleCredentialCache | undefined;
 
   constructor(
     provider: providers.Provider,
     registrySetting: RegistrySettings,
-    didStore: DidStore,
-    dataAggregator: EVMDataAggregator
+    didStore: DidStore
   ) {
     this._ipfsStore = didStore;
     this._resolver = new Resolver(provider, registrySetting);
-    this._dataAggregator = dataAggregator;
   }
 
   /**
@@ -61,18 +59,20 @@ export class IpfsCredentialResolver implements CredentialResolver {
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
       | undefined;
-    const cachedRoleCredential = this._dataAggregator.getRoleCredential(
+    const cachedRoleCredential = this._roleCredentialCache?.getRoleCredential(
       did,
       namespace
     );
     if (cachedRoleCredential) {
-      return cachedRoleCredential.data;
+      return cachedRoleCredential;
     }
     credential = await this.getVerifiableCredential(did, namespace);
     if (!credential) {
       credential = await this.getEIP191JWT(did, namespace);
     }
-    this._dataAggregator.setRoleCredential(did, namespace, credential);
+    if (credential) {
+      this._roleCredentialCache?.setRoleCredential(did, namespace, credential);
+    }
     return credential;
   }
 
@@ -185,5 +185,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
         })
       )
     ).filter(isVerifiableCredential);
+  }
+
+  /**
+   * Sets intermediate cache
+   * @param roleCredentialcache
+   */
+  setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void {
+    this._roleCredentialCache = roleCredentialcache;
   }
 }

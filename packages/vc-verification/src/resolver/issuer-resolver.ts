@@ -1,7 +1,7 @@
 import { DomainReader } from '@energyweb/credential-governance';
 import type { IIssuerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
-import { EVMDataAggregator } from './evm-data-aggregator';
+import { IRoleDefinitionCache } from '../models/cache-interfaces';
 
 /**
  * An interface for Resolution of Issuers for a namespace
@@ -15,6 +15,12 @@ export interface IssuerResolver {
   getIssuerDefinition(
     namespace: string
   ): Promise<IIssuerDefinition | undefined>;
+
+  /**
+   * Sets intermediate cache for the resolution request
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void;
 }
 
 /**
@@ -22,11 +28,10 @@ export interface IssuerResolver {
  */
 export class EthersProviderIssuerResolver implements IssuerResolver {
   private _domainReader: DomainReader;
-  private _dataAgregator: EVMDataAggregator;
+  private _roleDefCache: IRoleDefinitionCache | undefined;
 
-  constructor(domainReader: DomainReader, dataAggregator: EVMDataAggregator) {
+  constructor(domainReader: DomainReader) {
     this._domainReader = domainReader;
-    this._dataAgregator = dataAggregator;
   }
 
   /**
@@ -44,9 +49,9 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
     namespace: string
   ): Promise<IIssuerDefinition | undefined> {
     const cachedRoleDefinition =
-      this._dataAgregator.getRoleDefinition(namespace);
+      this._roleDefCache?.getRoleDefinition(namespace);
     if (cachedRoleDefinition) {
-      return cachedRoleDefinition.data.issuer;
+      return cachedRoleDefinition.issuer;
     }
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
@@ -55,9 +60,17 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
       node: resolvedNamespace,
     });
     if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
-      this._dataAgregator.setRoleDefinition(namespace, roleDefinition);
+      this._roleDefCache?.setRoleDefinition(namespace, roleDefinition);
       return roleDefinition.issuer;
     }
     return undefined;
+  }
+
+  /**
+   * Sets intermediate cache
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void {
+    this._roleDefCache = roleDefCache;
   }
 }

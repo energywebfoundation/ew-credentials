@@ -43,7 +43,6 @@ import {
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
-import { EVMDataAggregator } from '../src/resolver/evm-data-aggregator';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -174,14 +173,12 @@ function testSuite() {
     providerSettings = {
       type: ProviderTypes.HTTP,
     };
-
-    const evmDataAggregator = new EVMDataAggregator();
+    
     didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,
-      didStore,
-      evmDataAggregator
+      didStore
     );
     userOperator = new Operator(user, { address: registry.address });
     adminOperator = new Operator(admin, { address: registry.address });
@@ -200,10 +197,7 @@ function testSuite() {
       type: ResolverContractType.RoleDefinitionResolver_v2,
     });
 
-    issuerResolver = new EthersProviderIssuerResolver(
-      domainReader,
-      evmDataAggregator
-    );
+    issuerResolver = new EthersProviderIssuerResolver(domainReader);
     issuerVerification = new VCIssuerVerification(
       issuerResolver,
       credentialResolver,

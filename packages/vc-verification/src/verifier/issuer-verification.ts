@@ -3,6 +3,8 @@ import {
   IssuerResolver,
   VerificationResult,
   RevocationVerification,
+  RoleDefinitionCache,
+  RoleCredentialCache,
 } from '..';
 import { ClaimIssuerVerification } from './claim-issuer-verification';
 import { VCIssuerVerification } from './vc-issuer-verification';
@@ -16,6 +18,7 @@ import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { verificationResult, RoleEIP191JWT } from '../models';
 import { ERRORS } from '../utils';
+import { IRoleCredentialCache, IRoleDefinitionCache } from '../models';
 
 /**
  * A class to provide verification of issuer authority for either VC or RoleEIP191JWT
@@ -77,7 +80,10 @@ export class IssuerVerification {
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
       | undefined;
-
+    const roleDefCache = new RoleDefinitionCache();
+    const roleCredentialCache = new RoleCredentialCache();
+    this.credentialResolver.setRoleCredentialCache(roleCredentialCache);
+    this.issuerResolver.setRoleDefinitionCache(roleDefCache);
     const issuers = await this.issuerResolver.getIssuerDefinition(role);
     if (!issuers) {
       return verificationResult(false, ERRORS.NoIssuers);

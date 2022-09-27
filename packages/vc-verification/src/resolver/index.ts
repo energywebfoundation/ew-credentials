@@ -2,5 +2,6 @@ export * from './Ipfs-credential-resolver';
 export * from './credential-resolver';
 export * from './issuer-resolver';
 export * from './revoker-resolver';
-export * from './data-aggregator';
-export * from './evm-data-aggregator';
+export * from './did-document-cache';
+export * from './role-credential-cache';
+export * from './role-definition-cache';

@@ -5,7 +5,12 @@ import {
   StatusList2021Entry,
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
-import { CredentialResolver, IssuerResolver, RevokerResolver } from '..';
+import {
+  CredentialResolver,
+  IssuerResolver,
+  RevokerResolver,
+  RoleDefinitionCache,
+} from '..';
 import { ClaimIssuerVerification } from './claim-issuer-verification';
 import { VCIssuerVerification } from './vc-issuer-verification';
 import {
@@ -168,6 +173,8 @@ export class RevocationVerification {
       | RoleEIP191JWT
       | undefined;
     let credentialStatus: StatusList2021Entry | undefined;
+    const roleDefCache = new RoleDefinitionCache();
+    this.revokerResolver.setRoleDefinitionCache(roleDefCache);
     while (true) {
       const issuers = await this.issuerResolver.getIssuerDefinition(role);
       if (issuers?.did) {
