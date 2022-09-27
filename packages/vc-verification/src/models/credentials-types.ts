@@ -33,15 +33,3 @@ export interface RoleEIP191JWT {
   payload: RolePayload;
   eip191Jwt: string;
 }
-
-export interface CachedRoleCredential {
-  [key: string]: RoleEIP191JWT | VerifiableCredential<RoleCredentialSubject>;
-}
-
-export interface CachedRoleDefinition {
-  [key: string]: IRoleDefinitionV2;
-}
-
-export interface CachedDIDDocument {
-  [key: string]: IDIDDocument;
-}

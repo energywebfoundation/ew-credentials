@@ -1,4 +1,4 @@
-import { CachedRoleCredential, RoleEIP191JWT } from '../models';
+import { RoleEIP191JWT } from '../models';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { IRoleCredentialCache } from '../models';
@@ -7,7 +7,9 @@ import { IRoleCredentialCache } from '../models';
  * A class to cache role credential from EVMs / Blockchain
  */
 export class RoleCredentialCache implements IRoleCredentialCache {
-  private cachedRoleCredential: CachedRoleCredential = {};
+  private cachedRoleCredential: {
+    [key: string]: RoleEIP191JWT | VerifiableCredential<RoleCredentialSubject>;
+  } = {};
 
   /**
    * Stores role credential

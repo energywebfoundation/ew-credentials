@@ -90,7 +90,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    */
   async getVerifiableCredential(did: string, namespace: string) {
     const credentials = await this.credentialsOf(did);
-    credentials.map((credential) =>
+    credentials.forEach((credential) =>
       this._roleCredentialCache?.setRoleCredential(
         did,
         credential.credentialSubject.role.namespace,
@@ -124,7 +124,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     namespace: string
   ): Promise<RoleEIP191JWT | undefined> {
     const eip191Jwts = await this.eip191JwtsOf(did);
-    eip191Jwts.map((eip191Jwt) => {
+    eip191Jwts.forEach((eip191Jwt) => {
       const claimType = eip191Jwt?.payload?.claimData?.claimType;
       if (claimType) {
         this._roleCredentialCache?.setRoleCredential(did, claimType, eip191Jwt);

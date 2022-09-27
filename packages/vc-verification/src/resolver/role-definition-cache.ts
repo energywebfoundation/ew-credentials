@@ -1,4 +1,3 @@
-import { CachedRoleDefinition } from '../models';
 import { IRoleDefinitionV2 } from '@energyweb/credential-governance';
 import { IRoleDefinitionCache } from '../models';
 
@@ -6,7 +5,7 @@ import { IRoleDefinitionCache } from '../models';
  * A class to cache role definition from EVMs / blockchain
  */
 export class RoleDefinitionCache implements IRoleDefinitionCache {
-  private cachedRoleDefinition: CachedRoleDefinition = {};
+  private cachedRoleDefinition: { [key: string]: IRoleDefinitionV2 } = {};
 
   /**
    * Stores RoleDefinition

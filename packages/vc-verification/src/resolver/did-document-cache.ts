@@ -1,4 +1,3 @@
-import { CachedDIDDocument } from '../models';
 import { IDIDDocument } from '@ew-did-registry/did-resolver-interface';
 import { IDIDDocumentCache } from '../models';
 
@@ -6,7 +5,7 @@ import { IDIDDocumentCache } from '../models';
  * A class to cache DID Documents from EVMs / Blockchain
  */
 export class DIDDocumentCache implements IDIDDocumentCache {
-  private cachedDIDDocument: CachedDIDDocument = {};
+  private cachedDIDDocument: { [key: string]: IDIDDocument } = {};
 
   /**
    * Stores DID Document
