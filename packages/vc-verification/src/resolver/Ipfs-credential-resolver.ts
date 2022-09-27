@@ -18,10 +18,12 @@ import {
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
+import { IRoleCredentialCache } from '../models/cache-interfaces';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _resolver: Resolver;
+  private _roleCredentialCache: IRoleCredentialCache | undefined;
 
   constructor(
     provider: providers.Provider,
@@ -57,6 +59,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
       | undefined;
+    const cachedRoleCredential = this._roleCredentialCache?.getRoleCredential(
+      did,
+      namespace
+    );
+    if (cachedRoleCredential) {
+      return cachedRoleCredential;
+    }
     credential = await this.getVerifiableCredential(did, namespace);
     if (!credential) {
       credential = await this.getEIP191JWT(did, namespace);
@@ -81,6 +90,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
    */
   async getVerifiableCredential(did: string, namespace: string) {
     const credentials = await this.credentialsOf(did);
+    credentials.forEach((credential) =>
+      this._roleCredentialCache?.setRoleCredential(
+        did,
+        credential.credentialSubject.role.namespace,
+        credential
+      )
+    );
     return credentials.find(
       (claim) =>
         claim.credentialSubject.role.namespace === namespace ||
@@ -108,6 +124,12 @@ export class IpfsCredentialResolver implements CredentialResolver {
     namespace: string
   ): Promise<RoleEIP191JWT | undefined> {
     const eip191Jwts = await this.eip191JwtsOf(did);
+    eip191Jwts.forEach((eip191Jwt) => {
+      const claimType = eip191Jwt?.payload?.claimData?.claimType;
+      if (claimType) {
+        this._roleCredentialCache?.setRoleCredential(did, claimType, eip191Jwt);
+      }
+    });
     return eip191Jwts.find(
       (jwt) =>
         jwt?.payload?.claimData.claimType === namespace ||
@@ -173,5 +195,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
         })
       )
     ).filter(isVerifiableCredential);
+  }
+
+  /**
+   * Sets role credential cache
+   * @param roleCredentialcache
+   */
+  setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void {
+    this._roleCredentialCache = roleCredentialcache;
   }
 }

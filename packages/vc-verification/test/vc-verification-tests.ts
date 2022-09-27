@@ -20,6 +20,7 @@ import { claimIssuerVerificationTests } from './claim-issuer-verification';
 import { vcIssuerVerificationTests } from './vc-issuer-verification';
 import { revocationVerificationTests } from './vc-revocation-test';
 import { issuerVerificationTests } from './issuer-verification-test';
+import { cacheTests } from './cache-tests';
 
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
@@ -65,6 +66,10 @@ describe('[VC Verificaiton]', function () {
   });
 
   describe('Verification of issuer and authoritative credentials', () => {
+    describe(
+      'Cache test for RoleDefinition, role credential, DID Document',
+      cacheTests
+    );
     describe('Issuer Chain with RoleEIP191Jwt', claimIssuerVerificationTests);
     describe(
       'Issuer Chain with Verifiable Credentials',

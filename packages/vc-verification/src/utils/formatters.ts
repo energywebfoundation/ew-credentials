@@ -1,10 +1,9 @@
-import { isValidErc1056, getDIDChain } from '@ew-did-registry/did';
+import { isValidErc1056, getDIDChain, Chain } from '@ew-did-registry/did';
 import { RoleEIP191JWT, RolePayload } from '../models';
 import { CID } from 'multiformats/cid';
 import { chainIdToChainName } from '@energyweb/credential-governance';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import type { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import { Chain } from '@ew-did-registry/did';
 import { utils } from 'ethers';
 import { hasIn } from 'lodash';
 

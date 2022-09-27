@@ -173,7 +173,7 @@ function testSuite() {
     providerSettings = {
       type: ProviderTypes.HTTP,
     };
-
+    
     didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,

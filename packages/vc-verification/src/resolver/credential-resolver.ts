@@ -1,6 +1,7 @@
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import { RoleEIP191JWT } from '../models';
+import { IRoleCredentialCache } from '../models/cache-interfaces';
 
 /**
  * An interface for a credential resolver
@@ -56,4 +57,10 @@ export interface CredentialResolver {
   credentialsOf(
     did: string
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]>;
+
+  /**
+   * Sets intermediate cache for the resolution request
+   * @param roleCredentialcache
+   */
+  setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void;
 }

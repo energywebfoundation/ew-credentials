@@ -1,6 +1,7 @@
 import { DomainReader } from '@energyweb/credential-governance';
 import type { IIssuerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
+import { IRoleDefinitionCache } from '../models/cache-interfaces';
 
 /**
  * An interface for Resolution of Issuers for a namespace
@@ -14,6 +15,12 @@ export interface IssuerResolver {
   getIssuerDefinition(
     namespace: string
   ): Promise<IIssuerDefinition | undefined>;
+
+  /**
+   * Sets intermediate cache for the resolution request
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void;
 }
 
 /**
@@ -21,6 +28,7 @@ export interface IssuerResolver {
  */
 export class EthersProviderIssuerResolver implements IssuerResolver {
   private _domainReader: DomainReader;
+  private _roleDefCache: IRoleDefinitionCache | undefined;
 
   constructor(domainReader: DomainReader) {
     this._domainReader = domainReader;
@@ -40,6 +48,11 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
   async getIssuerDefinition(
     namespace: string
   ): Promise<IIssuerDefinition | undefined> {
+    const cachedRoleDefinition =
+      this._roleDefCache?.getRoleDefinition(namespace);
+    if (cachedRoleDefinition) {
+      return cachedRoleDefinition.issuer;
+    }
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
@@ -47,8 +60,17 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
       node: resolvedNamespace,
     });
     if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
+      this._roleDefCache?.setRoleDefinition(namespace, roleDefinition);
       return roleDefinition.issuer;
     }
     return undefined;
+  }
+
+  /**
+   * Sets intermediate cache
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void {
+    this._roleDefCache = roleDefCache;
   }
 }

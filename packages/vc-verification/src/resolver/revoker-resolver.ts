@@ -1,6 +1,7 @@
 import { DomainReader } from '@energyweb/credential-governance';
 import type { IRevokerDefinition } from '@energyweb/credential-governance';
 import { utils } from 'ethers';
+import { IRoleDefinitionCache } from '../models';
 
 /**
  * An interface for Resolution of revokers for a namespace
@@ -14,6 +15,12 @@ export interface RevokerResolver {
   getRevokerDefinition(
     namespace: string
   ): Promise<IRevokerDefinition | undefined>;
+
+  /**
+   * Sets intermediate cache for the resolution request
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void;
 }
 
 /**
@@ -21,6 +28,7 @@ export interface RevokerResolver {
  */
 export class EthersProviderRevokerResolver implements RevokerResolver {
   private _domainReader: DomainReader;
+  private _roleDefCache: IRoleDefinitionCache | undefined;
 
   constructor(domainReader: DomainReader) {
     this._domainReader = domainReader;
@@ -40,6 +48,11 @@ export class EthersProviderRevokerResolver implements RevokerResolver {
   async getRevokerDefinition(
     namespace: string
   ): Promise<IRevokerDefinition | undefined> {
+    const cachedRoleDefinition =
+      this._roleDefCache?.getRoleDefinition(namespace);
+    if (cachedRoleDefinition) {
+      return cachedRoleDefinition.revoker;
+    }
     const resolvedNamespace = namespace.startsWith('0x')
       ? namespace
       : utils.namehash(namespace);
@@ -47,8 +60,17 @@ export class EthersProviderRevokerResolver implements RevokerResolver {
       node: resolvedNamespace,
     });
     if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
+      this._roleDefCache?.setRoleDefinition(namespace, roleDefinition);
       return roleDefinition.revoker;
     }
     return undefined;
+  }
+
+  /**
+   * Sets intermediate cache
+   * @param roleDefCache
+   */
+  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void {
+    this._roleDefCache = roleDefCache;
   }
 }
