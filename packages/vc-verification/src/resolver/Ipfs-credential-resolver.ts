@@ -70,9 +70,6 @@ export class IpfsCredentialResolver implements CredentialResolver {
     if (!credential) {
       credential = await this.getEIP191JWT(did, namespace);
     }
-    if (credential) {
-      this._roleCredentialCache?.setRoleCredential(did, namespace, credential);
-    }
     return credential;
   }
 
@@ -93,6 +90,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
    */
   async getVerifiableCredential(did: string, namespace: string) {
     const credentials = await this.credentialsOf(did);
+    credentials.map((credential) =>
+      this._roleCredentialCache?.setRoleCredential(
+        did,
+        credential.credentialSubject.role.namespace,
+        credential
+      )
+    );
     return credentials.find(
       (claim) =>
         claim.credentialSubject.role.namespace === namespace ||
@@ -120,6 +124,12 @@ export class IpfsCredentialResolver implements CredentialResolver {
     namespace: string
   ): Promise<RoleEIP191JWT | undefined> {
     const eip191Jwts = await this.eip191JwtsOf(did);
+    eip191Jwts.map((eip191Jwt) => {
+      const claimType = eip191Jwt?.payload?.claimData?.claimType;
+      if (claimType) {
+        this._roleCredentialCache?.setRoleCredential(did, claimType, eip191Jwt);
+      }
+    });
     return eip191Jwts.find(
       (jwt) =>
         jwt?.payload?.claimData.claimType === namespace ||
@@ -188,7 +198,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
   }
 
   /**
-   * Sets intermediate cache
+   * Sets role credential cache
    * @param roleCredentialcache
    */
   setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void {
