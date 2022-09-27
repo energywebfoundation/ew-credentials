@@ -7,7 +7,7 @@ import { RoleEIP191JWT } from './credentials-types';
 import { IDIDDocument } from '@ew-did-registry/did-resolver-interface';
 
 /**
- * An Interface to cache DID Document from Blockchain and SSI-Hub
+ * An Interface to cache DID Documents
  */
 export interface IDIDDocumentCache {
   /**
@@ -25,7 +25,7 @@ export interface IDIDDocumentCache {
 }
 
 /**
- * An Interface to cache role credential from Blockchain and SSI-Hub
+ * An Interface to cache role credential
  */
 export interface IRoleCredentialCache {
   /**
@@ -52,7 +52,7 @@ export interface IRoleCredentialCache {
 }
 
 /**
- * An Interface to cache role definition from Blockchain and SSI-Hub
+ * An Interface to cache role definition
  */
 export interface IRoleDefinitionCache {
   /**
