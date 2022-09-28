@@ -185,9 +185,6 @@ export class IpfsCredentialResolver implements CredentialResolver {
           if (!isCID(serviceEndpoint)) {
             return {};
           }
-          if (!this._ipfsStore) {
-            throw new Error('IPFS Store (DIDStore) is not defined');
-          }
           const credential = await this._ipfsStore.get(serviceEndpoint);
           let vc;
           // expect that JWT would have 3 dot-separated parts, VC is non-JWT credential
