@@ -25,10 +25,18 @@ export class CredentialRevoked extends Error {
 }
 
 export class RevokerNotAuthorized extends Error {
-  constructor(revoker: string, credential: string, reason?: string) {
+  constructor(
+    revoker: string,
+    credential: string,
+    reason?: string,
+    stack?: string
+  ) {
     let message = `Revoker ${revoker} is not authorized to revoke ${credential}`;
     if (reason) {
       message = message + `: ${reason}`;
+    }
+    if (stack) {
+      message = message + `stack: ${stack}`;
     }
     super(message);
   }
