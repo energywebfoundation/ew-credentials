@@ -151,7 +151,12 @@ export class RevocationVerification {
           );
         }
       } catch (e) {
-        throw new RevokerNotAuthorized(revoker, role, (<Error>e).message);
+        throw new RevokerNotAuthorized(
+          revoker,
+          role,
+          (<Error>e).message,
+          (<Error>e).stack
+        );
       }
     } else {
       throw new InvalidRevokerType(role, revokers?.revokerType);
