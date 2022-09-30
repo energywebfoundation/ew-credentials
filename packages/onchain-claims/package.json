@@ -45,15 +45,15 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@energyweb/credential-governance": "2.2.0",
-    "@ew-did-registry/did": "^0.7.1-alpha.795.0",
-    "@ew-did-registry/did-ethr-resolver": "^0.7.1-alpha.795.0",
+    "@ew-did-registry/did": "0.7.1-alpha.795.0",
+    "@ew-did-registry/did-ethr-resolver": "0.7.1-alpha.795.0",
     "@poanet/solidity-flattener": "^3.0.7",
     "ethers": "^5.7.0"
   },
   "devDependencies": {
     "@ensdomains/buffer": "0.0.13",
     "@ensdomains/ens-contracts": "0.0.4",
-    "@ew-did-registry/proxyidentity": "^0.7.1-alpha.795.0",
+    "@ew-did-registry/proxyidentity": "0.7.1-alpha.795.0",
     "@openzeppelin/contracts": "4.3.3",
     "@openzeppelin/contracts-upgradeable": "4.3.3",
     "@openzeppelin/truffle-upgrades": "1.12.0",
