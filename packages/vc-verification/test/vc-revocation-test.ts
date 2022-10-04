@@ -42,10 +42,7 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
+import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -53,6 +50,7 @@ import {
   statusListCredentialWithInvalidPurpose,
 } from './Fixtures/sample-statuslist-credential';
 import { verifyCredential } from 'didkit-wasm-node';
+import { ChildProcess } from 'child_process';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -100,12 +98,13 @@ let userOperator: Operator;
 let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
-let ipfsUrl: string;
 let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
 export function revocationVerificationTests(): void {
+  let cluster: ChildProcess;
+
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -144,11 +143,11 @@ export function revocationVerificationTests(): void {
     });
     verifierAddress = verifierKeys.getAddress();
     verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-    ipfsUrl = await spawnIpfsDaemon();
+    cluster = await spawnIpfs();
   });
 
-  after(async () => {
-    await shutDownIpfsDaemon();
+  after(() => {
+    shutdownIpfs(cluster);
   });
 
   testSuite();
@@ -195,7 +194,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore(ipfsUrl);
+    didStore = new DidStore('http://localhost:8080');
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,

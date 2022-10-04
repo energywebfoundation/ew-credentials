@@ -30,3 +30,5 @@ bin/contracts
 
 # MacOs file
 *.DS_store
+
+test/utils/setUpIpfs/compose
