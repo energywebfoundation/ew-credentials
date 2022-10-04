@@ -91,7 +91,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
-   * @param roleCredentialCache Cache to store role credentials
+   * @param roleCredentialCache Cache to store role credentials. Cache is updated with all credentials retrieved for the DID
    * @returns
    */
   async getVerifiableCredential(
@@ -134,7 +134,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *
    * @param did subject DID for which the credential to be fetched
    * @param namespace role for which the credential need to be fetched
-   * @param roleCredentialCache Cache to store role credentials
+   * @param roleCredentialCache Cache to store role credentials. Cache is updated with all credentials retrieved for the DID
    * @returns RoleEIP191JWT
    */
   async getEIP191JWT(

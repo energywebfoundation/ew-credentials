@@ -10,7 +10,7 @@ export interface RevokerResolver {
   /**
    * Fetches authorised revokers for the provided namespace
    * @param namespace
-   * @param roleDefCache Cache to store RoleDefinition
+   * @param roleDefCache Cache to store RoleDefinition. Cache is updated with retrieved role definition if not present.
    * @returns IRevokerDefinition for the namespace
    */
   getRevokerDefinition(
@@ -38,7 +38,7 @@ export class EthersProviderRevokerResolver implements RevokerResolver {
    * const revokers = revokerResolver.getRevokerDefinition(role, roleDefCache);
    * ```
    * @param namespace for which revokers need to be fetched
-   * @param roleDefCache Cache to store and fetch role definition
+   * @param roleDefCache Cache to store and fetch role definition. Cache is updated with retrieved role definition if not present.
    * @returns IRevokerDefinition for the namespace from blockchain contract
    */
   async getRevokerDefinition(

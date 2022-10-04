@@ -10,7 +10,7 @@ export interface IssuerResolver {
   /**
    * Fetches authorised issuers for the provided namespace
    * @param namespace for which the issuers needs to be fetched
-   * @param roleDefCache Cache to store and fetch RoleDefinition
+   * @param roleDefCache Cache to store and fetch RoleDefinition. Cache is updated with retrieved role definition if not present.
    * @returns IIssuerDefinition for the namespace
    */
   getIssuerDefinition(
@@ -38,7 +38,7 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
    * const issuers = issuerResolver.getIssuerDefinition(sampleRole, roleDefCache);
    * ```
    * @param namespace for which the issuers need to be fetched
-   * @param roleDefCache Cache to store role definition
+   * @param roleDefCache Cache to store role definition. Cache is updated with retrieved role definition if not present.
    * @returns IIssuerDefinition for the namespace from blockchain contract
    */
   async getIssuerDefinition(
