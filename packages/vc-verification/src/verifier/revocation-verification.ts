@@ -5,12 +5,7 @@ import {
   StatusList2021Entry,
   VerifiableCredential,
 } from '@ew-did-registry/credentials-interface';
-import {
-  CredentialResolver,
-  IssuerResolver,
-  RevokerResolver,
-  RoleDefinitionCache,
-} from '..';
+import { CredentialResolver, IssuerResolver, RevokerResolver } from '..';
 import { ClaimIssuerVerification } from './claim-issuer-verification';
 import { VCIssuerVerification } from './vc-issuer-verification';
 import {
@@ -21,6 +16,8 @@ import {
   issuerDID,
 } from '../utils';
 import {
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
   RoleEIP191JWT,
   verificationResult,
   VerificationResult,
@@ -78,18 +75,25 @@ export class RevocationVerification {
    * registrySetting,
    * verifyProof
    * );
-   * let credential : StatusList2021Credential;
+   * let statusList : StatusList2021Credential;
    * const role = 'role';
-   * await revocationVerification.verifyStatusList(credential, role);
+   * await revocationVerification.verifyStatusList(statusList, role, roleCredentialCache, roleDefCache);
    * ```
-   * @param role role name
    * @param statusList credential which contains revocation status of `role` credential
+   * @param role role name
+   * @param roleCredentialCache Cache to store role credentials
+   * @param roleDefCache Cache to store role definition
    */
-  async verifyStatusList(statusList: StatusList2021Credential, role: string) {
+  async verifyStatusList(
+    statusList: StatusList2021Credential,
+    role: string,
+    roleCredentialCache?: IRoleCredentialCache,
+    roleDefCache?: IRoleDefinitionCache
+  ) {
     validateStatusList(statusList);
 
     const revoker = issuerDID(statusList.issuer);
-    await this.verifyRevoker(revoker, role);
+    await this.verifyRevoker(revoker, role, roleCredentialCache, roleDefCache);
   }
 
   /**
@@ -104,13 +108,23 @@ export class RevocationVerification {
    * );
    * const revoker = 'did:ethr:ewc:0x...';
    * const role = 'role';
-   * await revocationVerification.verifyRevoker(revoker, role);
+   * await revocationVerification.verifyRevoker(revoker, role, roleCredentialCache, roleDefCache);
    * ```
    * @param revoker DID of revoker
    * @param role name of the role verifiable credential
+   * @param roleCredentialCache Cache to store role credentials
+   * @param roleDefCache Cache to store role definition
    */
-  async verifyRevoker(revoker: string, role: string) {
-    const revokers = await this.revokerResolver.getRevokerDefinition(role);
+  async verifyRevoker(
+    revoker: string,
+    role: string,
+    roleCredentialCache?: IRoleCredentialCache,
+    roleDefCache?: IRoleDefinitionCache
+  ) {
+    const revokers = await this.revokerResolver.getRevokerDefinition(
+      role,
+      roleDefCache
+    );
     if (!revokers) {
       throw new NoRevokers(role);
     }
@@ -132,22 +146,32 @@ export class RevocationVerification {
       try {
         const revokerCredential = await this.credentialResolver.getCredential(
           revoker,
-          revokerRole
+          revokerRole,
+          roleCredentialCache
         );
         if (isVerifiableCredential(revokerCredential)) {
-          await this.vcIssuerVerification.verifyIssuance(revoker, revokerRole);
+          await this.vcIssuerVerification.verifyIssuance(
+            revoker,
+            revokerRole,
+            roleCredentialCache
+          );
           await this.vcIssuerVerification.verifyIssuer(
             issuerDID(revokerCredential.issuer as string),
-            revokerRole
+            revokerRole,
+            roleCredentialCache,
+            roleDefCache
           );
         } else {
           const rolePayload = await this.claimIssuerVerification.verifyIssuance(
             revoker,
-            revokerRole
+            revokerRole,
+            roleCredentialCache
           );
           await this.claimIssuerVerification.verifyIssuer(
             rolePayload?.iss as string,
-            revokerRole
+            revokerRole,
+            roleCredentialCache,
+            roleDefCache
           );
         }
       } catch (e) {
@@ -167,27 +191,33 @@ export class RevocationVerification {
    * Verifies revocation status of `issuer` credential required to issue `role`
    * @param issuer issuer DID
    * @param role namespace
+   * @param roleCredentialCache Cache to store role credentials
+   * @param roleDefCache Cache to store role definition
    * @returns
    */
   async checkRevocationStatus(
     issuer: string,
-    role: string
+    role: string,
+    roleCredentialCache?: IRoleCredentialCache,
+    roleDefCache?: IRoleDefinitionCache
   ): Promise<VerificationResult> {
     let issuerCredential:
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
       | undefined;
     let credentialStatus: StatusList2021Entry | undefined;
-    const roleDefCache = new RoleDefinitionCache();
-    this.revokerResolver.setRoleDefinitionCache(roleDefCache);
     while (true) {
-      const issuers = await this.issuerResolver.getIssuerDefinition(role);
+      const issuers = await this.issuerResolver.getIssuerDefinition(
+        role,
+        roleDefCache
+      );
       if (issuers?.did) {
         return verificationResult(true, '');
       } else if (issuers?.roleName) {
         issuerCredential = await this.credentialResolver.getCredential(
           issuer,
-          issuers?.roleName
+          issuers?.roleName,
+          roleCredentialCache
         );
         try {
           if (
@@ -212,7 +242,8 @@ export class RevocationVerification {
             const rolePayload =
               await this.claimIssuerVerification.verifyIssuance(
                 issuer,
-                issuers?.roleName
+                issuers?.roleName,
+                roleCredentialCache
               );
             issuer = rolePayload?.iss as string;
             role = issuers.roleName;
@@ -229,7 +260,12 @@ export class RevocationVerification {
             await this._statusListEntryVerificaiton.fetchStatusListCredential(
               credentialStatus?.statusListCredential as string
             );
-          await this.verifyRevoker(credential?.issuer as string, role);
+          await this.verifyRevoker(
+            credential?.issuer as string,
+            role,
+            roleCredentialCache,
+            roleDefCache
+          );
           return verificationResult(false, ERRORS.IssuerCredentialRevoked);
         }
       }

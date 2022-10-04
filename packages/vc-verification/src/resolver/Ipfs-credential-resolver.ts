@@ -23,7 +23,6 @@ import { IRoleCredentialCache } from '../models/cache-interfaces';
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _resolver: Resolver;
-  private _roleCredentialCache: IRoleCredentialCache | undefined;
 
   constructor(
     provider: providers.Provider,
@@ -42,16 +41,18 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole');
+   * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole', roleCredentialCache);
    * ```
    *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
+   * @param roleCredentialCache Cache to store role credentials
    * @returns
    */
   async getCredential(
     did: string,
-    namespace: string
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<
     VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   > {
@@ -59,16 +60,20 @@ export class IpfsCredentialResolver implements CredentialResolver {
       | VerifiableCredential<RoleCredentialSubject>
       | RoleEIP191JWT
       | undefined;
-    const cachedRoleCredential = this._roleCredentialCache?.getRoleCredential(
+    const cachedRoleCredential = roleCredentialCache?.getRoleCredential(
       did,
       namespace
     );
     if (cachedRoleCredential) {
       return cachedRoleCredential;
     }
-    credential = await this.getVerifiableCredential(did, namespace);
+    credential = await this.getVerifiableCredential(
+      did,
+      namespace,
+      roleCredentialCache
+    );
     if (!credential) {
-      credential = await this.getEIP191JWT(did, namespace);
+      credential = await this.getEIP191JWT(did, namespace, roleCredentialCache);
     }
     return credential;
   }
@@ -81,17 +86,29 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getVerifiableCredential('did:ethr:1234', 'sampleRole');
+   * const credential = credentialResolver.getVerifiableCredential('did:ethr:1234', 'sampleRole', roleCredentialCache);
    * ```
    *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
+   * @param roleCredentialCache Cache to store role credentials
    * @returns
    */
-  async getVerifiableCredential(did: string, namespace: string) {
+  async getVerifiableCredential(
+    did: string,
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
+  ) {
+    const cachedRoleCredential = roleCredentialCache?.getRoleCredential(
+      did,
+      namespace
+    );
+    if (isVerifiableCredential(cachedRoleCredential)) {
+      return cachedRoleCredential;
+    }
     const credentials = await this.credentialsOf(did);
     credentials.forEach((credential) =>
-      this._roleCredentialCache?.setRoleCredential(
+      roleCredentialCache?.setRoleCredential(
         did,
         credential.credentialSubject.role.namespace,
         credential
@@ -117,17 +134,26 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *
    * @param did subject DID for which the credential to be fetched
    * @param namespace role for which the credential need to be fetched
+   * @param roleCredentialCache Cache to store role credentials
    * @returns RoleEIP191JWT
    */
   async getEIP191JWT(
     did: string,
-    namespace: string
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<RoleEIP191JWT | undefined> {
+    const cachedRoleCredential = roleCredentialCache?.getRoleCredential(
+      did,
+      namespace
+    );
+    if (isEIP191Jwt(cachedRoleCredential)) {
+      return cachedRoleCredential;
+    }
     const eip191Jwts = await this.eip191JwtsOf(did);
     eip191Jwts.forEach((eip191Jwt) => {
       const claimType = eip191Jwt?.payload?.claimData?.claimType;
       if (claimType) {
-        this._roleCredentialCache?.setRoleCredential(did, claimType, eip191Jwt);
+        roleCredentialCache?.setRoleCredential(did, claimType, eip191Jwt);
       }
     });
     return eip191Jwts.find(
@@ -198,13 +224,5 @@ export class IpfsCredentialResolver implements CredentialResolver {
         })
       )
     ).filter(isVerifiableCredential);
-  }
-
-  /**
-   * Sets role credential cache
-   * @param roleCredentialcache
-   */
-  setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void {
-    this._roleCredentialCache = roleCredentialcache;
   }
 }

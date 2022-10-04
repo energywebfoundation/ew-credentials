@@ -10,17 +10,13 @@ export interface IssuerResolver {
   /**
    * Fetches authorised issuers for the provided namespace
    * @param namespace for which the issuers needs to be fetched
+   * @param roleDefCache Cache to store and fetch RoleDefinition
    * @returns IIssuerDefinition for the namespace
    */
   getIssuerDefinition(
-    namespace: string
+    namespace: string,
+    roleDefCache?: IRoleDefinitionCache
   ): Promise<IIssuerDefinition | undefined>;
-
-  /**
-   * Sets intermediate cache for the resolution request
-   * @param roleDefCache
-   */
-  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void;
 }
 
 /**
@@ -28,7 +24,6 @@ export interface IssuerResolver {
  */
 export class EthersProviderIssuerResolver implements IssuerResolver {
   private _domainReader: DomainReader;
-  private _roleDefCache: IRoleDefinitionCache | undefined;
 
   constructor(domainReader: DomainReader) {
     this._domainReader = domainReader;
@@ -40,16 +35,17 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
    * ```typescript
    * const issuerResolver = new EthersProviderIssuerResolver(domainReader);
    * const role = 'sampleRole';
-   * const issuers = issuerResolver.getIssuerDefinition(sampleRole);
+   * const issuers = issuerResolver.getIssuerDefinition(sampleRole, roleDefCache);
    * ```
    * @param namespace for which the issuers need to be fetched
+   * @param roleDefCache Cache to store role definition
    * @returns IIssuerDefinition for the namespace from blockchain contract
    */
   async getIssuerDefinition(
-    namespace: string
+    namespace: string,
+    roleDefCache?: IRoleDefinitionCache
   ): Promise<IIssuerDefinition | undefined> {
-    const cachedRoleDefinition =
-      this._roleDefCache?.getRoleDefinition(namespace);
+    const cachedRoleDefinition = roleDefCache?.getRoleDefinition(namespace);
     if (cachedRoleDefinition) {
       return cachedRoleDefinition.issuer;
     }
@@ -60,17 +56,9 @@ export class EthersProviderIssuerResolver implements IssuerResolver {
       node: resolvedNamespace,
     });
     if (DomainReader.isRoleDefinitionV2(roleDefinition)) {
-      this._roleDefCache?.setRoleDefinition(namespace, roleDefinition);
+      roleDefCache?.setRoleDefinition(namespace, roleDefinition);
       return roleDefinition.issuer;
     }
     return undefined;
-  }
-
-  /**
-   * Sets intermediate cache
-   * @param roleDefCache
-   */
-  setRoleDefinitionCache(roleDefCache: IRoleDefinitionCache): void {
-    this._roleDefCache = roleDefCache;
   }
 }

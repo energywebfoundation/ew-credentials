@@ -21,6 +21,10 @@ import {
   IssuerResolver,
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  RoleCredentialCache,
+  RoleDefinitionCache,
 } from '../src';
 import { ClaimIssuerVerification } from '../src/verifier/claim-issuer-verification';
 import {
@@ -62,6 +66,8 @@ let issuerVerification: ClaimIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
 let issuerDefinitionResolver: IssuerResolver;
+let roleCredentialCache: IRoleCredentialCache;
+let roleDefCache: IRoleDefinitionCache;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -207,6 +213,8 @@ function testSuite() {
       credentialResolver,
       issuerDefinitionResolver
     );
+    roleCredentialCache = new RoleCredentialCache();
+    roleDefCache = new RoleDefinitionCache();
 
     await (
       await ensRegistry.setSubnodeOwner(
@@ -375,7 +383,14 @@ function testSuite() {
       );
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, adminRole)).verified
+        (
+          await issuerVerification.verifyIssuer(
+            adminDid,
+            adminRole,
+            roleCredentialCache,
+            roleDefCache
+          )
+        ).verified
       ).true;
     });
 
@@ -440,7 +455,14 @@ function testSuite() {
       );
 
       expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
+        (
+          await issuerVerification.verifyIssuer(
+            adminDid,
+            managerRole,
+            roleCredentialCache,
+            roleDefCache
+          )
+        ).verified
       ).true;
     });
 
@@ -501,7 +523,12 @@ function testSuite() {
         updateDataUser,
         validity
       );
-      const res = issuerVerification.verifyIssuer(adminDid, userRole);
+      const res = issuerVerification.verifyIssuer(
+        adminDid,
+        userRole,
+        roleCredentialCache,
+        roleDefCache
+      );
       // `manager` claim required to issue `user` was not issued to `admin`
       await expect(res).to.be.rejectedWith(
         'Unable to resolve the issuer credential to verify their authority'
