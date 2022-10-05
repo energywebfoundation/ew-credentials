@@ -18,7 +18,6 @@ import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { verificationResult, RoleEIP191JWT } from '../models';
 import { ERRORS } from '../utils';
-import { IRoleCredentialCache, IRoleDefinitionCache } from '../models';
 
 /**
  * A class to provide verification of issuer authority for either VC or RoleEIP191JWT
@@ -82,16 +81,18 @@ export class IssuerVerification {
       | undefined;
     const roleDefCache = new RoleDefinitionCache();
     const roleCredentialCache = new RoleCredentialCache();
-    this.credentialResolver.setRoleCredentialCache(roleCredentialCache);
-    this.issuerResolver.setRoleDefinitionCache(roleDefCache);
-    const issuers = await this.issuerResolver.getIssuerDefinition(role);
+    const issuers = await this.issuerResolver.getIssuerDefinition(
+      role,
+      roleDefCache
+    );
     if (!issuers) {
       return verificationResult(false, ERRORS.NoIssuers);
     }
     if (issuers?.roleName) {
       issuerCredential = await this.credentialResolver.getCredential(
         issuer,
-        issuers?.roleName
+        issuers?.roleName,
+        roleCredentialCache
       );
       if (!issuerCredential) {
         return verificationResult(
@@ -100,14 +101,29 @@ export class IssuerVerification {
         );
       }
       const revocationStatusResult =
-        await this.revocationVerification.checkRevocationStatus(issuer, role);
+        await this.revocationVerification.checkRevocationStatus(
+          issuer,
+          role,
+          roleCredentialCache,
+          roleDefCache
+        );
       if (!revocationStatusResult.verified) {
         return revocationStatusResult;
       }
       if (isVerifiableCredential(issuerCredential)) {
-        return await this.vcIssuerVerification.verifyIssuer(issuer, role);
+        return await this.vcIssuerVerification.verifyIssuer(
+          issuer,
+          role,
+          roleCredentialCache,
+          roleDefCache
+        );
       }
-      return await this.claimIssuerVerification.verifyIssuer(issuer, role);
+      return await this.claimIssuerVerification.verifyIssuer(
+        issuer,
+        role,
+        roleCredentialCache,
+        roleDefCache
+      );
     } else {
       return issuers?.did?.find(
         (d) => addressOf(d).toUpperCase() === addressOf(issuer).toUpperCase()

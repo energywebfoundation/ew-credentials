@@ -26,6 +26,10 @@ import {
   IpfsCredentialResolver,
   EthersProviderIssuerResolver,
   IssuerResolver,
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  RoleCredentialCache,
+  RoleDefinitionCache,
 } from '../src';
 import { VCIssuerVerification } from '../src/verifier/vc-issuer-verification';
 import {
@@ -62,6 +66,8 @@ let issuerVerification: VCIssuerVerification;
 let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
 let issuerResolver: IssuerResolver;
+let roleCredentialCache: IRoleCredentialCache;
+let roleDefCache: IRoleDefinitionCache;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -201,6 +207,8 @@ function testSuite() {
       credentialResolver,
       verifyCredential
     );
+    roleCredentialCache = new RoleCredentialCache();
+    roleDefCache = new RoleDefinitionCache();
 
     await (
       await ensRegistry.setSubnodeOwner(
@@ -357,7 +365,14 @@ function testSuite() {
       );
 
       return expect(
-        (await issuerVerification.verifyIssuer(adminDid, adminRole)).verified
+        (
+          await issuerVerification.verifyIssuer(
+            adminDid,
+            adminRole,
+            roleCredentialCache,
+            roleDefCache
+          )
+        ).verified
       ).to.be.true;
     });
 
@@ -397,7 +412,14 @@ function testSuite() {
       );
 
       return expect(
-        (await issuerVerification.verifyIssuer(adminDid, managerRole)).verified
+        (
+          await issuerVerification.verifyIssuer(
+            adminDid,
+            managerRole,
+            roleCredentialCache,
+            roleDefCache
+          )
+        ).verified
       ).to.be.true;
     });
 
@@ -437,7 +459,14 @@ function testSuite() {
       );
       // only manager is authorized to issue user
       return expect(
-        (await issuerVerification.verifyIssuer(adminDid, userRole)).error
+        (
+          await issuerVerification.verifyIssuer(
+            adminDid,
+            userRole,
+            roleCredentialCache,
+            roleDefCache
+          )
+        ).error
       ).equal(ERRORS.IssuerNotAuthorized);
     });
   });

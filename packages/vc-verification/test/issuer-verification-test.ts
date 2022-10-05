@@ -31,6 +31,10 @@ import {
   RevocationVerification,
   EthersProviderRevokerResolver,
   RevokerResolver,
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  RoleCredentialCache,
+  RoleDefinitionCache,
 } from '../src';
 import {
   DIDAttribute,
@@ -72,6 +76,8 @@ let credentialResolver: CredentialResolver;
 let issuerResolver: IssuerResolver;
 let revokerResolver: RevokerResolver;
 let revocationVerification: RevocationVerification;
+let roleCredentialCache: IRoleCredentialCache;
+let roleDefCache: IRoleDefinitionCache;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -222,6 +228,8 @@ function testSuite() {
       revocationVerification,
       verifyCredential
     );
+    roleCredentialCache = new RoleCredentialCache();
+    roleDefCache = new RoleDefinitionCache();
 
     await (
       await ensRegistry.setSubnodeOwner(
@@ -468,7 +476,9 @@ function testSuite() {
         (
           await revocationVerification.checkRevocationStatus(
             adminDid,
-            managerRole
+            managerRole,
+            roleCredentialCache,
+            roleDefCache
           )
         ).verified
       ).to.be.true;
@@ -517,7 +527,9 @@ function testSuite() {
         (
           await revocationVerification.checkRevocationStatus(
             adminDid,
-            managerRole
+            managerRole,
+            roleCredentialCache,
+            roleDefCache
           )
         ).verified
       ).to.be.false;
