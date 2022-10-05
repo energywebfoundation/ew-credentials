@@ -33,6 +33,10 @@ import {
   RevocationVerification,
   RevokerResolver,
   EthersProviderRevokerResolver,
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  RoleCredentialCache,
+  RoleDefinitionCache,
 } from '../src';
 import {
   DIDAttribute,
@@ -76,6 +80,8 @@ let registrySettings: RegistrySettings;
 let credentialResolver: CredentialResolver;
 let revokerResolver: RevokerResolver;
 let issuerResolver: IssuerResolver;
+let roleCredentialCache: IRoleCredentialCache;
+let roleDefCache: IRoleDefinitionCache;
 
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
@@ -229,6 +235,8 @@ function testSuite() {
       registrySettings,
       verifyCredential
     );
+    roleCredentialCache = new RoleCredentialCache();
+    roleDefCache = new RoleDefinitionCache();
 
     await (
       await ensRegistry.setSubnodeOwner(
@@ -391,7 +399,9 @@ function testSuite() {
       return expect(
         revocationVerification.verifyStatusList(
           statusListCredentialWithInvalidPurpose,
-          adminRole
+          adminRole,
+          roleCredentialCache,
+          roleDefCache
         )
       ).rejectedWith('StatusList2021 does not have revocation purpose');
     });
@@ -418,7 +428,12 @@ function testSuite() {
         .reply(200, adminStatusList);
 
       return expect(
-        revocationVerification.verifyStatusList(adminStatusList, adminRole)
+        revocationVerification.verifyStatusList(
+          adminStatusList,
+          adminRole,
+          roleCredentialCache,
+          roleDefCache
+        )
       ).fulfilled;
     });
 
@@ -476,7 +491,12 @@ function testSuite() {
         .reply(200, managerStatusList);
 
       return expect(
-        revocationVerification.verifyStatusList(managerStatusList, userRole)
+        revocationVerification.verifyStatusList(
+          managerStatusList,
+          userRole,
+          roleCredentialCache,
+          roleDefCache
+        )
       ).fulfilled;
     });
   });

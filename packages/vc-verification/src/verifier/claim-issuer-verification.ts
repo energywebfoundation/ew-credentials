@@ -3,7 +3,13 @@ import { ProofVerifier } from '@ew-did-registry/claims';
 import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
 import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
 import { CredentialResolver, IssuerResolver } from '..';
-import { RolePayload, verificationResult, VerificationResult } from '../models';
+import {
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  RolePayload,
+  verificationResult,
+  VerificationResult,
+} from '../models';
 import { ERRORS, InvalidIssuerType } from '../utils';
 
 /**
@@ -43,30 +49,43 @@ export class ClaimIssuerVerification {
    * credentialResolver,
    * issuerResolver
    * );
-   * await issuerVerification.verifyIssuer('issuerDID', 'role');
+   * await issuerVerification.verifyIssuer('issuerDID', 'role', roleCredentialCache, roleDefCache);
    * ```
    * @param issuer DID of the issuer
    * @param role name of the role claim
+   * @param roleCredentialCache Cache to store role credentials
+   * @param roleDefCache Cache to store role definition
    * @returns VerificationResult
    */
   async verifyIssuer(
     issuer: string,
-    role: string
+    role: string,
+    roleCredentialCache?: IRoleCredentialCache,
+    roleDefCache?: IRoleDefinitionCache
   ): Promise<VerificationResult> {
     let currentIssuerDID = issuer;
     while (true) {
-      if (!(await this.verifyIssuerAuthority(role, currentIssuerDID))) {
+      if (
+        !(await this.verifyIssuerAuthority(
+          role,
+          currentIssuerDID,
+          roleCredentialCache,
+          roleDefCache
+        ))
+      ) {
         return verificationResult(false, ERRORS.IssuerNotAuthorized);
       }
       const roleIssuers = await this._issuerDefResolver.getIssuerDefinition(
-        role
+        role,
+        roleDefCache
       );
       if (roleIssuers && roleIssuers.did) {
         return verificationResult(true, '');
       } else if (roleIssuers && roleIssuers.roleName) {
         const currentIssuerClaim = await this.verifyIssuance(
           currentIssuerDID,
-          roleIssuers.roleName
+          roleIssuers.roleName,
+          roleCredentialCache
         );
         if (currentIssuerClaim) {
           currentIssuerDID = currentIssuerClaim.iss as string;
@@ -82,13 +101,19 @@ export class ClaimIssuerVerification {
    * Verifies that `role` claim was issued to `subject`
    * @param subject DID of the subject
    * @param role name of the role claim
+   * @param roleCredentialCache Cache to store role credentials
    * @returns valid RolePayload
    */
   async verifyIssuance(
     subject: string,
-    role: string
+    role: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<RolePayload | undefined> {
-    const roleJWT = await this._credentialResolver.getEIP191JWT(subject, role);
+    const roleJWT = await this._credentialResolver.getEIP191JWT(
+      subject,
+      role,
+      roleCredentialCache
+    );
     if (!roleJWT) {
       throw new Error(
         'Unable to resolve the issuer credential to verify their authority'
@@ -109,16 +134,21 @@ export class ClaimIssuerVerification {
    * Verifies issuer's authority to issue credential for a namespace
    * @param {string} namespace
    * @param {string} issuerDID
+   * @param roleCredentialCache
+   * @param roleDefCache
    * @returns boolean
    *
    * @todo remove as duplicate of this.verifyIssuer
    */
   private async verifyIssuerAuthority(
     namespace: string,
-    issuerDID: string
+    issuerDID: string,
+    roleCredentialCache?: IRoleCredentialCache,
+    roleDefCache?: IRoleDefinitionCache
   ): Promise<boolean> {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(
-      namespace
+      namespace,
+      roleDefCache
     );
     if (issuers && issuers.did && issuers.issuerType === 'DID') {
       return issuers?.did?.find(
@@ -129,7 +159,11 @@ export class ClaimIssuerVerification {
     }
     let claim;
     if (issuers && issuers.roleName) {
-      claim = await this.verifyIssuance(issuerDID, issuers.roleName);
+      claim = await this.verifyIssuance(
+        issuerDID,
+        issuers.roleName,
+        roleCredentialCache
+      );
     } else {
       throw new InvalidIssuerType(namespace, issuers?.issuerType);
     }

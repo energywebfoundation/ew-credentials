@@ -11,33 +11,39 @@ export interface CredentialResolver {
    * Fetches verifiable credential belonging to a DID for the provided namespace
    * @param did
    * @param namespace
+   * @param roleCredentialCache
    * @returns Verifiable Credential of the holder for the namespace
    */
   getVerifiableCredential(
     did: string,
-    namespace: string
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<VerifiableCredential<RoleCredentialSubject> | undefined>;
 
   /**
    * Fetches RoleEIP191JWT belonging to a DID for the provided namespace
    * @param did
    * @param namespace
+   * @param roleCredentialCache
    * @returns RoleEIP191JWT corresponding to credential of the holder for the namespace
    */
   getEIP191JWT(
     did: string,
-    namespace: string
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<RoleEIP191JWT | undefined>;
 
   /**
    * Fetches either RoleEIP191JWT or VC belonging to a DID for the provided namespace
    * @param did
    * @param namespace
+   * @param roleCredentialCache
    * @returns RoleEIP191JWT or VC
    */
   getCredential(
     did: string,
-    namespace: string
+    namespace: string,
+    roleCredentialCache?: IRoleCredentialCache
   ): Promise<
     VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   >;
@@ -57,10 +63,4 @@ export interface CredentialResolver {
   credentialsOf(
     did: string
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]>;
-
-  /**
-   * Sets intermediate cache for the resolution request
-   * @param roleCredentialcache
-   */
-  setRoleCredentialCache(roleCredentialcache: IRoleCredentialCache): void;
 }
