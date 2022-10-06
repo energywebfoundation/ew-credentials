@@ -44,10 +44,7 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
+import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
 import { adminVC, managerVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -55,6 +52,7 @@ import {
 } from './Fixtures/sample-statuslist-credential';
 import nock from 'nock';
 import { verifyCredential } from 'didkit-wasm-node';
+import { ChildProcess } from 'child_process';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -100,12 +98,13 @@ let userOperator: Operator;
 let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
-let ipfsUrl: string;
 let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
 export function issuerVerificationTests(): void {
+  let cluster: ChildProcess;
+
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -137,11 +136,11 @@ export function issuerVerificationTests(): void {
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    ipfsUrl = await spawnIpfsDaemon();
+    cluster = await spawnIpfs();
   });
 
-  after(async () => {
-    await shutDownIpfsDaemon();
+  after(() => {
+    shutdownIpfs(cluster);
   });
 
   testSuite();
@@ -188,7 +187,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore(ipfsUrl);
+    didStore = new DidStore('http://localhost:8080');
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,

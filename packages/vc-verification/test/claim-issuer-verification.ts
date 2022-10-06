@@ -36,15 +36,13 @@ import {
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
 import { JWT } from '@ew-did-registry/jwt';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
+import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
 import {
   DomainReader,
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
+import { ChildProcess } from 'child_process';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -91,12 +89,13 @@ let userOperator: Operator;
 let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
-let ipfsUrl: string;
 let didStore: DidStore;
 
 const validity = 10 * 60 * 1000;
 
 export function claimIssuerVerificationTests(): void {
+  let cluster: ChildProcess;
+
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -134,11 +133,11 @@ export function claimIssuerVerificationTests(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    ipfsUrl = await spawnIpfsDaemon();
+    cluster = await spawnIpfs();
   });
 
-  after(async () => {
-    await shutDownIpfsDaemon();
+  after(() => {
+    shutdownIpfs(cluster);
   });
 
   testSuite();
@@ -182,7 +181,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore(ipfsUrl);
+    didStore = new DidStore('http://localhost:8080');
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,
