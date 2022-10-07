@@ -1,9 +1,8 @@
-import { providers } from 'ethers';
 import { ProofVerifier } from '@ew-did-registry/claims';
-import { addressOf, Resolver } from '@ew-did-registry/did-ethr-resolver';
-import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
+import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { CredentialResolver, IssuerResolver } from '..';
 import {
+  IDIDDocumentCache,
   IRoleCredentialCache,
   IRoleDefinitionCache,
   RolePayload,
@@ -17,25 +16,19 @@ import { ERRORS, InvalidIssuerType } from '../utils';
  * The hierachy must only consist of RoleEIP191Jwt issuance
  */
 export class ClaimIssuerVerification {
-  private _resolver: Resolver;
   private _issuerDefResolver: IssuerResolver;
   private _credentialResolver: CredentialResolver;
 
   /**
    *
-   * @param provider
-   * @param registrySetting
    * @param credentialResolver
    * @param issuerDefResolver
    */
   constructor(
-    provider: providers.Provider,
-    registrySetting: RegistrySettings,
     credentialResolver: CredentialResolver,
     issuerDefResolver: IssuerResolver
   ) {
     this._issuerDefResolver = issuerDefResolver;
-    this._resolver = new Resolver(provider, registrySetting);
     this._credentialResolver = credentialResolver;
   }
 
@@ -44,24 +37,24 @@ export class ClaimIssuerVerification {
    *
    * ```typescript
    * const issuerVerification = new ClaimIssuerVerification(
-   * provider,
-   * RegistrySettings,
    * credentialResolver,
    * issuerResolver
    * );
-   * await issuerVerification.verifyIssuer('issuerDID', 'role', roleCredentialCache, roleDefCache);
+   * await issuerVerification.verifyIssuer('issuerDID', 'role', roleCredentialCache, roleDefCache, didDocumentCache);
    * ```
    * @param issuer DID of the issuer
    * @param role name of the role claim
    * @param roleCredentialCache Cache to store role credentials
    * @param roleDefCache Cache to store role definition
+   * @param didDocumentCache Cache to store DIDDocument
    * @returns VerificationResult
    */
   async verifyIssuer(
     issuer: string,
     role: string,
     roleCredentialCache?: IRoleCredentialCache,
-    roleDefCache?: IRoleDefinitionCache
+    roleDefCache?: IRoleDefinitionCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<VerificationResult> {
     let currentIssuerDID = issuer;
     while (true) {
@@ -70,7 +63,8 @@ export class ClaimIssuerVerification {
           role,
           currentIssuerDID,
           roleCredentialCache,
-          roleDefCache
+          roleDefCache,
+          didDocumentCache
         ))
       ) {
         return verificationResult(false, ERRORS.IssuerNotAuthorized);
@@ -85,7 +79,8 @@ export class ClaimIssuerVerification {
         const currentIssuerClaim = await this.verifyIssuance(
           currentIssuerDID,
           roleIssuers.roleName,
-          roleCredentialCache
+          roleCredentialCache,
+          didDocumentCache
         );
         if (currentIssuerClaim) {
           currentIssuerDID = currentIssuerClaim.iss as string;
@@ -102,25 +97,29 @@ export class ClaimIssuerVerification {
    * @param subject DID of the subject
    * @param role name of the role claim
    * @param roleCredentialCache Cache to store role credentials
+   * @param didDocumentCache Cache to store DIDDocument
    * @returns valid RolePayload
    */
   async verifyIssuance(
     subject: string,
     role: string,
-    roleCredentialCache?: IRoleCredentialCache
+    roleCredentialCache?: IRoleCredentialCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<RolePayload | undefined> {
     const roleJWT = await this._credentialResolver.getEIP191JWT(
       subject,
       role,
-      roleCredentialCache
+      roleCredentialCache,
+      didDocumentCache
     );
     if (!roleJWT) {
       throw new Error(
         'Unable to resolve the issuer credential to verify their authority'
       );
     }
-    const issuerDIDDoc = await this._resolver.read(
-      roleJWT.payload.iss as string
+    const issuerDIDDoc = await this._credentialResolver.getDIDDocument(
+      roleJWT.payload.iss as string,
+      didDocumentCache
     );
     const verifier = new ProofVerifier(issuerDIDDoc);
     if (await verifier.verifyAssertionProof(roleJWT.eip191Jwt)) {
@@ -136,6 +135,7 @@ export class ClaimIssuerVerification {
    * @param {string} issuerDID
    * @param roleCredentialCache
    * @param roleDefCache
+   * @param didDocumentCache
    * @returns boolean
    *
    * @todo remove as duplicate of this.verifyIssuer
@@ -144,7 +144,8 @@ export class ClaimIssuerVerification {
     namespace: string,
     issuerDID: string,
     roleCredentialCache?: IRoleCredentialCache,
-    roleDefCache?: IRoleDefinitionCache
+    roleDefCache?: IRoleDefinitionCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<boolean> {
     const issuers = await this._issuerDefResolver.getIssuerDefinition(
       namespace,
@@ -162,7 +163,8 @@ export class ClaimIssuerVerification {
       claim = await this.verifyIssuance(
         issuerDID,
         issuers.roleName,
-        roleCredentialCache
+        roleCredentialCache,
+        didDocumentCache
       );
     } else {
       throw new InvalidIssuerType(namespace, issuers?.issuerType);

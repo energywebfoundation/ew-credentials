@@ -5,9 +5,15 @@ import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
   RegistrySettings,
   IServiceEndpoint,
+  IDIDDocument,
 } from '@ew-did-registry/did-resolver-interface';
 import * as jwt from 'jsonwebtoken';
-import { RoleEIP191JWT, RolePayload } from '../models';
+import {
+  RoleEIP191JWT,
+  RolePayload,
+  IDIDDocumentCache,
+  IRoleCredentialCache,
+} from '../models';
 import {
   isEIP191Jwt,
   filterOutMaliciousClaims,
@@ -17,8 +23,7 @@ import {
 } from '../utils';
 import { CredentialResolver } from './credential-resolver';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { IRoleCredentialCache } from '../models/cache-interfaces';
+import { RoleCredentialSubject } from '@energyweb/credential-governance';
 
 export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
@@ -41,18 +46,20 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole', roleCredentialCache);
+   * const credential = credentialResolver.getCredential('did:ethr:1234', 'sampleRole', roleCredentialCache, didDocumentCache);
    * ```
    *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
    * @param roleCredentialCache Cache to store role credentials
+   * @param didDocumentCache Cache to store DID Documents.
    * @returns
    */
   async getCredential(
     did: string,
     namespace: string,
-    roleCredentialCache?: IRoleCredentialCache
+    roleCredentialCache?: IRoleCredentialCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<
     VerifiableCredential<RoleCredentialSubject> | RoleEIP191JWT | undefined
   > {
@@ -70,10 +77,16 @@ export class IpfsCredentialResolver implements CredentialResolver {
     credential = await this.getVerifiableCredential(
       did,
       namespace,
-      roleCredentialCache
+      roleCredentialCache,
+      didDocumentCache
     );
     if (!credential) {
-      credential = await this.getEIP191JWT(did, namespace, roleCredentialCache);
+      credential = await this.getEIP191JWT(
+        did,
+        namespace,
+        roleCredentialCache,
+        didDocumentCache
+      );
     }
     return credential;
   }
@@ -86,18 +99,20 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getVerifiableCredential('did:ethr:1234', 'sampleRole', roleCredentialCache);
+   * const credential = credentialResolver.getVerifiableCredential('did:ethr:1234', 'sampleRole', roleCredentialCache, didDocumentCache);
    * ```
    *
    * @param did subject DID for which the credential needs to be fetched
    * @param namespace role for which the credential needs to be fetched
    * @param roleCredentialCache Cache to store role credentials. Cache is updated with all credentials retrieved for the DID
+   * @param didDocumentCache Cache to store DID Documents.
    * @returns
    */
   async getVerifiableCredential(
     did: string,
     namespace: string,
-    roleCredentialCache?: IRoleCredentialCache
+    roleCredentialCache?: IRoleCredentialCache,
+    didDocumentCache?: IDIDDocumentCache
   ) {
     const cachedRoleCredential = roleCredentialCache?.getRoleCredential(
       did,
@@ -106,7 +121,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     if (isVerifiableCredential(cachedRoleCredential)) {
       return cachedRoleCredential;
     }
-    const credentials = await this.credentialsOf(did);
+    const credentials = await this.credentialsOf(did, didDocumentCache);
     credentials.forEach((credential) =>
       roleCredentialCache?.setRoleCredential(
         did,
@@ -129,18 +144,20 @@ export class IpfsCredentialResolver implements CredentialResolver {
    *  provider,
    *  registrySettings,
    *  didStore );
-   * const credential = credentialResolver.getEIP191JWT('did:ethr:1234', 'sampleRole');
+   * const credential = credentialResolver.getEIP191JWT('did:ethr:1234', 'sampleRole', roleCredentialCache, didDocumentCache);
    * ```
    *
    * @param did subject DID for which the credential to be fetched
    * @param namespace role for which the credential need to be fetched
    * @param roleCredentialCache Cache to store role credentials. Cache is updated with all credentials retrieved for the DID
+   * @param didDocumentCache Cache to store DID Documents
    * @returns RoleEIP191JWT
    */
   async getEIP191JWT(
     did: string,
     namespace: string,
-    roleCredentialCache?: IRoleCredentialCache
+    roleCredentialCache?: IRoleCredentialCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<RoleEIP191JWT | undefined> {
     const cachedRoleCredential = roleCredentialCache?.getRoleCredential(
       did,
@@ -149,7 +166,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     if (isEIP191Jwt(cachedRoleCredential)) {
       return cachedRoleCredential;
     }
-    const eip191Jwts = await this.eip191JwtsOf(did);
+    const eip191Jwts = await this.eip191JwtsOf(did, didDocumentCache);
     eip191Jwts.forEach((eip191Jwt) => {
       const claimType = eip191Jwt?.payload?.claimData?.claimType;
       if (claimType) {
@@ -166,10 +183,14 @@ export class IpfsCredentialResolver implements CredentialResolver {
   /**
    * Fetches all the Role eip191Jwts belonging to the subject DID
    * @param did subject DID
+   * @param didDocumentCache Cache to store DID Documents.
    * @returns RoleEIP191JWT list
    */
-  async eip191JwtsOf(did: string): Promise<RoleEIP191JWT[]> {
-    const didDocument = await this._resolver.read(did);
+  async eip191JwtsOf(
+    did: string,
+    didDocumentCache?: IDIDDocumentCache
+  ): Promise<RoleEIP191JWT[]> {
+    const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
     return (
       await Promise.all(
@@ -198,12 +219,14 @@ export class IpfsCredentialResolver implements CredentialResolver {
   /**
    * Fetches all the Verifiable Credential belonging to the subject DID
    * @param did subject DID
+   * @param didDocumentCache Cache to store DID Documents.
    * @returns VerifiableCredential<RoleCredentialSubject> list
    */
   async credentialsOf(
-    did: string
+    did: string,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
-    const didDocument = await this._resolver.read(did);
+    const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
     return (
       await Promise.all(
@@ -224,5 +247,24 @@ export class IpfsCredentialResolver implements CredentialResolver {
         })
       )
     ).filter(isVerifiableCredential);
+  }
+
+  /**
+   * Fetches DID Document for the given DID
+   * @param did subject DID
+   * @param didDocumentCache Cache to store DIDDocument. Cache is updated with Document retrieved for the DID
+   * @returns
+   */
+  async getDIDDocument(
+    did: string,
+    didDocumentCache?: IDIDDocumentCache
+  ): Promise<IDIDDocument> {
+    const cachedDIDDocument = didDocumentCache?.getDIDDocument(did);
+    if (cachedDIDDocument) {
+      return cachedDIDDocument;
+    }
+    const resolvedDIDDocument = await this._resolver.read(did);
+    didDocumentCache?.setDIDDocument(did, resolvedDIDDocument);
+    return resolvedDIDDocument;
   }
 }
