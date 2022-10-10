@@ -16,6 +16,7 @@ import {
   issuerDID,
 } from '../utils';
 import {
+  IDIDDocumentCache,
   IRoleCredentialCache,
   IRoleDefinitionCache,
   RoleEIP191JWT,
@@ -25,8 +26,6 @@ import {
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 import { StatusListEntryVerification } from '@ew-did-registry/revocation';
 import { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { RegistrySettings } from '@ew-did-registry/did-resolver-interface';
-import { providers } from 'ethers';
 
 /**
  * Provides verification of revocation of EnergyWeb role verifiable credential
@@ -41,8 +40,6 @@ export class RevocationVerification {
     private revokerResolver: RevokerResolver,
     private issuerResolver: IssuerResolver,
     credentialResolver: CredentialResolver,
-    provider: providers.Provider,
-    registrySetting: RegistrySettings,
     private verifyProof: (vc: string, proof_options: string) => Promise<any>
   ) {
     this.credentialResolver = credentialResolver;
@@ -52,8 +49,6 @@ export class RevocationVerification {
       verifyProof
     );
     this.claimIssuerVerification = new ClaimIssuerVerification(
-      provider,
-      registrySetting,
       credentialResolver,
       issuerResolver
     );
@@ -71,29 +66,35 @@ export class RevocationVerification {
    * revokerResolver,
    * issuerResolver,
    * credentialResolver,
-   * provider,
-   * registrySetting,
    * verifyProof
    * );
    * let statusList : StatusList2021Credential;
    * const role = 'role';
-   * await revocationVerification.verifyStatusList(statusList, role, roleCredentialCache, roleDefCache);
+   * await revocationVerification.verifyStatusList(statusList, role, roleCredentialCache, roleDefCache, didDocumentCache);
    * ```
    * @param statusList credential which contains revocation status of `role` credential
    * @param role role name
    * @param roleCredentialCache Cache to store role credentials
    * @param roleDefCache Cache to store role definition
+   * @param didDocumentCache Cache to store DID Documents
    */
   async verifyStatusList(
     statusList: StatusList2021Credential,
     role: string,
     roleCredentialCache?: IRoleCredentialCache,
-    roleDefCache?: IRoleDefinitionCache
+    roleDefCache?: IRoleDefinitionCache,
+    didDocumentCache?: IDIDDocumentCache
   ) {
     validateStatusList(statusList);
 
     const revoker = issuerDID(statusList.issuer);
-    await this.verifyRevoker(revoker, role, roleCredentialCache, roleDefCache);
+    await this.verifyRevoker(
+      revoker,
+      role,
+      roleCredentialCache,
+      roleDefCache,
+      didDocumentCache
+    );
   }
 
   /**
@@ -108,18 +109,20 @@ export class RevocationVerification {
    * );
    * const revoker = 'did:ethr:ewc:0x...';
    * const role = 'role';
-   * await revocationVerification.verifyRevoker(revoker, role, roleCredentialCache, roleDefCache);
+   * await revocationVerification.verifyRevoker(revoker, role, roleCredentialCache, roleDefCache, didDocumentCache);
    * ```
    * @param revoker DID of revoker
    * @param role name of the role verifiable credential
    * @param roleCredentialCache Cache to store role credentials
    * @param roleDefCache Cache to store role definition
+   * @param didDocumentCache Cache to store DID Documents
    */
   async verifyRevoker(
     revoker: string,
     role: string,
     roleCredentialCache?: IRoleCredentialCache,
-    roleDefCache?: IRoleDefinitionCache
+    roleDefCache?: IRoleDefinitionCache,
+    didDocumentCache?: IDIDDocumentCache
   ) {
     const revokers = await this.revokerResolver.getRevokerDefinition(
       role,
@@ -147,7 +150,8 @@ export class RevocationVerification {
         const revokerCredential = await this.credentialResolver.getCredential(
           revoker,
           revokerRole,
-          roleCredentialCache
+          roleCredentialCache,
+          didDocumentCache
         );
         if (isVerifiableCredential(revokerCredential)) {
           await this.vcIssuerVerification.verifyIssuance(
@@ -165,13 +169,15 @@ export class RevocationVerification {
           const rolePayload = await this.claimIssuerVerification.verifyIssuance(
             revoker,
             revokerRole,
-            roleCredentialCache
+            roleCredentialCache,
+            didDocumentCache
           );
           await this.claimIssuerVerification.verifyIssuer(
             rolePayload?.iss as string,
             revokerRole,
             roleCredentialCache,
-            roleDefCache
+            roleDefCache,
+            didDocumentCache
           );
         }
       } catch (e) {
@@ -193,13 +199,15 @@ export class RevocationVerification {
    * @param role namespace
    * @param roleCredentialCache Cache to store role credentials
    * @param roleDefCache Cache to store role definition
+   * @param didDocumentCache Cache to store DID Documents
    * @returns
    */
   async checkRevocationStatus(
     issuer: string,
     role: string,
     roleCredentialCache?: IRoleCredentialCache,
-    roleDefCache?: IRoleDefinitionCache
+    roleDefCache?: IRoleDefinitionCache,
+    didDocumentCache?: IDIDDocumentCache
   ): Promise<VerificationResult> {
     let issuerCredential:
       | VerifiableCredential<RoleCredentialSubject>
@@ -217,7 +225,8 @@ export class RevocationVerification {
         issuerCredential = await this.credentialResolver.getCredential(
           issuer,
           issuers?.roleName,
-          roleCredentialCache
+          roleCredentialCache,
+          didDocumentCache
         );
         try {
           if (
@@ -264,7 +273,8 @@ export class RevocationVerification {
             credential?.issuer as string,
             role,
             roleCredentialCache,
-            roleDefCache
+            roleDefCache,
+            didDocumentCache
           );
           return verificationResult(false, ERRORS.IssuerCredentialRevoked);
         }

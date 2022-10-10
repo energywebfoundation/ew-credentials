@@ -230,8 +230,6 @@ function testSuite() {
       revokerResolver,
       issuerResolver,
       credentialResolver,
-      provider,
-      registrySettings,
       verifyCredential
     );
     roleCredentialCache = new RoleCredentialCache();

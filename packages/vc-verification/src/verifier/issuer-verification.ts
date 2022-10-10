@@ -5,6 +5,7 @@ import {
   RevocationVerification,
   RoleDefinitionCache,
   RoleCredentialCache,
+  DIDDocumentCache,
 } from '..';
 import { ClaimIssuerVerification } from './claim-issuer-verification';
 import { VCIssuerVerification } from './vc-issuer-verification';
@@ -41,8 +42,6 @@ export class IssuerVerification {
       verifyProof
     );
     this.claimIssuerVerification = new ClaimIssuerVerification(
-      provider,
-      registrySetting,
       credentialResolver,
       issuerResolver
     );
@@ -81,6 +80,7 @@ export class IssuerVerification {
       | undefined;
     const roleDefCache = new RoleDefinitionCache();
     const roleCredentialCache = new RoleCredentialCache();
+    const didDocumentCache = new DIDDocumentCache();
     const issuers = await this.issuerResolver.getIssuerDefinition(
       role,
       roleDefCache
@@ -92,7 +92,8 @@ export class IssuerVerification {
       issuerCredential = await this.credentialResolver.getCredential(
         issuer,
         issuers?.roleName,
-        roleCredentialCache
+        roleCredentialCache,
+        didDocumentCache
       );
       if (!issuerCredential) {
         return verificationResult(
@@ -105,7 +106,8 @@ export class IssuerVerification {
           issuer,
           role,
           roleCredentialCache,
-          roleDefCache
+          roleDefCache,
+          didDocumentCache
         );
       if (!revocationStatusResult.verified) {
         return revocationStatusResult;
@@ -122,7 +124,8 @@ export class IssuerVerification {
         issuer,
         role,
         roleCredentialCache,
-        roleDefCache
+        roleDefCache,
+        didDocumentCache
       );
     } else {
       return issuers?.did?.find(

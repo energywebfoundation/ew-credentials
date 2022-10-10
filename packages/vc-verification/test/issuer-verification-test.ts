@@ -216,8 +216,6 @@ function testSuite() {
       revokerResolver,
       issuerResolver,
       credentialResolver,
-      provider,
-      registrySettings,
       verifyCredential
     );
     issuerVerification = new IssuerVerification(

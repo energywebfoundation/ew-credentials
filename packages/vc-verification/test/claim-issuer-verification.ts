@@ -207,8 +207,6 @@ function testSuite() {
     issuerDefinitionResolver = new EthersProviderIssuerResolver(domainReader);
 
     issuerVerification = new ClaimIssuerVerification(
-      provider,
-      registrySettings,
       credentialResolver,
       issuerDefinitionResolver
     );
