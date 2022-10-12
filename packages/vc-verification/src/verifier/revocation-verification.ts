@@ -14,6 +14,7 @@ import {
   NoRevokers,
   RevokerNotAuthorized,
   issuerDID,
+  isEIP191Jwt,
 } from '../utils';
 import {
   IDIDDocumentCache,
@@ -247,17 +248,12 @@ export class RevocationVerification {
             await this._statusListEntryVerificaiton.verifyCredentialStatus(
               issuerCredential.credentialStatus
             );
-          } else {
-            const rolePayload =
-              await this.claimIssuerVerification.verifyIssuance(
-                issuer,
-                issuers?.roleName,
-                roleCredentialCache
-              );
-            issuer = rolePayload?.iss as string;
+          } else if (isEIP191Jwt(issuerCredential)) {
+            const rolePayload = issuerCredential.payload;
+            issuer = rolePayload.iss as string;
             role = issuers.roleName;
-            credentialStatus = rolePayload?.credentialStatus;
-            if (rolePayload?.exp && rolePayload?.exp * 1000 < Date.now()) {
+            credentialStatus = rolePayload.credentialStatus;
+            if (rolePayload.exp && rolePayload.exp * 1000 < Date.now()) {
               return verificationResult(false, ERRORS.IssuerCredentialExpired);
             }
             await this._statusListEntryVerificaiton.verifyCredentialStatus(
