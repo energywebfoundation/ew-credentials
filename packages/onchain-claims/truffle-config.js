@@ -55,6 +55,8 @@ module.exports = {
               'https://volta-rpc.energyweb.org'
           );
       },
+      timeoutBlocks: 200,
+      networkCheckTimeout: 10000,
       network_id: 73799
     },
 
