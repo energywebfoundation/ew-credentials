@@ -68,6 +68,7 @@
     "eslint-plugin-import": "2.25.4",
     "ganache-cli": "^6.12.2",
     "husky": "^4.3.8",
+    "keyv":"4.5.0",
     "lerna": "^4.0.0",
     "lint-staged": "^11.1.1",
     "mocha": "7.2.0",
