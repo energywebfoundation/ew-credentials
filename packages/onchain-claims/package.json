@@ -21,6 +21,7 @@
     "compile:contracts": "truffle compile",
     "compile:ts": "bili",
     "deploy:revocationregistry": "node -r ts-node/register ./scripts/deploy-revocation-registry",
+    "transfer:claimmanager": "node -r ts-node/register ./scripts/transfer-ownership-claimmanager",
     "ganache": "ganache-cli -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000",
     "test": "../../node_modules/.bin/mocha --timeout 1000 -r ts-node/register test/**/*-tests.ts",
     "test-ganache": "mocha -r ts-node/register test/**/*-tests.ts",
