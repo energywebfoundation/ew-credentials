@@ -1,9 +1,5 @@
-import { IRoleDefinitionV2 } from '@energyweb/credential-governance';
 import type { StatusList2021Entry } from '@ew-did-registry/credentials-interface';
 import { JwtPayload } from 'jsonwebtoken';
-import { IDIDDocument } from '@ew-did-registry/did-resolver-interface';
-import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
-import type { RoleCredentialSubject } from '@energyweb/credential-governance';
 
 export interface VerificationResult {
   verified: boolean;

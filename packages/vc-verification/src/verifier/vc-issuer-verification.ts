@@ -1,4 +1,4 @@
-import { CredentialResolver, IssuerResolver, issuerDID } from '..';
+import { CredentialResolver, IssuerResolver } from '../resolver';
 import {
   IRoleCredentialCache,
   IRoleDefinitionCache,
@@ -7,7 +7,12 @@ import {
 } from '../models';
 import { VerifiableCredential } from '@ew-did-registry/credentials-interface';
 import type { RoleCredentialSubject } from '@energyweb/credential-governance';
-import { ERRORS, InvalidCredentialProof, NoCredential } from '../utils/errors';
+import {
+  ERRORS,
+  InvalidCredentialProof,
+  NoCredential,
+  issuerDID,
+} from '../utils';
 import { addressOf } from '@ew-did-registry/did-ethr-resolver';
 
 /**
