@@ -40,7 +40,10 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
@@ -90,7 +93,7 @@ let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
 let didStore: DidStore;
-
+let ipfsUrl: string;
 const validity = 10 * 60 * 1000;
 
 export function vcIssuerVerificationTests(): void {
@@ -127,12 +130,12 @@ export function vcIssuerVerificationTests(): void {
     managerAddress = managerKeys.getAddress();
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
-    cluster = await spawnIpfs();
-  });
+    ipfsUrl = await spawnIpfsDaemon();
+   });
 
-  after(() => {
-    shutdownIpfs(cluster);
-  });
+   after(async () => {
+     await shutDownIpfsDaemon();
+   });
 
   testSuite();
 }
@@ -178,7 +181,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore('http://localhost:8080');
+    didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,

@@ -36,7 +36,10 @@ import {
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
 import { JWT } from '@ew-did-registry/jwt';
-import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 import {
   DomainReader,
   ResolverContractType,
@@ -90,6 +93,7 @@ let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
 let didStore: DidStore;
+let ipfsUrl: string;
 
 const validity = 10 * 60 * 1000;
 
@@ -133,11 +137,11 @@ export function claimIssuerVerificationTests(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    cluster = await spawnIpfs();
+    ipfsUrl = await spawnIpfsDaemon();
   });
 
-  after(() => {
-    shutdownIpfs(cluster);
+  after(async () => {
+    await shutDownIpfsDaemon();
   });
 
   testSuite();
@@ -181,7 +185,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore('http://localhost:8080');
+    didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,

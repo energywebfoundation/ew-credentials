@@ -46,7 +46,10 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -105,7 +108,7 @@ let adminOperator: Operator;
 let managerOperator: Operator;
 let providerSettings: ProviderSettings;
 let didStore: DidStore;
-
+let ipfsUrl: string;
 const validity = 10 * 60 * 1000;
 
 export function revocationVerificationTests(): void {
@@ -149,12 +152,12 @@ export function revocationVerificationTests(): void {
     });
     verifierAddress = verifierKeys.getAddress();
     verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-    cluster = await spawnIpfs();
-  });
+    ipfsUrl = await spawnIpfsDaemon();
+   });
 
-  after(() => {
-    shutdownIpfs(cluster);
-  });
+   after(async () => {
+     await shutDownIpfsDaemon();
+   });
 
   testSuite();
 }
@@ -200,7 +203,7 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore('http://localhost:8080');
+    didStore = new DidStore(ipfsUrl);
     credentialResolver = new IpfsCredentialResolver(
       provider,
       registrySettings,
