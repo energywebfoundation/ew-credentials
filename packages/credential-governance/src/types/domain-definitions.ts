@@ -44,6 +44,7 @@ export interface IFieldDefinition {
   maxValue?: number;
   minDate?: Date;
   maxDate?: Date;
+  schema?: string;
 }
 export interface IRoleDefinitionText {
   roleType: string;
