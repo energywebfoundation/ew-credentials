@@ -44,7 +44,11 @@ export interface IFieldDefinition {
   maxValue?: number;
   minDate?: Date;
   maxDate?: Date;
-  schema?: string;
+  /**
+   * A JSON Schema definition
+   * For more information about JSON Schema, see https://json-schema.org/
+   */
+  schema?: Record<string, unknown>;
 }
 export interface IRoleDefinitionText {
   roleType: string;
