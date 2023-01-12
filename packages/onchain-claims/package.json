@@ -48,7 +48,7 @@
     "@energyweb/credential-governance": "2.2.0",
     "@ew-did-registry/did": "0.8.1-alpha.1015.0",
     "@ew-did-registry/did-ethr-resolver": "0.8.1-alpha.1015.0",
-    "@poanet/solidity-flattener": "^3.0.7",
+    "@poanet/solidity-flattener": "^3.0.8",
     "ethers": "^5.7.2"
   },
   "devDependencies": {
