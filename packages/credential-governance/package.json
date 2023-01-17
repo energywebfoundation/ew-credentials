@@ -54,14 +54,14 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "@ew-did-registry/credentials-interface": "0.8.1-alpha.1015.0",
-    "@ew-did-registry/did": "0.8.1-alpha.1015.0",
+    "@ew-did-registry/credentials-interface": "0.8.1-alpha.1037.0",
+    "@ew-did-registry/did": "0.8.1-alpha.1037.0",
     "ethers": "^5.7.2"
   },
   "devDependencies": {
     "@ensdomains/buffer": "0.0.13",
     "@ensdomains/ens-contracts": "0.0.4",
-    "@ew-did-registry/proxyidentity": "0.8.1-alpha.1015.0",
+    "@ew-did-registry/proxyidentity": "0.8.1-alpha.1037.0",
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",
     "@openzeppelin/truffle-upgrades": "1.17.0",

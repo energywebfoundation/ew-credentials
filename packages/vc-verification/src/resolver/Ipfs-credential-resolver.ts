@@ -7,7 +7,7 @@ import {
   IServiceEndpoint,
   IDIDDocument,
 } from '@ew-did-registry/did-resolver-interface';
-import * as jwt from 'jsonwebtoken';
+import { decode } from 'jsonwebtoken';
 import {
   RoleEIP191JWT,
   RolePayload,
@@ -202,7 +202,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
           let rolePayload: RolePayload | undefined;
           // expect that JWT has 3 dot-separated parts
           if (claimToken.split('.').length === 3) {
-            rolePayload = jwt.decode(claimToken) as RolePayload;
+            rolePayload = decode(claimToken) as RolePayload;
           }
           return {
             payload: rolePayload,
