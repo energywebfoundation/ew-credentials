@@ -48,7 +48,6 @@
     "@energyweb/credential-governance": "2.2.0",
     "@ew-did-registry/did": "0.8.1-alpha.1037.0",
     "@ew-did-registry/did-ethr-resolver": "0.8.1-alpha.1037.0",
-    "@poanet/solidity-flattener": "^3.0.7",
     "ethers": "^5.7.2"
   },
   "devDependencies": {
@@ -58,6 +57,7 @@
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",
     "@openzeppelin/truffle-upgrades": "1.17.0",
+    "@poanet/solidity-flattener": "^3.0.9",
     "@truffle/contract": "4.6.8",
     "@truffle/deployer": "3.2.105",
     "@truffle/hdwallet-provider": "2.1.2",
