@@ -99,16 +99,16 @@ export class DomainHierarchy {
           return '';
         };
       };
-      console.log(" Before getDomainsFromLogs " + (new Date()).toString());
+      console.time('getDomainsFromLogs <DomainUpdated>');
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
         event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
-      console.log(" After getDomainsFromLogs " + (new Date()).toString());
+      console.timeEnd('getDomainsFromLogs <DomainUpdated>');
       if (this._publicResolver) {
-        console.log(" Before getDomainsFromLogs if condition" + (new Date()).toString());
+        console.time('getDomainsFromLogs <TextChanged>');
         const publicResolverDomains = await this.getDomainsFromLogs({
           parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
@@ -120,11 +120,11 @@ export class DomainHierarchy {
           contractInterface: new utils.Interface(ensResolverContract),
         });
         subDomains = new Set([...publicResolverDomains, ...subDomains]);
-        console.log(" After getDomainsFromLogs if condition" + (new Date()).toString());
       }
+      console.timeEnd('getDomainsFromLogs <TextChanged>');
       return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
     }
-    console.log(" Before getDomainsFromLogs singleLevel " + (new Date()).toString());
+    console.time('getDomainsFromLogs <NewOwner first level>');
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
       event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
@@ -147,7 +147,7 @@ export class DomainHierarchy {
       },
       provider: this._ensRegistry.provider,
     });
-    console.log(" After getDomainsFromLogs singleLevel " + (new Date()).toString());
+    console.timeEnd('getDomainsFromLogs <NewOwner first level>');
     return [...singleLevel].filter(Boolean); // Boolean filter to remove empty string
   };
 
@@ -180,6 +180,7 @@ export class DomainHierarchy {
     const subDomains: Set<string> = new Set();
     let parents = [domain];
 
+    console.time('getDomainsFromLogs <NewOwner recursive>');
     // Breadth-first search down subdomain tree
     while (parents.length > 0) {
       const event = this._ensRegistry.filters.NewOwner(null, null, null);
@@ -200,6 +201,7 @@ export class DomainHierarchy {
         if (!this.isMetadomain(p)) subDomains.add(p);
       }
     }
+    console.timeEnd('getDomainsFromLogs <NewOwner recursive>');
     return [...subDomains].filter(Boolean);
   };
 
@@ -214,35 +216,53 @@ export class DomainHierarchy {
     event: EventFilter;
     contractInterface: utils.Interface;
   }) => {
+    console.group('getDomainsFromLogs');
+
+    let mem = process.memoryUsage().heapUsed;
+    let maxMem = mem;
+    console.log(`max mem ${maxMem / 1e6} mb`);
     const filter = {
       fromBlock: 0,
       toBlock: 'latest',
       address: event.address,
       topics: event.topics || [],
     };
-    // console.log("Inside getAllLogs first map " + (new Date()).toString());
-    const logs = await provider.getLogs(filter);
-    const rawLogs = await pMap(logs, async (log) => {
-      const parsedLog = contractInterface.parseLog(log);
-      return contractInterface.decodeEventLog(parsedLog.name, log.data, log.topics);
-    });
-    
-    // console.log("Inside getAllLogs after first map " + (new Date()).toString());
-    
-    // const rawLogs = logs.map((log) => {
-    //   const parsedLog = contractInterface.parseLog(log);
-    //   /** ethers_v5 Interface.parseLog incorrectly parses log, so have to use lowlevel alternative */
-    //   return contractInterface.decodeEventLog(
-    //     parsedLog.name,
-    //     log.data,
-    //     log.topics
-    //   );
-    // });
-    console.log("Inside getAllLogs second map " + (new Date()).toString());
-    const domains = await pMap(rawLogs, parser);
-    console.log("Inside getAllLogs after second map " + (new Date()).toString());
+    mem = process.memoryUsage().heapUsed;
+    if (mem > maxMem) {
+      maxMem = mem;
+      console.log(`max mem ${maxMem / 1e6} mb`);
+    }
+
+    console.time('domainReader.readName');
+    const domains = await pMap(
+      await provider.getLogs(filter),
+      async (log) => {
+        const parsedLog = contractInterface.parseLog(log);
+        const decoded = contractInterface.decodeEventLog(
+          parsedLog.name,
+          log.data,
+          log.topics
+        );
+        const parsed = await parser(decoded);
+
+        mem = process.memoryUsage().heapUsed;
+        if (mem > maxMem) {
+          maxMem = mem;
+          process.stdout.write(`max mem ${maxMem / 1e6} mb`);
+          process.stdout.clearLine(0);
+          process.stdout.cursorTo(0);
+        }
+
+        return parsed;
+      },
+      { concurrency: 3 }
+    );
+    process.stdout.write('\n');
+
+    console.timeEnd('domainReader.readName');
     const nonEmptyDomains = domains.filter((domain) => domain != '');
-    console.log("Inside getAllLogs second after second map " + (new Date()).toString());
+    console.log(`> max memory ${maxMem / 1e6} mb`);
+    console.groupEnd();
     return new Set(nonEmptyDomains);
   };
 
