@@ -206,7 +206,6 @@ export class DomainHierarchy {
   };
 
   private getDomainsFromLogs = async ({
-    provider,
     parser,
     event,
     contractInterface,
@@ -221,47 +220,37 @@ export class DomainHierarchy {
     let mem = process.memoryUsage().heapUsed;
     let maxMem = mem;
     console.log(`max mem ${maxMem / 1e6} mb`);
-    const filter = {
-      fromBlock: 0,
-      toBlock: 'latest',
-      address: event.address,
-      topics: event.topics || [],
-    };
+
     mem = process.memoryUsage().heapUsed;
     if (mem > maxMem) {
       maxMem = mem;
-      console.log(`max mem ${maxMem / 1e6} mb`);
+      console.log(`mem ${maxMem / 1e6} mb`);
     }
 
+    const concurrency = 3;
     console.time('domainReader.readName');
     const domains = await pMap(
-      await provider.getLogs(filter),
-      async (log) => {
-        const parsedLog = contractInterface.parseLog(log);
-        const decoded = contractInterface.decodeEventLog(
-          parsedLog.name,
-          log.data,
-          log.topics
-        );
-        const parsed = await parser(decoded);
-
+      this.getLogs(event, concurrency),
+      async (log: providers.Log) => {
         mem = process.memoryUsage().heapUsed;
         if (mem > maxMem) {
           maxMem = mem;
-          process.stdout.write(`max mem ${maxMem / 1e6} mb`);
+          process.stdout.write(`mem ${maxMem / 1e6} mb`);
           process.stdout.clearLine(0);
           process.stdout.cursorTo(0);
         }
 
+        const parsed = await this.parseLog(log, contractInterface, parser);
+        console.log(`parsed ${parsed}`);
         return parsed;
       },
-      { concurrency: 3 }
+      { concurrency }
     );
     process.stdout.write('\n');
 
     console.timeEnd('domainReader.readName');
     const nonEmptyDomains = domains.filter((domain) => domain != '');
-    console.log(`> max memory ${maxMem / 1e6} mb`);
+    console.log(`mem ${maxMem / 1e6} mb`);
     console.groupEnd();
     return new Set(nonEmptyDomains);
   };
@@ -270,5 +259,44 @@ export class DomainHierarchy {
     return ['roles', 'apps', 'orgs'].some((meta) =>
       name.startsWith(`${meta}.`)
     );
+  }
+
+  private async parseLog(
+    log: providers.Log,
+    contractInterface: utils.Interface,
+    parser: (log: Result) => Promise<string>
+  ): Promise<string> {
+    const parsedLog = contractInterface.parseLog(log);
+    const decoded = contractInterface.decodeEventLog(
+      parsedLog.name,
+      log.data,
+      log.topics
+    );
+    return parser(decoded);
+  }
+
+  private async *getLogs(
+    event: EventFilter,
+    concurrency: number
+  ): AsyncGenerator<providers.Log> {
+    let currentBlock = await this._provider.getBlockNumber();
+    console.log(`block ${currentBlock}`);
+    while (currentBlock > 0) {
+      const filter = {
+        fromBlock: currentBlock > concurrency ? currentBlock - concurrency : 0,
+        toBlock: currentBlock,
+        address: event.address,
+        topics: event.topics || [],
+      };
+
+      const logs = await this._provider.getLogs(filter);
+      currentBlock =
+        currentBlock > concurrency ? (currentBlock -= concurrency) : 0;
+      console.log(`block ${currentBlock}`);
+
+      for (const log of logs) {
+        yield log;
+      }
+    }
   }
 }
