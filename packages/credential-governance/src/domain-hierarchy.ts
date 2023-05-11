@@ -99,16 +99,18 @@ export class DomainHierarchy {
           return '';
         };
       };
-      console.log(" Before getDomainsFromLogs " + (new Date()).toString());
+      console.time('getDomainsFromLogs.ALL');
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
         event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
-      console.log(" After getDomainsFromLogs " + (new Date()).toString());
+      console.timeEnd('getDomainsFromLogs.ALL');
       if (this._publicResolver) {
-        console.log(" Before getDomainsFromLogs if condition" + (new Date()).toString());
+        console.log(
+          ' Before getDomainsFromLogs if condition' + new Date().toString()
+        );
         const publicResolverDomains = await this.getDomainsFromLogs({
           parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
@@ -120,11 +122,13 @@ export class DomainHierarchy {
           contractInterface: new utils.Interface(ensResolverContract),
         });
         subDomains = new Set([...publicResolverDomains, ...subDomains]);
-        console.log(" After getDomainsFromLogs if condition" + (new Date()).toString());
+        console.log(
+          ' After getDomainsFromLogs if condition' + new Date().toString()
+        );
       }
       return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
     }
-    console.log(" Before getDomainsFromLogs singleLevel " + (new Date()).toString());
+    console.time('getDomainsFromLogs.FIRSTLEVEL');
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
       event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
@@ -147,7 +151,7 @@ export class DomainHierarchy {
       },
       provider: this._ensRegistry.provider,
     });
-    console.log(" After getDomainsFromLogs singleLevel " + (new Date()).toString());
+    console.timeEnd('getDomainsFromLogs.FIRSTLEVEL');
     return [...singleLevel].filter(Boolean); // Boolean filter to remove empty string
   };
 
@@ -220,15 +224,24 @@ export class DomainHierarchy {
       address: event.address,
       topics: event.topics || [],
     };
-    // console.log("Inside getAllLogs first map " + (new Date()).toString());
+    console.group();
+    console.time('provider.getLogs');
     const logs = await provider.getLogs(filter);
+    console.timeEnd('provider.getLogs');
+
+    console.time('interface.parse and decode');
     const rawLogs = await pMap(logs, async (log) => {
       const parsedLog = contractInterface.parseLog(log);
-      return contractInterface.decodeEventLog(parsedLog.name, log.data, log.topics);
+      return contractInterface.decodeEventLog(
+        parsedLog.name,
+        log.data,
+        log.topics
+      );
     });
-    
+    console.timeEnd('interface.parse and decode');
+
     // console.log("Inside getAllLogs after first map " + (new Date()).toString());
-    
+
     // const rawLogs = logs.map((log) => {
     //   const parsedLog = contractInterface.parseLog(log);
     //   /** ethers_v5 Interface.parseLog incorrectly parses log, so have to use lowlevel alternative */
@@ -238,11 +251,11 @@ export class DomainHierarchy {
     //     log.topics
     //   );
     // });
-    console.log("Inside getAllLogs second map " + (new Date()).toString());
+    console.time('domainReader.readName');
     const domains = await pMap(rawLogs, parser);
-    console.log("Inside getAllLogs after second map " + (new Date()).toString());
+    console.timeEnd('domainReader.readName');
     const nonEmptyDomains = domains.filter((domain) => domain != '');
-    console.log("Inside getAllLogs second after second map " + (new Date()).toString());
+    console.groupEnd();
     return new Set(nonEmptyDomains);
   };
 
