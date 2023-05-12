@@ -227,11 +227,14 @@ export class DomainHierarchy {
       console.log(`mem ${maxMem / 1e6} mb`);
     }
 
-    const concurrency = Infinity;
+    const logBatchSize = 25_000;
     console.time('domainReader.readName');
     const domains = await pMap(
-      this.getLogs(event, concurrency),
+      this.getLogs(event, logBatchSize),
       async (log: providers.Log) => {
+        const parsed = await this.parseLog(log, contractInterface, parser);
+        if (parsed && parsed !== 'test.iam.ewc')
+          console.log(`parsed ${parsed}`);
         mem = process.memoryUsage().heapUsed;
         if (mem > maxMem) {
           maxMem = mem;
@@ -240,11 +243,9 @@ export class DomainHierarchy {
           process.stdout.cursorTo(0);
         }
 
-        const parsed = await this.parseLog(log, contractInterface, parser);
-        console.log(`parsed ${parsed}`);
         return parsed;
       },
-      { concurrency }
+      { concurrency: 100 }
     );
     process.stdout.write('\n');
 
