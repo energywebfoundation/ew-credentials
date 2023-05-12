@@ -227,7 +227,7 @@ export class DomainHierarchy {
       console.log(`mem ${maxMem / 1e6} mb`);
     }
 
-    const concurrency = 3;
+    const concurrency = Infinity;
     console.time('domainReader.readName');
     const domains = await pMap(
       this.getLogs(event, concurrency),
@@ -289,14 +289,12 @@ export class DomainHierarchy {
         topics: event.topics || [],
       };
 
-      const logs = await this._provider.getLogs(filter);
+      for (const log of await this._provider.getLogs(filter)) {
+        yield log;
+      }
       currentBlock =
         currentBlock > concurrency ? (currentBlock -= concurrency) : 0;
       console.log(`block ${currentBlock}`);
-
-      for (const log of logs) {
-        yield log;
-      }
     }
   }
 }
