@@ -11,6 +11,7 @@ import { PublicResolver__factory } from '../ethers/factories/PublicResolver__fac
 import { DomainNotifier__factory } from '../ethers/factories/DomainNotifier__factory';
 import { PublicResolver } from '../ethers/PublicResolver';
 import { DomainNotifier } from '../ethers/DomainNotifier';
+import pMap from '@cjs-exporter/p-map';
 
 const { namehash } = utils;
 const { AddressZero } = constants;
@@ -197,7 +198,6 @@ export class DomainHierarchy {
   };
 
   private getDomainsFromLogs = async ({
-    provider,
     parser,
     event,
     contractInterface,
@@ -207,23 +207,16 @@ export class DomainHierarchy {
     event: EventFilter;
     contractInterface: utils.Interface;
   }) => {
-    const filter = {
-      fromBlock: 0,
-      toBlock: 'latest',
-      address: event.address,
-      topics: event.topics || [],
-    };
-    const logs = await provider.getLogs(filter);
-    const rawLogs = logs.map((log) => {
-      const parsedLog = contractInterface.parseLog(log);
-      /** ethers_v5 Interface.parseLog incorrectly parses log, so have to use lowlevel alternative */
-      return contractInterface.decodeEventLog(
-        parsedLog.name,
-        log.data,
-        log.topics
-      );
-    });
-    const domains = await Promise.all(rawLogs.map(parser));
+    const logBatchSize = 25000;
+    const domains = await pMap(
+      this.getLogs(event, logBatchSize),
+      async (log: providers.Log) => {
+        const parsed = await this.parseLog(log, contractInterface, parser);
+        return parsed;
+      },
+      { concurrency: 100 }
+    );
+
     const nonEmptyDomains = domains.filter((domain) => domain != '');
     return new Set(nonEmptyDomains);
   };
@@ -232,5 +225,40 @@ export class DomainHierarchy {
     return ['roles', 'apps', 'orgs'].some((meta) =>
       name.startsWith(`${meta}.`)
     );
+  }
+
+  private async parseLog(
+    log: providers.Log,
+    contractInterface: utils.Interface,
+    parser: (log: Result) => Promise<string>
+  ): Promise<string> {
+    const parsedLog = contractInterface.parseLog(log);
+    const decoded = contractInterface.decodeEventLog(
+      parsedLog.name,
+      log.data,
+      log.topics
+    );
+    return parser(decoded);
+  }
+
+  private async *getLogs(
+    event: EventFilter,
+    concurrency: number
+  ): AsyncGenerator<providers.Log> {
+    let currentBlock = await this._provider.getBlockNumber();
+    while (currentBlock > 0) {
+      const filter = {
+        fromBlock: currentBlock > concurrency ? currentBlock - concurrency : 0,
+        toBlock: currentBlock,
+        address: event.address,
+        topics: event.topics || [],
+      };
+
+      for (const log of await this._provider.getLogs(filter)) {
+        yield log;
+      }
+      currentBlock =
+        currentBlock > concurrency ? (currentBlock -= concurrency) : 0;
+    }
   }
 }
