@@ -99,16 +99,13 @@ export class DomainHierarchy {
           return '';
         };
       };
-      console.time('getDomainsFromLogs <DomainUpdated>');
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
         event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
-      console.timeEnd('getDomainsFromLogs <DomainUpdated>');
       if (this._publicResolver) {
-        console.time('getDomainsFromLogs <TextChanged>');
         const publicResolverDomains = await this.getDomainsFromLogs({
           parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
@@ -121,10 +118,8 @@ export class DomainHierarchy {
         });
         subDomains = new Set([...publicResolverDomains, ...subDomains]);
       }
-      console.timeEnd('getDomainsFromLogs <TextChanged>');
       return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
     }
-    console.time('getDomainsFromLogs <NewOwner first level>');
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
       event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
@@ -147,7 +142,6 @@ export class DomainHierarchy {
       },
       provider: this._ensRegistry.provider,
     });
-    console.timeEnd('getDomainsFromLogs <NewOwner first level>');
     return [...singleLevel].filter(Boolean); // Boolean filter to remove empty string
   };
 
@@ -180,7 +174,6 @@ export class DomainHierarchy {
     const subDomains: Set<string> = new Set();
     let parents = [domain];
 
-    console.time('getDomainsFromLogs <NewOwner recursive>');
     // Breadth-first search down subdomain tree
     while (parents.length > 0) {
       const event = this._ensRegistry.filters.NewOwner(null, null, null);
@@ -201,7 +194,6 @@ export class DomainHierarchy {
         if (!this.isMetadomain(p)) subDomains.add(p);
       }
     }
-    console.timeEnd('getDomainsFromLogs <NewOwner recursive>');
     return [...subDomains].filter(Boolean);
   };
 
@@ -215,44 +207,17 @@ export class DomainHierarchy {
     event: EventFilter;
     contractInterface: utils.Interface;
   }) => {
-    console.group('getDomainsFromLogs');
-
-    let mem = process.memoryUsage().heapUsed;
-    let maxMem = mem;
-    console.log(`max mem ${maxMem / 1e6} mb`);
-
-    mem = process.memoryUsage().heapUsed;
-    if (mem > maxMem) {
-      maxMem = mem;
-      console.log(`mem ${maxMem / 1e6} mb`);
-    }
-
-    const logBatchSize = 25_000;
-    console.time('domainReader.readName');
+    const logBatchSize = 25000;
     const domains = await pMap(
       this.getLogs(event, logBatchSize),
       async (log: providers.Log) => {
         const parsed = await this.parseLog(log, contractInterface, parser);
-        if (parsed && parsed !== 'test.iam.ewc')
-          console.log(`parsed ${parsed}`);
-        mem = process.memoryUsage().heapUsed;
-        if (mem > maxMem) {
-          maxMem = mem;
-          process.stdout.write(`mem ${maxMem / 1e6} mb`);
-          process.stdout.clearLine(0);
-          process.stdout.cursorTo(0);
-        }
-
         return parsed;
       },
       { concurrency: 100 }
     );
-    process.stdout.write('\n');
 
-    console.timeEnd('domainReader.readName');
     const nonEmptyDomains = domains.filter((domain) => domain != '');
-    console.log(`mem ${maxMem / 1e6} mb`);
-    console.groupEnd();
     return new Set(nonEmptyDomains);
   };
 
@@ -281,7 +246,6 @@ export class DomainHierarchy {
     concurrency: number
   ): AsyncGenerator<providers.Log> {
     let currentBlock = await this._provider.getBlockNumber();
-    console.log(`block ${currentBlock}`);
     while (currentBlock > 0) {
       const filter = {
         fromBlock: currentBlock > concurrency ? currentBlock - concurrency : 0,
@@ -295,7 +259,6 @@ export class DomainHierarchy {
       }
       currentBlock =
         currentBlock > concurrency ? (currentBlock -= concurrency) : 0;
-      console.log(`block ${currentBlock}`);
     }
   }
 }
