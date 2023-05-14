@@ -99,16 +99,13 @@ export class DomainHierarchy {
           return '';
         };
       };
-      console.log(" Before getDomainsFromLogs " + (new Date()).toString());
       let subDomains = await this.getDomainsFromLogs({
         parser: getParser(this._domainReader.readName.bind(this._domainReader)),
         provider: this._domainNotifier.provider,
         event: this._domainNotifier.filters.DomainUpdated(null), // some updates may be missed because they require explicit notification
         contractInterface: new utils.Interface(domainNotifierContract),
       });
-      console.log(" After getDomainsFromLogs " + (new Date()).toString());
       if (this._publicResolver) {
-        console.log(" Before getDomainsFromLogs if condition" + (new Date()).toString());
         const publicResolverDomains = await this.getDomainsFromLogs({
           parser: getParser((node) => this._domainReader.readName(node)),
           provider: this._publicResolver.provider,
@@ -120,11 +117,9 @@ export class DomainHierarchy {
           contractInterface: new utils.Interface(ensResolverContract),
         });
         subDomains = new Set([...publicResolverDomains, ...subDomains]);
-        console.log(" After getDomainsFromLogs if condition" + (new Date()).toString());
       }
       return [...subDomains].filter(Boolean); // Boolean filter to remove empty string
     }
-    console.log(" Before getDomainsFromLogs singleLevel " + (new Date()).toString());
     const singleLevel = await this.getDomainsFromLogs({
       contractInterface: new utils.Interface(ensRegistryContract),
       event: this._ensRegistry.filters.NewOwner(namehash(domain), null, null),
@@ -147,7 +142,6 @@ export class DomainHierarchy {
       },
       provider: this._ensRegistry.provider,
     });
-    console.log(" After getDomainsFromLogs singleLevel " + (new Date()).toString());
     return [...singleLevel].filter(Boolean); // Boolean filter to remove empty string
   };
 
@@ -204,7 +198,6 @@ export class DomainHierarchy {
   };
 
   private getDomainsFromLogs = async ({
-    provider,
     parser,
     event,
     contractInterface,
@@ -214,35 +207,17 @@ export class DomainHierarchy {
     event: EventFilter;
     contractInterface: utils.Interface;
   }) => {
-    const filter = {
-      fromBlock: 0,
-      toBlock: 'latest',
-      address: event.address,
-      topics: event.topics || [],
-    };
-    // console.log("Inside getAllLogs first map " + (new Date()).toString());
-    const logs = await provider.getLogs(filter);
-    const rawLogs = await pMap(logs, async (log) => {
-      const parsedLog = contractInterface.parseLog(log);
-      return contractInterface.decodeEventLog(parsedLog.name, log.data, log.topics);
-    });
-    
-    // console.log("Inside getAllLogs after first map " + (new Date()).toString());
-    
-    // const rawLogs = logs.map((log) => {
-    //   const parsedLog = contractInterface.parseLog(log);
-    //   /** ethers_v5 Interface.parseLog incorrectly parses log, so have to use lowlevel alternative */
-    //   return contractInterface.decodeEventLog(
-    //     parsedLog.name,
-    //     log.data,
-    //     log.topics
-    //   );
-    // });
-    console.log("Inside getAllLogs second map " + (new Date()).toString());
-    const domains = await pMap(rawLogs, parser);
-    console.log("Inside getAllLogs after second map " + (new Date()).toString());
+    const logBatchSize = 25000;
+    const domains = await pMap(
+      this.getLogs(event, logBatchSize),
+      async (log: providers.Log) => {
+        const parsed = await this.parseLog(log, contractInterface, parser);
+        return parsed;
+      },
+      { concurrency: 100 }
+    );
+
     const nonEmptyDomains = domains.filter((domain) => domain != '');
-    console.log("Inside getAllLogs second after second map " + (new Date()).toString());
     return new Set(nonEmptyDomains);
   };
 
@@ -250,5 +225,40 @@ export class DomainHierarchy {
     return ['roles', 'apps', 'orgs'].some((meta) =>
       name.startsWith(`${meta}.`)
     );
+  }
+
+  private async parseLog(
+    log: providers.Log,
+    contractInterface: utils.Interface,
+    parser: (log: Result) => Promise<string>
+  ): Promise<string> {
+    const parsedLog = contractInterface.parseLog(log);
+    const decoded = contractInterface.decodeEventLog(
+      parsedLog.name,
+      log.data,
+      log.topics
+    );
+    return parser(decoded);
+  }
+
+  private async *getLogs(
+    event: EventFilter,
+    concurrency: number
+  ): AsyncGenerator<providers.Log> {
+    let currentBlock = await this._provider.getBlockNumber();
+    while (currentBlock > 0) {
+      const filter = {
+        fromBlock: currentBlock > concurrency ? currentBlock - concurrency : 0,
+        toBlock: currentBlock,
+        address: event.address,
+        topics: event.topics || [],
+      };
+
+      for (const log of await this._provider.getLogs(filter)) {
+        yield log;
+      }
+      currentBlock =
+        currentBlock > concurrency ? (currentBlock -= concurrency) : 0;
+    }
   }
 }
