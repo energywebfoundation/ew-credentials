@@ -6,7 +6,6 @@ import {
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
 import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
@@ -37,15 +36,12 @@ import {
 import { Keys } from '@ew-did-registry/keys';
 import { JWT } from '@ew-did-registry/jwt';
 import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
-import {
   DomainReader,
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
 import { ChildProcess } from 'child_process';
+import { shutdownIpfs, spawnIpfs } from '../../../test/utils/setUpIpfs';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -137,11 +133,12 @@ export function claimIssuerVerificationTests(): void {
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
     verifierAddress = verifierKeys.getAddress();
-    ipfsUrl = await spawnIpfsDaemon();
+    ipfsUrl = 'http://localhost:8080';
+    await spawnIpfs();
   });
 
   after(async () => {
-    await shutDownIpfsDaemon();
+    shutdownIpfs(cluster);
   });
 
   testSuite();

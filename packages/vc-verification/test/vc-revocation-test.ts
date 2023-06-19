@@ -2,15 +2,11 @@ import { utils, ContractFactory, Contract } from 'ethers';
 import chai from 'chai';
 import nock from 'nock';
 import chaiAsPromised from 'chai-as-promised';
-import { JWT } from '@ew-did-registry/jwt';
 import {
   abi as erc1056Abi,
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { IdentityManager__factory as IdentityManagerFactory } from '@energyweb/credential-governance/ethers/factories/IdentityManager__factory';
-import { IdentityManager } from '@energyweb/credential-governance/ethers/IdentityManager';
-import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import {
   DomainReader,
@@ -46,10 +42,6 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -58,6 +50,7 @@ import {
 } from './Fixtures/sample-statuslist-credential';
 import { verifyCredential } from 'didkit-wasm-node';
 import { ChildProcess } from 'child_process';
+import { shutdownIpfs, spawnIpfs } from '../../../test/utils/setUpIpfs';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -71,7 +64,6 @@ const managerRole = 'manager';
 const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-let proxyIdentityManager: IdentityManager;
 let roleFactory: DomainTransactionFactoryV2;
 let roleResolver: RoleDefinitionResolverV2;
 let registry: Contract;
@@ -152,12 +144,13 @@ export function revocationVerificationTests(): void {
     });
     verifierAddress = verifierKeys.getAddress();
     verifierDid = `did:${Methods.Erc1056}:${verifierAddress}`;
-    ipfsUrl = await spawnIpfsDaemon();
-   });
+    ipfsUrl = 'http://localhost:8080';
+    await spawnIpfs();
+  });
 
-   after(async () => {
-     await shutDownIpfsDaemon();
-   });
+  after(async () => {
+    shutdownIpfs(cluster);
+  });
 
   testSuite();
 }
@@ -186,9 +179,6 @@ function testSuite() {
       )
     ).deployed();
 
-    const offerableIdentity = await (
-      await new OfferableIdentityFactory(deployer).deploy()
-    ).deployed();
     roleFactory = new DomainTransactionFactoryV2({
       domainResolverAddress: roleResolver.address,
     });
@@ -407,7 +397,6 @@ function testSuite() {
     });
 
     it('Revocation by DID type revoker should be verified', async () => {
-      const adminJWT = new JWT(adminKeys);
       const updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
@@ -439,8 +428,6 @@ function testSuite() {
 
     // `user` role can be revoked by `manager`. `manager` can be issued by `admin`
     it('Revocation by ROLE type revoker should be verified', async () => {
-      const adminJWT = new JWT(adminKeys);
-      const managerJWT = new JWT(managerKeys);
       let updateData: IUpdateData = {
         type: DIDAttribute.ServicePoint,
         value: {
