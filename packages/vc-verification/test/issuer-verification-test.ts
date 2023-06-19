@@ -44,10 +44,7 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
+import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
 import { adminVC, managerVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -139,12 +136,13 @@ export function issuerVerificationTests(): void {
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    ipfsUrl = await spawnIpfsDaemon();
-   });
+    ipfsUrl = 'http://localhost:8080';
+    cluster = await spawnIpfs();
+  });
 
-   after(async () => {
-     await shutDownIpfsDaemon();
-   });
+  after(async () => {
+    shutdownIpfs(cluster);
+  });
 
   testSuite();
 }

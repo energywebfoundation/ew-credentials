@@ -6,7 +6,6 @@ import {
   bytecode as erc1056Bytecode,
 } from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
 import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { OfferableIdentity__factory as OfferableIdentityFactory } from '@energyweb/credential-governance/ethers/factories/OfferableIdentity__factory';
 import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
 import {
   DomainReader,
@@ -40,14 +39,11 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
 import { ChildProcess } from 'child_process';
+import { shutdownIpfs, spawnIpfs } from '../../../test/utils/setUpIpfs';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -130,12 +126,13 @@ export function vcIssuerVerificationTests(): void {
     managerAddress = managerKeys.getAddress();
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
-    ipfsUrl = await spawnIpfsDaemon();
-   });
+    ipfsUrl = 'http://localhost:8080';
+    cluster = await spawnIpfs();
+  });
 
-   after(async () => {
-     await shutDownIpfsDaemon();
-   });
+  after(async () => {
+    shutdownIpfs(cluster);
+  });
 
   testSuite();
 }
@@ -164,9 +161,6 @@ function testSuite() {
       )
     ).deployed();
 
-    const offerableIdentity = await (
-      await new OfferableIdentityFactory(deployer).deploy()
-    ).deployed();
     roleFactory = new DomainTransactionFactoryV2({
       domainResolverAddress: roleResolver.address,
     });
