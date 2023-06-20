@@ -70,7 +70,10 @@ describe('[VC Verificaiton]', function () {
       'Cache test for RoleDefinition, role credential, DID Document',
       cacheTests
     );
-    describe('Issuer Chain with RoleEIP191Jwt', claimIssuerVerificationTests);
+    describe(
+      'Issuer Chain with RoleEIP191Jwt',
+      claimIssuerVerificationTests
+    );
     describe(
       'Issuer Chain with Verifiable Credentials',
       vcIssuerVerificationTests
