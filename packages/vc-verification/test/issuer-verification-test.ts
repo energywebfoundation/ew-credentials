@@ -44,7 +44,10 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import { spawnIpfs, shutdownIpfs } from '../../../test/utils/setUpIpfs';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -52,7 +55,6 @@ import {
 } from './Fixtures/sample-statuslist-credential';
 import nock from 'nock';
 import { verifyCredential } from 'didkit-wasm-node';
-import { ChildProcess } from 'child_process';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -82,7 +84,6 @@ let roleDefCache: IRoleDefinitionCache;
 let deployer: JsonRpcSigner;
 let deployerAddr: string;
 let user: EwSigner;
-let userAddress: string;
 let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
@@ -103,8 +104,6 @@ let ipfsUrl: string;
 const validity = 10 * 60 * 1000;
 
 export function issuerVerificationTests(): void {
-  let cluster: ChildProcess;
-
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -117,7 +116,6 @@ export function issuerVerificationTests(): void {
       privateKey:
         '0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1',
     });
-    userAddress = userKeys.getAddress();
     user = EwSigner.fromPrivateKey(userKeys.privateKey, providerSettings);
 
     adminKeys = new Keys({
@@ -136,12 +134,11 @@ export function issuerVerificationTests(): void {
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    ipfsUrl = 'http://localhost:8080';
-    cluster = await spawnIpfs();
+    ipfsUrl = await spawnIpfsDaemon();
   });
 
   after(async () => {
-    shutdownIpfs(cluster);
+    await shutDownIpfsDaemon();
   });
 
   testSuite();

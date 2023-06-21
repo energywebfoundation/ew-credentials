@@ -36,12 +36,14 @@ import {
 import { Keys } from '@ew-did-registry/keys';
 import { JWT } from '@ew-did-registry/jwt';
 import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
+import {
   DomainReader,
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
-import { ChildProcess } from 'child_process';
-import { shutdownIpfs, spawnIpfs } from '../../../test/utils/setUpIpfs';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -74,7 +76,6 @@ let manager: EwSigner;
 let managerAddress: string;
 let admin: EwSigner;
 let adminAddress: string;
-let verifierAddress: string;
 
 let userKeys: Keys;
 let userDid: string;
@@ -82,7 +83,6 @@ let adminKeys: Keys;
 let adminDid: string;
 let managerKeys: Keys;
 let managerDid: string;
-let verifierKeys: Keys;
 
 let userOperator: Operator;
 let adminOperator: Operator;
@@ -94,8 +94,6 @@ let ipfsUrl: string;
 const validity = 10 * 60 * 1000;
 
 export function claimIssuerVerificationTests(): void {
-  let cluster: ChildProcess;
-
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -128,17 +126,11 @@ export function claimIssuerVerificationTests(): void {
     managerDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    verifierKeys = new Keys({
-      privateKey:
-        '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
-    });
-    verifierAddress = verifierKeys.getAddress();
-    ipfsUrl = 'http://localhost:8080';
-    await spawnIpfs();
+    ipfsUrl = await spawnIpfsDaemon();
   });
 
   after(async () => {
-    shutdownIpfs(cluster);
+    await shutDownIpfsDaemon();
   });
 
   testSuite();

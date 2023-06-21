@@ -39,11 +39,13 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
+import {
+  spawnIpfsDaemon,
+  shutDownIpfsDaemon,
+} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
-import { ChildProcess } from 'child_process';
-import { shutdownIpfs, spawnIpfs } from '../../../test/utils/setUpIpfs';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -93,8 +95,6 @@ let ipfsUrl: string;
 const validity = 10 * 60 * 1000;
 
 export function vcIssuerVerificationTests(): void {
-  let cluster: ChildProcess;
-
   before(async function () {
     ({ provider } = this);
     deployer = provider.getSigner(1);
@@ -126,12 +126,11 @@ export function vcIssuerVerificationTests(): void {
     managerAddress = managerKeys.getAddress();
     managerDid = `did:${Methods.Erc1056}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
-    ipfsUrl = 'http://localhost:8080';
-    cluster = await spawnIpfs();
+    ipfsUrl = await spawnIpfsDaemon();
   });
 
   after(async () => {
-    shutdownIpfs(cluster);
+    await shutDownIpfsDaemon();
   });
 
   testSuite();
