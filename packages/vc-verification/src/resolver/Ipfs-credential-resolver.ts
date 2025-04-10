@@ -193,7 +193,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
   ): Promise<RoleEIP191JWT[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
-    let resolved: Array<RoleEIP191JWT> = [];
+    const resolved: Array<RoleEIP191JWT> = [];
     for (const { serviceEndpoint } of services) {
       if (!isCID(serviceEndpoint)) {
         continue;
@@ -236,7 +236,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
-    let resolved: Array<VerifiableCredential<RoleCredentialSubject>> = [];
+    const resolved: Array<VerifiableCredential<RoleCredentialSubject>> = [];
     for (const { serviceEndpoint } of services) {
       if (!isCID(serviceEndpoint)) {
         continue;
