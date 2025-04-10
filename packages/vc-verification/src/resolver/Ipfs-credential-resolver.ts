@@ -193,34 +193,32 @@ export class IpfsCredentialResolver implements CredentialResolver {
   ): Promise<RoleEIP191JWT[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
-    return (
-      await Promise.all(
-        services.map(async ({ serviceEndpoint }) => {
-          if (!isCID(serviceEndpoint)) {
-            return {};
-          }
+    let resolved: Array<RoleEIP191JWT> = [];
+    for (const { serviceEndpoint } of services) {
+      if (!isCID(serviceEndpoint)) {
+        continue;
+      }
 
-          let claimToken: string;
-          try {
-            claimToken = await this.resolveFromIpfs(serviceEndpoint);
-          } catch (e) {
-            process.stdout.write(
-              `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
-            );
-            return {};
-          }
-          let rolePayload: RolePayload | undefined;
-          // expect that JWT has 3 dot-separated parts
-          if (claimToken.split('.').length === 3) {
-            rolePayload = decode(claimToken) as RolePayload;
-          }
-          return {
-            payload: rolePayload,
-            eip191Jwt: claimToken,
-          } as RoleEIP191JWT;
-        })
-      )
-    )
+      let claimToken: string;
+      try {
+        claimToken = await this.resolveFromIpfs(serviceEndpoint);
+      } catch (e) {
+        process.stdout.write(
+          `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
+        );
+        continue;
+      }
+      let rolePayload: RolePayload | undefined;
+      // expect that JWT has 3 dot-separated parts
+      if (claimToken.split('.').length === 3) {
+        rolePayload = decode(claimToken) as RolePayload;
+      }
+      resolved.push({
+        payload: rolePayload,
+        eip191Jwt: claimToken,
+      } as RoleEIP191JWT);
+    }
+    return resolved
       .filter(isEIP191Jwt)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
@@ -238,30 +236,29 @@ export class IpfsCredentialResolver implements CredentialResolver {
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services: IServiceEndpoint[] = didDocument.service || [];
-    return (
-      await Promise.all(
-        services.map(async ({ serviceEndpoint }) => {
-          if (!isCID(serviceEndpoint)) {
-            return {};
-          }
-          let credential: string;
-          try {
-            credential = await this.resolveFromIpfs(serviceEndpoint);
-          } catch (e) {
-            process.stdout.write(
-              `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
-            );
-            return {};
-          }
-          let vc;
-          // expect that JWT would have 3 dot-separated parts, VC is non-JWT credential
-          if (!(credential.split('.').length === 3)) {
-            vc = JSON.parse(credential);
-          }
-          return vc as VerifiableCredential<RoleCredentialSubject>;
-        })
-      )
-    ).filter(isVerifiableCredential);
+    let resolved: Array<VerifiableCredential<RoleCredentialSubject>> = [];
+    for (const { serviceEndpoint } of services) {
+      if (!isCID(serviceEndpoint)) {
+        continue;
+      }
+      let credential: string;
+      try {
+        credential = await this.resolveFromIpfs(serviceEndpoint);
+      } catch (e) {
+        process.stdout.write(
+          `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
+        );
+        continue;
+      }
+      let vc;
+      // expect that JWT would have 3 dot-separated parts, VC is non-JWT credential
+      if (!(credential.split('.').length === 3)) {
+        vc = JSON.parse(credential);
+      }
+      resolved.push(vc as VerifiableCredential<RoleCredentialSubject>);
+    }
+
+    return resolved.filter(isVerifiableCredential);
   }
 
   /**
