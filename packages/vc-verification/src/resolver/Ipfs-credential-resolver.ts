@@ -29,7 +29,8 @@ export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _resolver: Resolver;
   private IPFS_RESOLVE_TIMEOUT = 3000;
-  private IPFS_BATCH_SIZE = 5;
+  // NOTE: decrease this if receive `too many p2p requests
+  private IPFS_BATCH_SIZE = 10;
 
   constructor(
     provider: providers.Provider,
