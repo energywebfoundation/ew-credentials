@@ -5,7 +5,6 @@ import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
   RegistrySettings,
-  IServiceEndpoint,
   IDIDDocument,
 } from '@ew-did-registry/did-resolver-interface';
 import { decode } from 'jsonwebtoken';
@@ -228,7 +227,7 @@ export class IpfsCredentialResolver implements CredentialResolver {
     return resolved
       .filter((cred) => cred.split('.').length !== 3)
       .map((cred) => JSON.parse(cred))
-      .filter((cred) => isVerifiableCredential);
+      .filter(isVerifiableCredential);
   }
 
   /**
