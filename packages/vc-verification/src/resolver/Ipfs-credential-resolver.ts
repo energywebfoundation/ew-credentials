@@ -197,14 +197,11 @@ export class IpfsCredentialResolver implements CredentialResolver {
     const resolved = await this.resolveFromIpfsBatch(services);
 
     return resolved
-      .map((claimToken) => {
-        let rolePayload: RolePayload | undefined;
-        // expect that JWT has 3 dot-separated parts
-        if (claimToken.split('.').length === 3) {
-          rolePayload = decode(claimToken) as RolePayload;
-        }
-        return { payload: rolePayload, eip191Jwt: claimToken } as RoleEIP191JWT;
-      })
+      .filter((claimToken) => claimToken.split('.').length === 3)
+      .map((claimToken) => ({
+        payload: decode(claimToken) as RolePayload,
+        eip191Jwt: claimToken,
+      }))
       .filter(isEIP191Jwt)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
