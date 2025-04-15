@@ -1,10 +1,10 @@
 import { providers, utils } from 'ethers';
+import plimit from 'p-limit';
 import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
   RegistrySettings,
-  IServiceEndpoint,
   IDIDDocument,
 } from '@ew-did-registry/did-resolver-interface';
 import { decode } from 'jsonwebtoken';
@@ -29,6 +29,8 @@ export class IpfsCredentialResolver implements CredentialResolver {
   private _ipfsStore: IDidStore;
   private _resolver: Resolver;
   private IPFS_RESOLVE_TIMEOUT = 3000;
+  // NOTE: decrease this if receive `too many p2p requests
+  private IPFS_BATCH_SIZE = 10;
 
   constructor(
     provider: providers.Provider,
@@ -192,33 +194,15 @@ export class IpfsCredentialResolver implements CredentialResolver {
     didDocumentCache?: IDIDDocumentCache
   ): Promise<RoleEIP191JWT[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
-    const services: IServiceEndpoint[] = didDocument.service || [];
-    const resolved: Array<RoleEIP191JWT> = [];
-    for (const { serviceEndpoint } of services) {
-      if (!isCID(serviceEndpoint)) {
-        continue;
-      }
+    const services = didDocument.service.map((s) => s.serviceEndpoint) || [];
+    const resolved = await this.resolveFromIpfsBatch(services);
 
-      let claimToken: string;
-      try {
-        claimToken = await this.resolveFromIpfs(serviceEndpoint);
-      } catch (e) {
-        process.stdout.write(
-          `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
-        );
-        continue;
-      }
-      let rolePayload: RolePayload | undefined;
-      // expect that JWT has 3 dot-separated parts
-      if (claimToken.split('.').length === 3) {
-        rolePayload = decode(claimToken) as RolePayload;
-      }
-      resolved.push({
-        payload: rolePayload,
-        eip191Jwt: claimToken,
-      } as RoleEIP191JWT);
-    }
     return resolved
+      .filter((claimToken) => claimToken.split('.').length === 3)
+      .map((claimToken) => ({
+        payload: decode(claimToken) as RolePayload,
+        eip191Jwt: claimToken,
+      }))
       .filter(isEIP191Jwt)
       .map(transformClaim)
       .filter(filterOutMaliciousClaims);
@@ -235,30 +219,13 @@ export class IpfsCredentialResolver implements CredentialResolver {
     didDocumentCache?: IDIDDocumentCache
   ): Promise<VerifiableCredential<RoleCredentialSubject>[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
-    const services: IServiceEndpoint[] = didDocument.service || [];
-    const resolved: Array<VerifiableCredential<RoleCredentialSubject>> = [];
-    for (const { serviceEndpoint } of services) {
-      if (!isCID(serviceEndpoint)) {
-        continue;
-      }
-      let credential: string;
-      try {
-        credential = await this.resolveFromIpfs(serviceEndpoint);
-      } catch (e) {
-        process.stdout.write(
-          `[IpfsCredentialResolver] Can not resolve ${serviceEndpoint}. Token is skipped\n`
-        );
-        continue;
-      }
-      let vc;
-      // expect that JWT would have 3 dot-separated parts, VC is non-JWT credential
-      if (!(credential.split('.').length === 3)) {
-        vc = JSON.parse(credential);
-      }
-      resolved.push(vc as VerifiableCredential<RoleCredentialSubject>);
-    }
+    const services = didDocument.service.map((s) => s.serviceEndpoint) || [];
+    const resolved = await this.resolveFromIpfsBatch(services);
 
-    return resolved.filter(isVerifiableCredential);
+    return resolved
+      .filter((cred) => cred.split('.').length !== 3)
+      .map((cred) => JSON.parse(cred))
+      .filter(isVerifiableCredential);
   }
 
   /**
@@ -283,6 +250,9 @@ export class IpfsCredentialResolver implements CredentialResolver {
   private async resolveFromIpfs(service: string): Promise<string> {
     const timeout = new Promise((_, reject) => {
       setTimeout(() => {
+        process.stdout.write(
+          `[IpfsCredentialResolver] Can not resolve ${service}. Token is skipped\n`
+        );
         reject();
       }, this.IPFS_RESOLVE_TIMEOUT);
     });
@@ -291,5 +261,17 @@ export class IpfsCredentialResolver implements CredentialResolver {
       timeout,
       this._ipfsStore.get(service),
     ]) as Promise<string>;
+  }
+
+  private async resolveFromIpfsBatch(services: string[]): Promise<string[]> {
+    const limit = plimit(this.IPFS_BATCH_SIZE);
+    const resolved = await Promise.allSettled(
+      services
+        .filter((service) => isCID(service))
+        .map((service) => limit(() => this.resolveFromIpfs(service)))
+    );
+    return resolved
+      .filter((r) => r.status == 'fulfilled')
+      .map((r) => (r as PromiseFulfilledResult<string>).value);
   }
 }
