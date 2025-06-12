@@ -1,5 +1,6 @@
 import { providers, utils } from 'ethers';
 import plimit from 'p-limit';
+import { DidStore } from '@ew-did-registry/did-s3-store';
 import { IDidStore } from '@ew-did-registry/did-store-interface';
 import { Resolver } from '@ew-did-registry/did-ethr-resolver';
 import {
@@ -34,7 +35,7 @@ export class S3CredentialResolver implements CredentialResolver {
   constructor(
     provider: providers.Provider,
     registrySetting: RegistrySettings,
-    didStore: IDidStore
+    didStore: DidStore
   ) {
     this._didStore = didStore;
     this._resolver = new Resolver(provider, registrySetting);
