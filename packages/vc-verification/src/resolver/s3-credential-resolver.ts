@@ -27,7 +27,7 @@ import { RoleCredentialSubject } from '@energyweb/credential-governance';
 export class S3CredentialResolver implements CredentialResolver {
   private _didStore: IDidStore;
   private _resolver: Resolver;
-  private RESOLVE_TIMEOUT = 3000;
+  private RESOLVE_TIMEOUT = 90000;
   // NOTE: decrease this if receive `too many p2p requests
   private BATCH_SIZE = 10;
 
