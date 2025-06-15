@@ -5,3 +5,4 @@ export * from './revoker-resolver';
 export * from './did-document-cache';
 export * from './role-credential-cache';
 export * from './role-definition-cache';
+export * from './s3-credential-resolver';
