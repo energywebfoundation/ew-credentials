@@ -23,7 +23,7 @@ import {
   ProviderTypes,
   RegistrySettings,
 } from '@ew-did-registry/did-resolver-interface';
-import { DidStore } from '@ew-did-registry/did-s3-store';
+import { DidStore } from '@ew-did-registry/did-ssi-hub-store';
 import { JWT } from '@ew-did-registry/jwt';
 import { Keys } from '@ew-did-registry/keys';
 import chai from 'chai';
@@ -171,9 +171,7 @@ function testSuite() {
     didStore = new DidStore({
       baseURL: 'string',
       privateKey: 'string',
-      did: 'string',
-      loginEndpoint: 'string',
-      refreshEndpoint: 'string',
+      did: 'string'
     });
     credentialResolver = new S3CredentialResolver(
       provider,

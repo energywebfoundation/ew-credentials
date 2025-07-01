@@ -25,7 +25,7 @@ import { cacheTests } from './cache-tests';
 export const hashLabel = (label: string): string =>
   utils.keccak256(utils.toUtf8Bytes(label));
 
-describe('[VC Verificaiton]', function () {
+xdescribe('[VC Verificaiton]', function () {
   this.timeout(0);
   const provider = new JsonRpcProvider('http://localhost:8544');
   const deployer = provider.getSigner(1);

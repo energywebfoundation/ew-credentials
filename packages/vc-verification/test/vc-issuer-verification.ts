@@ -41,7 +41,7 @@ import { Keys } from '@ew-did-registry/keys';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import { ERRORS } from '../src';
 import { verifyCredential } from 'didkit-wasm-node';
-import { DidStore } from '@ew-did-registry/did-s3-store';
+import { DidStore } from '@ew-did-registry/did-ssi-hub-store';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -171,9 +171,7 @@ function testSuite() {
     didStore = new DidStore({
       baseURL: 'string',
       privateKey: 'string',
-      did: 'string',
-      loginEndpoint: 'string',
-      refreshEndpoint: 'string',
+      did: 'string'
     });
     credentialResolver = new S3CredentialResolver(
       provider,
