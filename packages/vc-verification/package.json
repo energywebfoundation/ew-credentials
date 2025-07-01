@@ -38,14 +38,14 @@
   "dependencies": {
     "@energyweb/credential-governance": "2.2.0",
     "@energyweb/onchain-claims": "2.2.0",
-    "@ew-did-registry/claims": "^0.9.1-alpha.1545.0",
-    "@ew-did-registry/credentials-interface": "^0.9.1-alpha.1545.0",
-    "@ew-did-registry/did-ethr-resolver": "^0.9.1-alpha.1545.0",
-    "@ew-did-registry/did-s3-store": "^0.9.1-alpha.1545.0",
-    "@ew-did-registry/did-store-interface": "^0.9.1-alpha.1545.0",
-    "@ew-did-registry/revocation": "^0.9.1-alpha.1545.0",
+    "@ew-did-registry/claims": "0.9.1-alpha.1577.0",
+    "@ew-did-registry/credentials-interface": "0.9.1-alpha.1577.0",
+    "@ew-did-registry/did-ethr-resolver": "0.9.1-alpha.1577.0",
+    "@ew-did-registry/did-store-interface": "0.9.1-alpha.1577.0",
+    "@ew-did-registry/revocation": "0.9.1-alpha.1577.0",
     "ethers": "^5.7.2",
     "lodash": "^4.17.21",
+    "multiformats": "^9.9.0",
     "p-limit": "3"
   },
   "devDependencies": {
