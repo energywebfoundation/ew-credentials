@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ 'develop', 'master' ]
+    branches: [ 'develop', 'master', 'fix/duplicate-service' ]
 
 jobs:
   deploy:
@@ -36,8 +36,8 @@ jobs:
       - name: Output Run number
         run: echo ${{ github.run_number }}
 
-      - name: Deploy on develop branch
-        if: github.ref == 'refs/heads/develop'
+      - name: Deploy on fix/duplicate-service branch
+        if: github.ref == 'refs/heads/fix/duplicate-service'
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RUN_NUMBER: ${{ github.run_number }}

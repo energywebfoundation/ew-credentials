@@ -195,7 +195,8 @@ export class S3CredentialResolver implements CredentialResolver {
   ): Promise<RoleEIP191JWT[]> {
     const didDocument = await this.getDIDDocument(did, didDocumentCache);
     const services = didDocument.service.map((s) => s.serviceEndpoint) || [];
-    const resolved = await this.resolveFromDidStoreBatch(services);
+    const uniqueServices = [...new Set(services)];
+    const resolved = await this.resolveFromDidStoreBatch(uniqueServices);
 
     return resolved
       .filter((claimToken) => claimToken.split('.').length === 3)
