@@ -248,19 +248,25 @@ export class S3CredentialResolver implements CredentialResolver {
   }
 
   private async resolveFromDidStore(service: string): Promise<string> {
-    const timeout = new Promise((_, reject) => {
-      setTimeout(() => {
-        process.stdout.write(
-          `[S3CredentialResolver] Can not resolve ${service}. Token is skipped\n`
-        );
-        reject();
-      }, this.RESOLVE_TIMEOUT);
-    });
+    const timeoutMs = this.RESOLVE_TIMEOUT;
 
-    return Promise.race([
-      timeout,
-      this._didStore.get(service),
-    ]) as Promise<string>;
+    return new Promise<string>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        const msg = `[S3CredentialResolver] Timeout resolving ${service}. Token is skipped\n`;
+        process.stdout.write(msg);
+        reject(new Error(msg));
+      }, timeoutMs);
+
+      this._didStore.get(service)
+        .then((result) => {
+          clearTimeout(timeoutId);
+          resolve(result);
+        })
+        .catch((err) => {
+          clearTimeout(timeoutId);
+          reject(err);
+        });
+    });
   }
 
   private async resolveFromDidStoreBatch(
