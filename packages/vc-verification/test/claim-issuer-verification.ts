@@ -1,49 +1,45 @@
-import { utils, ContractFactory, Contract } from 'ethers';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {
-  abi as erc1056Abi,
-  bytecode as erc1056Bytecode,
-} from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
-import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
-import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
-import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
-import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
-import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
-import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
-import { Methods, Chain } from '@ew-did-registry/did';
-import {
-  CredentialResolver,
-  IssuerResolver,
-  IpfsCredentialResolver,
-  EthersProviderIssuerResolver,
-  IRoleCredentialCache,
-  IRoleDefinitionCache,
-  RoleCredentialCache,
-  RoleDefinitionCache,
-} from '../src';
-import { ClaimIssuerVerification } from '../src/verifier/claim-issuer-verification';
-import {
-  DIDAttribute,
-  ProviderTypes,
-  ProviderSettings,
-  RegistrySettings,
-  IUpdateData,
-} from '@ew-did-registry/did-resolver-interface';
-import { Keys } from '@ew-did-registry/keys';
-import { JWT } from '@ew-did-registry/jwt';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
 import {
   DomainReader,
   ResolverContractType,
   VOLTA_CHAIN_ID,
 } from '@energyweb/credential-governance';
+import { ENSRegistry } from '@energyweb/credential-governance/ethers/ENSRegistry';
+import { RoleDefinitionResolverV2__factory } from '@energyweb/credential-governance/ethers/factories/RoleDefinitionResolverV2__factory';
+import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ethers/RoleDefinitionResolverV2';
+import { DomainTransactionFactoryV2 } from '@energyweb/credential-governance/src';
+import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
+import {
+  abi as erc1056Abi,
+  bytecode as erc1056Bytecode,
+} from '@energyweb/onchain-claims/test/test_utils/ERC1056.json';
+import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
+import { Chain, Methods } from '@ew-did-registry/did';
+import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
+import {
+  DIDAttribute,
+  IUpdateData,
+  ProviderSettings,
+  ProviderTypes,
+  RegistrySettings,
+} from '@ew-did-registry/did-resolver-interface';
+import { DidStore } from '@ew-did-registry/did-ssi-hub-store';
+import { JWT } from '@ew-did-registry/jwt';
+import { Keys } from '@ew-did-registry/keys';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import { Contract, ContractFactory, utils } from 'ethers';
+import {
+  CredentialResolver,
+  EthersProviderIssuerResolver,
+  IRoleCredentialCache,
+  IRoleDefinitionCache,
+  IssuerResolver,
+  RoleCredentialCache,
+  RoleDefinitionCache,
+  S3CredentialResolver,
+} from '../src';
+import { ClaimIssuerVerification } from '../src/verifier/claim-issuer-verification';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -126,11 +122,9 @@ export function claimIssuerVerificationTests(): void {
     managerDid = `did:${Methods.Erc1056}:${Chain.VOLTA}:${managerAddress}`;
     manager = EwSigner.fromPrivateKey(managerKeys.privateKey, providerSettings);
 
-    ipfsUrl = await spawnIpfsDaemon();
   });
 
   after(async () => {
-    await shutDownIpfsDaemon();
   });
 
   testSuite();
@@ -174,8 +168,12 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore(ipfsUrl);
-    credentialResolver = new IpfsCredentialResolver(
+    didStore = new DidStore({
+      baseURL: 'string',
+      privateKey: 'string',
+      did: 'string'
+    });
+    credentialResolver = new S3CredentialResolver(
       provider,
       registrySettings,
       didStore
