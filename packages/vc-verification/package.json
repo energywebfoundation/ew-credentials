@@ -45,7 +45,7 @@
     "@ew-did-registry/did-s3-store": "^0.9.1-alpha.1545.0",
     "@ew-did-registry/did-store-interface": "^0.9.1-alpha.1545.0",
     "@ew-did-registry/revocation": "^0.9.1-alpha.1545.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.0.0",
     "lodash": "^4.17.21",
     "p-limit": "3"
   },
