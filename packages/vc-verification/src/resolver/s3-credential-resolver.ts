@@ -257,7 +257,8 @@ export class S3CredentialResolver implements CredentialResolver {
         reject(new Error(msg));
       }, timeoutMs);
 
-      this._didStore.get(service)
+      this._didStore
+        .get(service)
         .then((result) => {
           clearTimeout(timeoutId);
           resolve(result);
