@@ -54,6 +54,7 @@
     "@semantic-release/release-notes-generator": "^9.0.2",
     "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",
+    "@types/glob": "8.1.0",
     "@types/mocha": "^8.2.2",
     "@types/node": "^18.11.11",
     "@types/wait-on": "^5.3.1",
