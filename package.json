@@ -66,7 +66,7 @@
     "copyfiles": "^2.4.1",
 	  "eslint": "^8.6.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-import": "2.32.0",
     "ganache-cli": "^6.12.2",
     "go-ipfs-dep": "file:test/stubs/go-ipfs-dep",
     "husky": "^4.3.8",
