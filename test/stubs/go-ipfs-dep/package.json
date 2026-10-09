@@ -1,0 +1,6 @@
+{
+  "name": "go-ipfs-dep",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Stub for ipfsd-ctl's go-ipfs-dep peer dependency. Tests only spawn js-ipfs, and the real package downloads a go-ipfs binary from dist.ipfs.tech at install time."
+}
