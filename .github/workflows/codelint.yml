@@ -13,17 +13,6 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Install modules
         run: npm ci
-      # go-ipfs-dep (unused peer of ipfsd-ctl) downloads go-ipfs from dist.ipfs.tech during setup,
-      # and some of that host's IPv4 servers time out. Pin the first one that responds.
-      - name: Pin a reachable dist.ipfs.tech server
-        run: |
-          for ip in $(getent ahostsv4 dist.ipfs.tech | awk '{ print $1 }' | sort -u); do
-            if curl -sf -m 10 --resolve "dist.ipfs.tech:443:$ip" -o /dev/null https://dist.ipfs.tech/go-ipfs/versions; then
-              echo "$ip dist.ipfs.tech" | sudo tee -a /etc/hosts
-              break
-            fi
-            echo "dist.ipfs.tech server $ip did not respond"
-          done
       - name: Bootstrap packages
         run: npm run setup
       - name: Build
