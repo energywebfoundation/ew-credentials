@@ -19,12 +19,10 @@ import { RoleDefinitionResolverV2 } from '@energyweb/credential-governance/ether
 import { PreconditionType } from '@energyweb/credential-governance/src/types/domain-definitions';
 import { defaultVersion } from '@energyweb/onchain-claims/test/test_utils/role-utils';
 import { EwSigner, Operator } from '@ew-did-registry/did-ethr-resolver';
-import { DidStore } from '@ew-did-registry/did-ipfs-store';
 import { Methods } from '@ew-did-registry/did';
 import {
   CredentialResolver,
   IssuerResolver,
-  IpfsCredentialResolver,
   EthersProviderIssuerResolver,
   RevocationVerification,
   RevokerResolver,
@@ -33,6 +31,7 @@ import {
   IRoleDefinitionCache,
   RoleCredentialCache,
   RoleDefinitionCache,
+  S3CredentialResolver,
 } from '../src';
 import {
   DIDAttribute,
@@ -42,10 +41,6 @@ import {
   IUpdateData,
 } from '@ew-did-registry/did-resolver-interface';
 import { Keys } from '@ew-did-registry/keys';
-import {
-  spawnIpfsDaemon,
-  shutDownIpfsDaemon,
-} from '../../../test/utils/ipfs-daemon';
 import { adminVC, managerVC, userVC } from './Fixtures/sample-vc';
 import {
   adminStatusList,
@@ -53,6 +48,7 @@ import {
   statusListCredentialWithInvalidPurpose,
 } from './Fixtures/sample-statuslist-credential';
 import { verifyCredential } from 'didkit-wasm-node';
+import { DidStore } from '@ew-did-registry/did-s3-store';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -140,11 +136,9 @@ export function revocationVerificationTests(): void {
       privateKey:
         '8d5366123cb560bb606379f90a0bfd4769eecc0557f1b362dcae9012b548b1e5',
     });
-    ipfsUrl = await spawnIpfsDaemon();
   });
 
   after(async () => {
-    await shutDownIpfsDaemon();
   });
 
   testSuite();
@@ -188,8 +182,14 @@ function testSuite() {
       type: ProviderTypes.HTTP,
     };
 
-    didStore = new DidStore(ipfsUrl);
-    credentialResolver = new IpfsCredentialResolver(
+    didStore = new DidStore({
+      baseURL: 'string',
+      privateKey: 'string',
+      did: 'string',
+      loginEndpoint: 'string',
+      refreshEndpoint: 'string',
+    });
+    credentialResolver = new S3CredentialResolver(
       provider,
       registrySettings,
       didStore
