@@ -6,4 +6,6 @@ COPY . .
 RUN npm ci
 RUN npm run setup
 RUN npm run build
+RUN chown -R node:node /app
+USER node
 CMD 'node -r ts-node/register ./packages/credential-governance/src/test-domain-hierarchy'
