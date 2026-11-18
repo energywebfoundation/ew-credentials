@@ -12,7 +12,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "run-with-testrpc -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"lerna run test\" ",
+    "test": "run-with-testrpc --testrpc-cmd ./node_modules/ganache-cli/cli.js -m \"candy maple cake sugar pudding cream honey rich smooth crumble sweet treat\" --port 8544 --accounts 20 --networkId=9 --chainId 73799 --gasLimit=10000000 \"lerna run test\" ",
     "setup": "lerna bootstrap --hoist --ci",
     "build": "patch-package && rm -rf build docs packages/*/dist && lerna run compile",
     "compile": "lerna run compile",
