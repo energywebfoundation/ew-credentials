@@ -2,10 +2,6 @@
 # Trivy loads this file by default. An ID not listed here still fails the job.
 # Remove an entry once the lockfile is upgraded past the fixed version.
 
-# joi 17.13.8 — fixed in 17.13.9, 18.3.1
-# packages/credential-governance, packages/onchain-claims, packages/vc-verification
-CVE-2026-118772
-
 # axios 0.27.2 — fixed in 0.30.0 through 0.32.0, and 1.8.2 through 1.16.0
 # packages/vc-verification
 CVE-2025-27152
@@ -18,10 +14,6 @@ CVE-2026-44487
 CVE-2026-44492
 CVE-2026-44495
 CVE-2026-44496
-
-# follow-redirects 1.16.1 — fixed in 1.16.2
-# packages/vc-verification
-CVE-2026-116689
 
 # nanoid 2.1.11 — fixed in 3.3.12 through 3.3.18, and 5.1.6 through 5.1.16
 # packages/vc-verification
