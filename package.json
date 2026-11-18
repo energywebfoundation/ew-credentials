@@ -92,6 +92,7 @@
     "fast-uri@3": "^3.1.9",
     "follow-redirects@1": "^1.16.2",
     "form-data@2": "^2.5.6",
+    "git-url-parse@11": "^13.1.1",
     "hardhat@2": "^2.29.2",
     "joi@17": "^17.13.9",
     "js-yaml@3": "^3.15.2",
